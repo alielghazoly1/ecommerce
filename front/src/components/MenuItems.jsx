@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useContext } from 'react';
 import { Home, FolderOpen, ShoppingBag, Mail, User } from 'lucide-react';
 import { Link as ScrollLink } from 'react-scroll';
 import { useNavigate, useLocation } from 'react-router-dom';
-
+import { ShopContext } from '../context/ShopContext';
 export const menuItemData = [
   { to: 'home', label: 'Home', Icon: Home },
   { to: 'categories', label: 'Categories', Icon: FolderOpen },
@@ -11,8 +11,7 @@ export const menuItemData = [
 ];
 
 const MenuItems = ({ setSideBarOpen, isMobile }) => {
-  const [cartItems] = useState({ item1: 2, item2: 1 });
-  const [token, setToken] = useState(true);
+ const { cartItems, token, setToken } = useContext(ShopContext);
   const location = useLocation();
   const navigate = useNavigate();
 

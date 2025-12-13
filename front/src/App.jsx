@@ -21,9 +21,11 @@ import MyOrders from './pages/MyOrders';
 import Product from './pages/Product';
 import Verify from './pages/Verify';
 import Order from './pages/Order';
+// context
+import ShopContextProvider from './context/ShopContext';
 const App = () => {
   return (
-    <div>
+    <ShopContextProvider>
       <Header />
       <Routes>
         <Route path='/' element={<Home/>}/>
@@ -35,7 +37,7 @@ const App = () => {
         <Route path='/login' element={<Login/>}/>
         <Route path='/signup' element={<SignUp/>}/>
       </Routes>
-    </div>
+    </ShopContextProvider>
   )
 };
 

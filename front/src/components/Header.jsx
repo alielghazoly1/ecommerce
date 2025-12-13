@@ -21,7 +21,7 @@ const Header = () => {
         <div className="items-center gap-4 lg:flex hidden">
           <Rocket className="w-8 h-8 text-cyan-400 animate-pulse" />
           <h1 className="text-white font-bold text-xl tracking-widest">
-            New-Shop
+            solivera
           </h1>
         </div>
         <div className="flex-1 flex justify-center lg:justify-end">
@@ -33,7 +33,7 @@ const Header = () => {
         <div className="flex items-center gap-2">
           <Rocket className="w-8 h-8 text-cyan-400 animate-pulse" />
           <h1 className="text-white font-bold text-xl tracking-widest">
-            New-Shop
+            solivera
           </h1>
         </div>
         <button
