@@ -4,7 +4,7 @@ import { ShoppingCart } from 'lucide-react';
 const Hero = () => {
   return (
     <section
-      className="relative w-full min-h-screen bg-gradient-to-r from-indigo-900 via-purple-900 to-pink-900
+      className="relative w-full min-h-screen bg-linear-to-r from-indigo-900 via-purple-900 to-pink-900
     text-white flex items-center"
     >
       <div className="absolute inset-0 bg-black/40"></div>
@@ -24,7 +24,7 @@ const Hero = () => {
           <div className="flex flex-col sm:flex-row items-center gap-6 mt-6">
             <button
               onClick={() => {
-                window.location.href = '/shop';
+                window.location.href = '/shopping';
               }}
               className="flex items-center gap-3 bg-cyan-400 hover:bg-cyan-500
                       text-white font-bold px-8 py-4 rounded-2xl text-xl shadow-2xl transition-transform

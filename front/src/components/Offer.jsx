@@ -6,7 +6,7 @@ import { ShopContext } from '../context/ShopContext';
 const Offer = () => {
   const { addToCart } = useContext(ShopContext);
   const [timeLeft, setTimeLeft] = useState({});
-  const [products, setProducts] = useState(all_products.slice(0, 12));
+  const [products] = useState(all_products.slice(0, 12));
   useEffect(() => {
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + 5);
@@ -25,7 +25,7 @@ const Offer = () => {
   // console.log(timeLeft)
   return (
     <section
-      className="relatev w-full min-h-screen bg-gradient-to-r
+      className="relatev w-full min-h-screen bg-linear-to-r
   from-indigo-900 via-purple-900 to-pink-900 text-white py-24
   px-6 sm:px-10"
     >

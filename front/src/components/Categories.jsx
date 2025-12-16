@@ -12,7 +12,7 @@ const Categories = () => {
       ? all_products
       : all_products.filter((p) => p.category === selectedCategory);
   return (
-    <div className="relative w-full min-h-screen bg-gradient-to-r from-indigo-900 via-purple-900 to-pink-900 text-white py-24 px-6 sm:px-10">
+    <div className="relative w-full min-h-screen bg-linear-to-r from-indigo-900 via-purple-900 to-pink-900 text-white py-24 px-6 sm:px-10">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
       <div className="relative z-10 max-w-7xl mx-auto text-center">
         <h2 className="text-4xl sm:text-5xl font-extrabold mb-12">
@@ -24,7 +24,7 @@ const Categories = () => {
             className={`px-6 py-3 rounded-2xl text-lg font-semibold transition-alz
           shadow-lg ${
             selectedCategory === 'All'
-              ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white shadow-cyan-400/50 scale-105'
+              ? 'bg-linear-to-r from-cyan-400 to-blue-500 text-white shadow-cyan-400/50 scale-105'
               : 'bg-white/10 text-gray-200 hover:bg-white/20 '
           }`}
           >
@@ -37,7 +37,7 @@ const Categories = () => {
               className={`px-6 py-3 rounded-2xl text-lg font-semibold transition-alz
                 shadow-lg ${
                   selectedCategory === 'All'
-                    ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white shadow-cyan-400/50 scale-105'
+                    ? 'bg-linear-to-r from-cyan-400 to-blue-500 text-white shadow-cyan-400/50 scale-105'
                     : 'bg-white/10 text-gray-200 hover:bg-white/20 '
                 }`}
             >
@@ -65,7 +65,7 @@ const Categories = () => {
                 <p className="text-gray-300 text-sm mb-4 line-clamp-2">
                   {product.description}
                 </p>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center gap-0.5 justify-around">
                   <span className="text-xl font-bold text-cyan-400">
                     $ {product.price.toFixed(2)}
                   </span>
@@ -74,7 +74,7 @@ const Categories = () => {
                     className="flex items-center gap-2 bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 px-4 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition-all shadow-lg"
                   >
                     <ShoppingBag className="w-5 h-5" />
-                    Add to Cart
+                    Add
                   </button>
                 </div>
               </div>

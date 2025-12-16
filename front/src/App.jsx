@@ -1,6 +1,6 @@
 // import React
 import React from 'react';
-// import Routes 
+// import Routes
 import { Routes, Route } from 'react-router';
 // import components
 import Categories from './components/Categories';
@@ -28,17 +28,17 @@ const App = () => {
     <ShopContextProvider>
       <Header />
       <Routes>
-        <Route path='/' element={<Home/>}/>
-        <Route path='/product/productId' element={<Product/>}/>
-        <Route path='/cart' element={<Cart/>}/>
-        <Route path='/order' element={<Order/>}/>
-        <Route path='/verify' element={<Verify/>}/>
-        <Route path='/myorders' element={<MyOrders/>}/>
-        <Route path='/login' element={<Login/>}/>
-        <Route path='/signup' element={<SignUp/>}/>
+        <Route path="/" element={<Home />} />
+        <Route path="/product/productId" element={<Product />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/order" element={<Order />} />
+        <Route path="/verify" element={<Verify />} />
+        <Route path="/myorders" element={<MyOrders />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
       </Routes>
     </ShopContextProvider>
-  )
+  );
 };
 
 export default App;
