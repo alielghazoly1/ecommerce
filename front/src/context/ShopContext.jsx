@@ -38,8 +38,9 @@ const ShopContextProvider = ({ children }) => {
   };
 
   const getTotalCartAmount = () => {
+    console.log(cartItems);
     return Object.entries(cartItems).reduce((total, [id, qty]) => {
-      const product = allProducts.find((prod) => prod.id === parseInt(id));
+      const product = allProducts.find((prod) => prod._id === id);
       return total + (product ? product.price * qty : 0);
     }, 0);
   };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useContext } from 'react';
 import { ShopContext } from '../context/ShopContext';
-import { Trash2, Plus, Minus, ShoppingCart } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingCart, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 const Cart = () => {
   const {
@@ -11,7 +11,8 @@ const Cart = () => {
     removeFromCart,
     getTotalCartAmount,
   } = useContext(ShopContext);
-
+ console.log(getTotalCartAmount());
+ 
   const navigate = useNavigate();
   const total = getTotalCartAmount();
 
@@ -99,11 +100,22 @@ const Cart = () => {
               ))}
             </div>
             <div
-              className="bg-white/10 border border-white/20
+              className="bg-white/10 border mt-6 border-white/20
             backdrop-blur-md p-8 rounded-3xl shadow-xl flex flex-col
             sm:flex-row justify-between items-center gap-6"
             >
-              
+              <div className="text-2xl font-bold">
+                المجموع الكلي :
+                <span className="text-cyan-400 ml-3">$ {total.toFixed(2)}</span>
+              </div>
+              <button
+                onClick={() => navigate('/order')}
+                className="flex items-center gap-3 bg-linear-to-r px-8 from-indigo-500
+                via-purple-500 to-pink-500 sm:w-auto w-full text-white py-4 rounded-2xl font-semibold hover:opacity-90 transition-all shadow-lg"
+              >
+                <ShoppingBag className="w-5 h-5" />
+                إتمام الشراء
+              </button>
             </div>
           </>
         )}
