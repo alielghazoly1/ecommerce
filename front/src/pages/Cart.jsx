@@ -30,7 +30,7 @@ const Cart = () => {
       pointer-events-none"
       ></div>
       <div className="relative z-10 max-w-7xl mx-auto">
-        <h2 className="text-4xl sm:text-5xl font-extrabold mb-12">
+        <h2 className="text-4xl sm:text-5xl font-extrabold mb-12 text-center">
           عربة التسوق الخاصة بك
         </h2>
         {cartProducts.length === 0 ? (
