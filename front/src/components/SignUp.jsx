@@ -88,18 +88,18 @@ const SignUp = () => {
           >
             انشاء حساب
           </button>
-
-          {/* Redirect to login */}
-          <div className="text-center">
-            لديك حساب؟{' '}
-            <span
-              className=" text-cyan-400 cursor-pointer font-semibold"
-              onClick={() => navigate('/login')}
-            >
-              تسجيل دخول
-            </span>
-          </div>
         </form>
+
+        {/* Redirect to login */}
+        <p className="mt-6 text-gray-300 text-center">
+          لديك حساب؟{' '}
+          <span
+            className=" text-cyan-400 cursor-pointer font-semibold hover:underline"
+            onClick={() => navigate('/login')}
+          >
+            تسجيل دخول
+          </span>
+        </p>
       </div>
     </section>
   );
