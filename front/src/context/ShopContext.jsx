@@ -17,10 +17,10 @@ const ShopContextProvider = ({ children }) => {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
 
-  const addToCart = (id) => {
+  const addToCart = (id, quantity = 1) => {
     setCartItems((prev) => ({
       ...prev,
-      [id]: prev[id] ? prev[id] + 1 : 1,
+      [id]: prev[id] ? prev[id] + quantity : quantity,
     }));
   };
   const removeFromCart = (id, removeAll = false) => {
