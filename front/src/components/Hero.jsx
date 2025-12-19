@@ -1,6 +1,7 @@
 import React from 'react';
 import heroImage from '../assets/bg.png';
 import { ShoppingCart } from 'lucide-react';
+import LazyImage from './LazyImage';
 const Hero = () => {
   return (
     <section
@@ -46,7 +47,7 @@ const Hero = () => {
           </div>
         </div>
         <div className="flex-1 relative w-full max-w-lg">
-          <img
+          <LazyImage
             src={heroImage}
             alt="Hero"
             className="w-full h-auto object-cover rounded-2xl shadow-2xl"

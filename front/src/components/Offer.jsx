@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { all_products } from '../assets/data';
 import { ShoppingBag } from 'lucide-react';
 import { ShopContext } from '../context/ShopContext';
+import LazyImage from './LazyImage';
 
 const Offer = () => {
   const { addToCart } = useContext(ShopContext);
@@ -69,7 +70,7 @@ const Offer = () => {
                       justify-center bg-linear-to-b
                       from-purple-800/40 to-transparent"
               >
-                <img
+                <LazyImage
                   src={product.image}
                   alt=""
                   className="object-contain w-56 h-56 hover:scale-110

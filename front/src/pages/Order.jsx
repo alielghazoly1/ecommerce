@@ -2,6 +2,7 @@ import React from 'react';
 import { useContext, useState } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
+import LazyImage from '../components/LazyImage';
 
 const Order = () => {
   // Get data from ShopContext
@@ -84,7 +85,7 @@ const Order = () => {
                   className="flex items-center gap-4 bg-white/10
                           rounded-2xl shadow-xl border border-white/20"
                 >
-                  <img
+                  <LazyImage
                     src={item.image}
                     alt="photo"
                     className="w-20 h-20
@@ -105,9 +106,7 @@ const Order = () => {
               {/* Total price */}
               <div className="text-xl font-bold mt-6">
                 المجموع الكلي :
-                <span className="text-cyan-400 ml-2">
-                  ${total.toFixed(2)}
-                </span>
+                <span className="text-cyan-400 ml-2">${total.toFixed(2)}</span>
               </div>
             </div>
 

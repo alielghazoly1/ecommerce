@@ -3,6 +3,7 @@ import { useContext } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import { Trash2, Plus, Minus, ShoppingCart, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import LazyImage from '../components/LazyImage';
 const Cart = () => {
   const {
     cartItems,
@@ -55,7 +56,7 @@ const Cart = () => {
                   hover:shadow-cyan-400/30 transition-all"
                 >
                   <div className="flex items-center gap-6">
-                    <img
+                    <LazyImage
                       src={item.image}
                       alt={item.name}
                       className="w-24 h-24 object-contain rounded-xl "
