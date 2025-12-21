@@ -1,70 +1,67 @@
-import React from 'react';
-// Import useState and useContext for state management and shared data
-import { useState, useContext } from 'react';
-// Import categories and all products data
+import { useState, useContext, useMemo, useCallback } from 'react';
 import { categories, all_products } from '../assets/data';
-// Import Shop Context
 import { ShopContext } from '../context/ShopContext';
-// Shopping bag icon
 import { ShoppingBag } from 'lucide-react';
-// Navigation hook
 import { useNavigate } from 'react-router-dom';
+import LazyImage from './LazyImage';
 
 const Categories = () => {
-  // State to track selected category (default: All)
+  // Selected category
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  // Get addToCart function from context
+  // Context
   const { addToCart } = useContext(ShopContext);
 
-  // Filter products based on selected category
-  // If "All", return all products
-  const filteredProducts =
-    selectedCategory === 'All'
+  // Memoized products filtering (performance)
+  const filteredProducts = useMemo(() => {
+    return selectedCategory === 'All'
       ? all_products
       : all_products.filter((p) => p.category === selectedCategory);
+  }, [selectedCategory]);
 
-  // Hook for page navigation
   const navigate = useNavigate();
 
+  // Memoized handler
+  const handleAddToCart = useCallback(
+    (id) => {
+      addToCart(id);
+    },
+    [addToCart]
+  );
+
   return (
-    // Main container with gradient background
     <div className="relative w-full min-h-screen bg-linear-to-r from-indigo-900 via-purple-900 to-pink-900 text-white py-24 px-6 sm:px-10">
-      {/* Overlay for dark background and blur effect */}
+      {/* Overlay */}
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
 
-      {/* Main content */}
       <div className="relative z-10 max-w-7xl mx-auto text-center">
-        {/* Page title */}
         <h2 className="text-4xl sm:text-5xl font-extrabold mb-12">
           فئات المنتجات
         </h2>
 
-        {/* Category buttons */}
+        {/* Categories */}
         <div className="flex flex-wrap justify-center gap-6 mb-16">
-          {/* Button to show all products */}
           <button
             onClick={() => setSelectedCategory('All')}
-            className={`px-6 py-3 rounded-2xl text-lg font-semibold transition-alz
-          shadow-lg ${
-            selectedCategory === 'All'
-              ? 'bg-linear-to-r from-cyan-400 to-blue-500 text-white shadow-cyan-400/50 scale-105'
-              : 'bg-white/10 text-gray-200 hover:bg-white/20 '
-          }`}
+            className={`px-6 py-3 rounded-2xl text-lg font-semibold transition-all shadow-lg
+              ${
+                selectedCategory === 'All'
+                  ? 'bg-linear-to-r from-cyan-400 to-blue-500 text-white shadow-cyan-400/50 scale-105'
+                  : 'bg-white/10 text-gray-200 hover:bg-white/20'
+              }`}
           >
             جميع الفئات
           </button>
 
-          {/* Dynamic category buttons */}
           {categories.map((cat) => (
             <button
               key={cat.name}
               onClick={() => setSelectedCategory(cat.name)}
-              className={`px-6 py-3 rounded-2xl text-lg font-semibold transition-alz
-                shadow-lg ${
-                  selectedCategory === 'All'
+              className={`px-6 py-3 rounded-2xl text-lg font-semibold transition-all shadow-lg
+                ${
+                  selectedCategory === cat.name
                     ? 'bg-linear-to-r from-cyan-400 to-blue-500 text-white shadow-cyan-400/50 scale-105'
-                    : 'bg-white/10 text-gray-200 hover:bg-white/20 '
+                    : 'bg-white/10 text-gray-200 hover:bg-white/20'
                 }`}
             >
               {cat.name}
@@ -72,50 +69,50 @@ const Categories = () => {
           ))}
         </div>
 
-        {/* Products grid */}
+        {/* Products */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {/* Product card */}
           {filteredProducts.map((product) => (
             <div
               key={product._id}
-              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl overflow-hidden shadow-2xl hover:scale-105 hover:shadow-cyan-400/30 transition-all duration-500"
+              className="bg-white/10 border border-white/20 rounded-3xl overflow-hidden shadow-xl
+                         transition-shadow duration-300 hover:shadow-cyan-400/30"
             >
-              {/* Product image and navigation to details page */}
+              {/* Image */}
               <div
-                onClick={() => {
-                  navigate(`/product/${product._id}`);
-                }}
-                className=" relative cursor-pointer w-full h-64 flex items-center justify-center bg-linear-to-b from-purple-800/40 to-transparent"
+                onClick={() => navigate(`/product/${product._id}`)}
+                className="cursor-pointer w-full h-64 flex items-center justify-center
+                           bg-linear-to-b from-purple-800/40 to-transparent"
               >
-                <img
-                loading="lazy"
+                <LazyImage
                   src={product.image}
                   alt={product.name}
-                  className="object-contain w-56 h-56 hover:scale-105 transition-transform duration-500"
+                  className="object-contain w-56 h-56 transition-transform duration-500 hover:scale-105"
                 />
               </div>
 
-              {/* Product details */}
+              {/* Info */}
               <div className="p-5 text-left">
-                {/* Product name */}
                 <h3 className="text-lg font-bold mb-2 truncate">
                   {product.name}
                 </h3>
 
-                {/* Product description */}
                 <p className="text-gray-300 text-sm mb-4 line-clamp-2">
                   {product.description}
                 </p>
 
-                {/* Price and add-to-cart button */}
-                <div className="flex items-center gap-0.5 justify-around">
+                <div className="flex items-center justify-around">
                   <span className="text-xl font-bold text-cyan-400">
                     $ {product.price.toFixed(2)}
                   </span>
 
                   <button
-                    onClick={() => addToCart(product._id)}
-                    className="flex items-center gap-2 bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 px-4 py-2 rounded-xl text-white font-semibold hover:opacity-90 transition-all shadow-lg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToCart(product._id);
+                    }}
+                    className="flex items-center gap-2 bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500
+                               px-4 py-2 rounded-xl text-white font-semibold hover:opacity-90
+                               transition-all shadow-lg"
                   >
                     <ShoppingBag className="w-5 h-5" />
                     Add
