@@ -1,0 +1,10 @@
+{
+  "editor.inlineSuggest.enabled": true,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": true,
+    "strings": true
+  },
+  "editor.acceptSuggestionOnEnter": "off",
+  "extensions.autoUpdate": true
+}

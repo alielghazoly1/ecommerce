@@ -14,9 +14,12 @@ const Categories = () => {
 
   // Memoized products filtering (performance)
   const filteredProducts = useMemo(() => {
-    return selectedCategory === 'All'
-      ? all_products
-      : all_products.filter((p) => p.category === selectedCategory);
+    const products =
+      selectedCategory === 'All'
+        ? all_products
+        : all_products.filter((p) => p.category === selectedCategory);
+
+    return products.slice(0, 10);
   }, [selectedCategory]);
 
   const navigate = useNavigate();
@@ -86,7 +89,9 @@ const Categories = () => {
                 <LazyImage
                   src={product.image}
                   alt={product.name}
-                  className="object-contain w-56 h-56 transition-transform duration-500 hover:scale-105"
+                  width="224"
+                  height="224"
+                  className="object-contain  transition-transform duration-500 hover:scale-105"
                 />
               </div>
 
