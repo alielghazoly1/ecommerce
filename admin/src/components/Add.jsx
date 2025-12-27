@@ -1,4 +1,46 @@
+import { useState } from 'react';
+import axios from 'axios';
+
 const Add = () => {
+  const url = 'http://localhost:4000';
+  const [image, setImage] = useState(null);
+  const [data, setData] = useState({
+    name: '',
+    deacription: '',
+    price: '',
+    category: 'Men',
+  });
+  const onChangeHandler = (event) => {
+    const { name, value } = event.target;
+    setData((prev) => ({ ...prev, [name]: value }));
+  };
+  const onImageChange = (event) => {
+    if (event.target.files && event.target.files[0]) {
+      setImage(event.target.files[0]);
+    }
+  };
+  const onSubmitHandler = async (event) => {
+    event.preventDefault();
+    const formData = new FormData();
+    formData.append('name', data.name);
+    formData.append('description', data.deacription);
+    formData.append('categories', data.category);
+    formData.append('price', Number(data.price));
+    if (image) {
+      formData.append('image', image);
+    }
+    try {
+      const res = await axios.post(`${url}/api/product/add`, formData);
+      if (res.data.success) {
+        setData({ name: '', deacription: '', price: '', category: 'Men' });
+        setImage(null);
+        alert('تم اضافة المنتج بنجاح');
+      }
+    } catch (err) {
+      console.log(err);
+      alert('حدث خطا اثناء اضافة المنتج');
+    }
+  };
   return (
     <section
       className="relative w-full min-h-screen bg-gradient-to-r
@@ -57,7 +99,7 @@ const Add = () => {
             <input
               type="file"
               accept="image/*"
-              onChange={onChangeHandler}
+              onChange={onImageChange}
               className="w-full text-white"
             />
             Add Image
