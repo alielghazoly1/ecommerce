@@ -30,7 +30,7 @@ const AdminLogin = () => {
        }
   return (
     <div
-      className="min-h-screen flex items-center justify-center bg-linear-to-r
+      className=" min-h-screen flex items-center justify-center bg-linear-to-r
 from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden"
     >
       <div
@@ -55,7 +55,7 @@ from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-3 bm-4 rounded-lg bg-white/20 border
+          className="w-full p-3 mb-4 rounded-lg bg-white/20 border
         border-white/20 placeholder-gray-200 focus:outline-none
         focus:ring-2 focus:ring-pink-400 text-white"
           required
@@ -65,7 +65,7 @@ from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-3 bm-4 rounded-lg bg-white/20 border
+          className="w-full p-3 mb-4 rounded-lg bg-white/20 border
         border-white/20 placeholder-gray-200 focus:outline-none
         focus:ring-2 focus:ring-pink-400 text-white"
           required
