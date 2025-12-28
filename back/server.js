@@ -14,8 +14,25 @@ const PORT = 4000;
 
 app.use(express.json());
 
+// const allowedOrigins = ['http://localhost:5174'];
+
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       if (!origin || allowedOrigins.includes(origin)) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error('Not allowed by CORS'));
+//       }
+//     },
+//     credentials: true,
+//   })
+// );
+
 app.use(cors());
-app.use("/images", express.static("uploads"))
+
+
+app.use('/images', express.static('uploads'));
 app.use('/api/user', userRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/product', productRouter);
