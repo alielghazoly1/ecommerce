@@ -6,9 +6,11 @@ import Sidebar from './components/Sidebar';
 import ProductedRoute from './components/ProductedRoute';
 import { Route, Routes } from 'react-router-dom';
 import AdminLogin from './components/AdminLogin';
+import {Toaster} from "react-hot-toast"
 const App = () => {
   return (
     <>
+      <Toaster />
       <Sidebar />
       <Routes>
         <Route path="/admin/login" element={<AdminLogin />} />
