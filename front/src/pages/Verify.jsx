@@ -8,7 +8,9 @@ const Verify = () => {
   const success = searchParams.get('success');
   const orderId = searchParams.get('orderId');
   const storedToken = localStorage.getItem('token');
-
+  const [status, setStatus] = useState('loading');
+  const navigate = useNavigate();
+  
   const {
     url,
     clearCart,
@@ -18,9 +20,7 @@ const Verify = () => {
     getTotalCartAmount,
   } = useContext(ShopContext);
 
-  const navigate = useNavigate();
 
-  const [status, setStatus] = useState('loading');
   useEffect(() => {
     if (!token) return;
     const verifyPayment = async () => {
