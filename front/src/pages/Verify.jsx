@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
-
+import axios from 'axios';
 const Verify = () => {
   const [searchParams] = useSearchParams();
   const success = searchParams.get('success');
@@ -21,7 +21,30 @@ const Verify = () => {
   const navigate = useNavigate();
 
   const [status, setStatus] = useState('loading');
-
+  useEffect(() => {
+    if (!token) return;
+    const verifyPayment = async () => {
+      try {
+        const res = await axios.post(`${url}/api/order/verify`, {
+          success,
+          orderId,
+        });
+        if (res.data.success) {
+          await clearCart();
+          setStatus('success');
+          setTimeout(() => navigate('/myorders'), 2000);
+        } else {
+          setStatus('error');
+          setTimeout(() => navigate('/'), 2000);
+        }
+      } catch (err) {
+        console.log(err);
+        setStatus('error');
+        setTimeout(() => navigate('/'), 2000);
+      }
+    };
+    verifyPayment();
+  }, [success, orderId, url, navigate, token]);
   return (
     <section
       className="min-h-screen flex items-center
