@@ -11,9 +11,10 @@ const Cart = () => {
     addToCart,
     removeFromCart,
     getTotalCartAmount,
+    url,
   } = useContext(ShopContext);
- console.log(getTotalCartAmount());
- 
+  console.log(getTotalCartAmount());
+
   const navigate = useNavigate();
   const total = getTotalCartAmount();
 
@@ -57,7 +58,7 @@ const Cart = () => {
                 >
                   <div className="flex items-center gap-6">
                     <LazyImage
-                      src={item.image}
+                      src={`${url}/images/${item.image}`}
                       alt={item.name}
                       className="w-24 h-24 object-contain rounded-xl "
                     />

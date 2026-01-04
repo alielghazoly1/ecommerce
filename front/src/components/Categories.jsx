@@ -1,5 +1,5 @@
 import { useState, useContext, useMemo, useCallback } from 'react';
-import { categories, all_products } from '../assets/data';
+import { categories } from '../assets/data';
 import { ShopContext } from '../context/ShopContext';
 import { ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -10,17 +10,18 @@ const Categories = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   // Context
-  const { addToCart } = useContext(ShopContext);
+  const { addToCart, url, all_products } = useContext(ShopContext);
 
   // Memoized products filtering (performance)
   const filteredProducts = useMemo(() => {
+    if (!all_products) return [];
     const products =
       selectedCategory === 'All'
         ? all_products
         : all_products.filter((p) => p.category === selectedCategory);
 
     return products.slice(0, 10);
-  }, [selectedCategory]);
+  }, [selectedCategory, all_products]);
 
   const navigate = useNavigate();
 
@@ -87,7 +88,7 @@ const Categories = () => {
                            bg-linear-to-b from-purple-800/40 to-transparent"
               >
                 <LazyImage
-                  src={product.image}
+                  src={`${url}/images/${product.image}`}
                   alt={product.name}
                   width="224"
                   height="224"
