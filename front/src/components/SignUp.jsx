@@ -1,14 +1,14 @@
-import React, { use } from 'react';
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
-
+import axios from 'axios';
 const SignUp = () => {
   // Navigation hook
   const navigate = useNavigate();
 
   // Toggle state (register / login if needed later)
   const [state, setState] = useState('register');
+  const { url, setToken } = useContext(ShopContext);
 
   // Form data state
   const [formData, setFormData] = useState({
@@ -17,6 +17,37 @@ const SignUp = () => {
     password: '',
     confirmPassword: '',
   });
+
+  const onChangeHandeler = (event) => {
+    const name = event.target.name;
+    const value = event.target.value;
+    setFormData((data) => ({ ...data, [name]: value }));
+  };
+  const onSignUp = async (event) => {
+    if (formData.password !== formData.confirmPassword) {
+      alert('كلمه المرور غير متطابقة');
+      return;
+    }
+    event.preventDefault();
+    let newUrl = url;
+    if (state === 'login') {
+      newUrl = `${newUrl}/api/user/login`;
+    } else {
+      newUrl = `${newUrl}/api/user/register`;
+    }
+    try {
+      const res = await axios.post(newUrl, formData);
+      if (res.data.success) {
+        setToken(res.data.token);
+        localStorage.setItem('token', res.data.token);
+        navigate('/');
+      } else {
+        alert(res.data.massage);
+      }
+    } catch (err) {
+      alert('error' + err);
+    }
+  };
 
   return (
     <section
@@ -34,13 +65,14 @@ const SignUp = () => {
         </h2>
 
         {/* Signup form */}
-        <form className="flex flex-col gap-6" action="">
+        <form className="flex flex-col gap-6" onSubmit={onSignUp}>
           {/* Name input */}
           <input
             type="text"
             name="name"
             placeholder="الاسم"
             value={formData.name}
+            onChange={onChangeHandeler}
             required
             className="w-full bg-white/15 text-white placeholder-gray-300
               px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400"
@@ -52,6 +84,7 @@ const SignUp = () => {
             name="email"
             placeholder="البريد الإليكتروني"
             value={formData.email}
+            onChange={onChangeHandeler}
             required
             className="w-full bg-white/15 text-white placeholder-gray-300
               px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400"
@@ -63,6 +96,7 @@ const SignUp = () => {
             name="password"
             placeholder="كلمة المرور "
             value={formData.password}
+            onChange={onChangeHandeler}
             required
             className="w-full bg-white/15 text-white placeholder-gray-300
               px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400"
@@ -74,6 +108,7 @@ const SignUp = () => {
             name="confirmPassword"
             placeholder="تاكيد كلمة المرور"
             value={formData.confirmPassword}
+            onChange={onChangeHandeler}
             required
             className="w-full bg-white/15 text-white placeholder-gray-300
               px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400"

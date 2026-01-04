@@ -4,7 +4,7 @@ import { useContext, useState } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import LazyImage from '../components/LazyImage';
 const Product = () => {
-  const { addToCart, all_products } = useContext(ShopContext);
+  const { addToCart, all_products, url} = useContext(ShopContext);
   const { productId } = useParams();
 
   const product = all_products.find((p) => p._id === productId);
@@ -44,7 +44,7 @@ const Product = () => {
       rounded-3xl p-6"
       >
         <LazyImage
-          src={product.image}
+          src={`${url}/images/${product.image}`}
           className="w-64 h-64 object-contain rounded-2xl"
           alt={product.name}
         />

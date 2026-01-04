@@ -1,12 +1,11 @@
-import React from 'react';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { ShopContext } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
 import LazyImage from '../components/LazyImage';
-
+import axios from 'axios';
 const Order = () => {
   // Get data from ShopContext
-  const { cartItems, all_products, getTotalCartAmount } =
+  const { cartItems, all_products, getTotalCartAmount, url, token } =
     useContext(ShopContext);
 
   const navigate = useNavigate();
@@ -47,7 +46,38 @@ const Order = () => {
     alert('تم ارسال الطلب بنجاح');
     navigate('/');
   };
-
+  const placeOrder = async (e) => {
+    e.preventDefault();
+    let orderItems = [];
+    all_products.map((item) => {
+      if (cartItems[item._id] > 0) {
+        let itemInfo = item;
+        itemInfo['quantity'] = cartItems[item._id];
+        orderItems.push(itemInfo);
+      }
+    });
+    let orderData = {
+      address: shipping,
+      item: orderItems,
+      amount: getTotalCartAmount() + 2,
+    };
+    let res = await axios.post(`${url}/api/order/place`, orderData, {
+      headers: { token },
+    });
+    if (res.data.success) {
+      const { session_url } = res.data;
+      window.location.replace(session_url);
+    } else {
+      alert('Error');
+    }
+  };
+  useEffect(() => {
+    if (!token) {
+      navigate('/cart');
+    } else if (getTotalCartAmount() === 0) {
+      navigate('/cart');
+    }
+  }, [token]);
   return (
     <section
       className="relative w-full min-h-screen bg-linear-to-r

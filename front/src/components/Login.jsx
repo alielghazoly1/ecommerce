@@ -2,13 +2,43 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
+import axios from 'axios';
 const Login = () => {
   const navigate = useNavigate();
   const [state, useStatee] = useState('login');
+  const { url, setToken } = useContext(ShopContext);
+
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
     password: '',
   });
+  const onChangeHandeler = (event) => {
+    const name = event.target.name;
+    const value = event.target.value;
+    setFormData((data) => ({ ...data, [name]: value }));
+  };
+  const onLogin = async (event) => {
+    event.preventDefault();
+    let newUrl = url;
+    if (state === 'login') {
+      newUrl = `${newUrl}/api/user/login`;
+    } else {
+      newUrl = `${newUrl}/api/user/register`;
+    }
+    try{
+      const res = await axios.post(newUrl,formData)
+      if(res.data.success){
+        setToken(res.data.token)
+        localStorage.setItem("token", res.data.token)
+        navigate('/')
+      }else{
+        alert(res.data.massage)
+      }
+    }catch(err){
+      alert('error'+ err)
+    }
+  };
   return (
     <section
       className="relative w-full min-h-screen bg-linear-to-r
@@ -23,13 +53,14 @@ const Login = () => {
         <h2 className="text-3xl sm:text-4xl font-extrabold mb-6 text-center">
           تسجيل الدخول
         </h2>
-        <form className="flex flex-col gap-6">
+        <form onSubmit={onLogin} className="flex flex-col gap-6">
           {/* Email input */}
           <input
             type="email"
             name="email"
             placeholder="البريد الإليكتروني"
             value={formData.email}
+            onChange={onChangeHandeler}
             required
             className="w-full bg-white/15 text-white placeholder-gray-300
               px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400"
@@ -40,6 +71,7 @@ const Login = () => {
             name="password"
             placeholder="كلمة المرور "
             value={formData.password}
+            onChange={onChangeHandeler}
             required
             className="w-full bg-white/15 text-white placeholder-gray-300
               px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400"
