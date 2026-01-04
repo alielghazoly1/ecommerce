@@ -60,11 +60,70 @@ const MyOrders = () => {
                 (sum, item) => sum + item.price * (item.quantity || 1),
                 0
               ) || 0;
-              return(
-                <div key={order._id}>
-
+            return (
+              <div
+                key={order._id}
+                className="bg-linear-to-b from-purple-800/70
+                to-transparent rounded-2xl shadow-lg p-6 flex flex-col justify-between hover:scale-105
+                transform transition-all duration-300"
+              >
+                <div>
+                  <h2 className="text-xl font-semibold mb-2 text-white">
+                    Order ID : {order._id.slice(-6).toUpperCase()}
+                  </h2>
+                  <p className="mb-4 text-white">
+                    {order.items?.length || 0} product
+                    {order.items && order.items.length > 1 ? 's' : ''}
+                  </p>
+                  <div className="space-y-2">
+                    {order.items?.map((item) => (
+                      <div
+                        key={item._id}
+                        className="flex justify-between items-center
+                          border-b border-r-gray-200 pb-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          {item.image && (
+                            <img
+                              src={`${url}/images/${item.image}`}
+                              alt="photos"
+                              className="w-12 object-cover
+                                      rounded"
+                            />
+                          )}
+                          <p className="text-white">
+                            {item.name} X {item.quantity || 1}
+                          </p>
+                        </div>
+                        <p className="font-semibold text-white">
+                          ${item.price * (item.quantity || 1)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              )
+                <div className="mt-4 flex justify-between items-center">
+                  <span
+                    className={`flex items-center gap-2 font-semibold
+                     ${
+                       order.status === 'delivered'
+                         ? 'text-green-500'
+                         : order.status === 'pending'
+                         ? 'text-yellow-500'
+                         : 'text-red-500'
+                     }`}
+                  >
+                    {order.status === "delivered" && <CheckCircle/>}
+                    {order.status === "pending" && <Loader2 className=' animate-spin'/>}
+                    {order.status === "canceled" && <XCircle/>}
+                    {order.status?.charAt(0).toUpperCase()+ order.status?.slice(1)}
+                  </span>
+                  <span className='font-bold text-white'>
+                           Total: ${total}
+                  </span>
+                </div>
+              </div>
+            );
           })}
         </div>
       )}
