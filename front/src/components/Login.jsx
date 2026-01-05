@@ -5,7 +5,7 @@ import { ShopContext } from '../context/ShopContext';
 import axios from 'axios';
 const Login = () => {
   const navigate = useNavigate();
-  const [state, useStatee] = useState('login');
+  const [state, setState] = useState('login');
   const { url, setToken } = useContext(ShopContext);
 
   const [formData, setFormData] = useState({
@@ -26,17 +26,17 @@ const Login = () => {
     } else {
       newUrl = `${newUrl}/api/user/register`;
     }
-    try{
-      const res = await axios.post(newUrl,formData)
-      if(res.data.success){
-        setToken(res.data.token)
-        localStorage.setItem("token", res.data.token)
-        navigate('/')
-      }else{
-        alert(res.data.massage)
+    try {
+      const res = await axios.post(newUrl, formData);
+      if (res.data.success) {
+        setToken(res.data.token);
+        localStorage.setItem('token', res.data.token);
+        navigate('/');
+      } else {
+        alert(res.data.massage);
       }
-    }catch(err){
-      alert('error'+ err)
+    } catch (err) {
+      alert('error' + err);
     }
   };
   return (

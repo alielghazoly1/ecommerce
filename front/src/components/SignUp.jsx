@@ -25,7 +25,7 @@ const SignUp = () => {
   };
   const onSignUp = async (event) => {
     if (formData.password !== formData.confirmPassword) {
-      alert('كلمه المرور غير متطابقة');
+      alert('كلمة المرور غير متطابقة');
       return;
     }
     event.preventDefault();
@@ -42,7 +42,7 @@ const SignUp = () => {
         localStorage.setItem('token', res.data.token);
         navigate('/');
       } else {
-        alert(res.data.massage);
+        alert(res.data.message);
       }
     } catch (err) {
       alert('error' + err);

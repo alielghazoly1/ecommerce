@@ -8,7 +8,7 @@ const ShopContextProvider = ({ children }) => {
   const url = import.meta.env.VITE_API_URL;
   const [allProducts, setAllProducts] = useState(all_products);
   const [token, setToken] = useState('');
-  const [products, setProducts] = useState([])
+  const [products, setProducts] = useState([]);
   useEffect(() => {
     const savedCart = localStorage.getItem('cartItems');
     if (savedCart) {
@@ -19,7 +19,8 @@ const ShopContextProvider = ({ children }) => {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
 
-  const addToCart = async (id, quantity = 1) => {
+  const addToCart = async (id) => {
+    const productId = id.toString();
     setCartItems((prev) => ({
       ...prev,
       [id]: prev[id] ? prev[id] + quantity : quantity,
@@ -96,7 +97,7 @@ const ShopContextProvider = ({ children }) => {
   };
   useEffect(() => {
     async function loadData() {
-      await fetchProductsList()
+      await fetchProductsList();
       if (localStorage.getItem('token')) {
         setToken(localStorage.getItem('token'));
         await loadCartData(localStorage.getItem('token'));
@@ -105,7 +106,7 @@ const ShopContextProvider = ({ children }) => {
     loadData();
   }, []);
   const value = {
-    all_products: allProducts,
+    all_products: products,
     cartItems,
     addToCart,
     removeFromCart,

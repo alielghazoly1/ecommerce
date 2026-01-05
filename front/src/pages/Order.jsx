@@ -58,7 +58,7 @@ const Order = () => {
     });
     let orderData = {
       address: shipping,
-      item: orderItems,
+      items: orderItems,
       amount: getTotalCartAmount() + 2,
     };
     let res = await axios.post(`${url}/api/order/place`, orderData, {
@@ -150,54 +150,56 @@ const Order = () => {
               </h3>
 
               <div className="space-y-4">
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="الاسم بالكامل"
-                  value={shipping.name}
-                  onChange={handleChange}
-                  className="w-full bg-white/15 text-white placeholder-gray-300
+                <form onSubmit={placeOrder}>
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="الاسم بالكامل"
+                    value={shipping.name}
+                    onChange={handleChange}
+                    className="w-full bg-white/15 text-white placeholder-gray-300
                   px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400"
-                />
-                <input
-                  type="text"
-                  name="address"
-                  placeholder=" العنوان بالكامل"
-                  value={shipping.address}
-                  onChange={handleChange}
-                  className="w-full bg-white/15 text-white placeholder-gray-300
+                  />
+                  <input
+                    type="text"
+                    name="address"
+                    placeholder=" العنوان بالكامل"
+                    value={shipping.address}
+                    onChange={handleChange}
+                    className="w-full bg-white/15 text-white placeholder-gray-300
                   px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400"
-                />
-                <input
-                  type="text"
-                  name="city"
-                  placeholder="المدينة"
-                  value={shipping.city}
-                  onChange={handleChange}
-                  className="w-full bg-white/15 text-white placeholder-gray-300
+                  />
+                  <input
+                    type="text"
+                    name="city"
+                    placeholder="المدينة"
+                    value={shipping.city}
+                    onChange={handleChange}
+                    className="w-full bg-white/15 text-white placeholder-gray-300
                   px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400"
-                />
-                <input
-                  type="text"
-                  name="phone"
-                  placeholder="الهاتف"
-                  value={shipping.phone}
-                  onChange={handleChange}
-                  className="w-full bg-white/15 text-white placeholder-gray-300
+                  />
+                  <input
+                    type="text"
+                    name="phone"
+                    placeholder="الهاتف"
+                    value={shipping.phone}
+                    onChange={handleChange}
+                    className="w-full bg-white/15 text-white placeholder-gray-300
                   px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400"
-                />
+                  />
 
-                {/* Confirm order button */}
-                <button
-                  onClick={handleConfirmOrder}
-                  className="
+                  {/* Confirm order button */}
+                  <button
+                    onClick={handleConfirmOrder}
+                    className="
                         w-full bg-linear-to-r from-indigo-500 via-purple-500
                         to-pink-500 text-white font-semibold py-3 rounded-xl
                         hover:opacity-90 transition-all mt-4
                 "
-                >
-                  تاكيد الطلب
-                </button>
+                  >
+                    تاكيد الطلب
+                  </button>
+                </form>
               </div>
             </div>
           </div>
