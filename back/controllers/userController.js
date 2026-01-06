@@ -60,5 +60,63 @@ const registerUser = async (req, res) => {
     res.json({ success: false, message: err.message });
   }
 };
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await userModel.find().select('-password');
+    res.json({ success: true, data: users });
+  } catch (err) {
+    console.log(err);
+    res.json({ success: false, message: 'Error' });
+  }
+};
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedUser = await userModel.findByIdAndDelete(id);
+    if (!deletedUser) {
+      return res.status(500).json({ success: false, message: 'Error' });
+    }
+    res.json({ success: true, message: '' });
+  } catch (err) {
+    console.log(err);
+    res.json({ success: false, message: 'Error' });
+  }
+};
 
+export const makeAdmin = async(req,res)=>{
+  try{
+    const {id} = req.params
+    const updatedUser = await userModel.findByIdAndUpdate(
+      id,
+      {role:"admin"},
+      {new:true}
+    )
+    if(!updatedUser){
+      return res.status(404).json({success:false , message:"المستخدم غير موجود"})
+    }
+    res.json({success:true , message:"تم ترقية المستخدم إلى مشرف بنجاح", data:updatedUser})
+  }catch(error){
+    console.error("خطأ في ترقية المستخدم",error)
+    res.status(500).json({success:false,message:"حدث خطأ أثناء ترقية المستخدم إلى مشرف"})
+  }
+}
+export const demoteToUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await userModel.findById(id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    if (user.role !== "admin") {
+      return res.status(400).json({ success: false, message: "المستخدم ليس ادمن" });
+    }
+
+    user.role = "user";
+    await user.save();
+
+    res.json({ success: true, message: "تم إعادة المستخدم إلى مستخدم عادي بنجاح", user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 export { loginUser, registerUser };

@@ -23,7 +23,7 @@ const ShopContextProvider = ({ children }) => {
     const productId = id.toString();
     setCartItems((prev) => ({
       ...prev,
-      [id]: prev[id] ? prev[id] + quantity : quantity,
+      [id]: prev[id] ? prev[id] + 1 : 1,
     }));
     if (token) {
       await axios.post(
@@ -49,7 +49,7 @@ const ShopContextProvider = ({ children }) => {
       try {
         await axios.post(
           `${url}/api/cart/remove`,
-          { id: productId },
+          { id: id.toString(), removeAll },
           { headers: { token } }
         );
       } catch (err) {
