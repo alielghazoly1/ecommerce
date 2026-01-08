@@ -8,7 +8,7 @@ import LazyImage from './LazyImage';
 const Categories = () => {
   // Selected category
   const [selectedCategory, setSelectedCategory] = useState('All');
-
+  
   // Context
   const { addToCart, url, all_products } = useContext(ShopContext);
 

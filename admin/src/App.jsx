@@ -1,4 +1,5 @@
 // import { useState } from 'react';
+import Users from './components/Users';
 import Add from './components/Add';
 import List from './components/List';
 import Orders from './components/Orders';
@@ -35,6 +36,14 @@ const App = () => {
           element={
             <ProductedRoute>
               <Orders />
+            </ProductedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProductedRoute>
+              <Users />
             </ProductedRoute>
           }
         />

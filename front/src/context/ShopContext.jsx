@@ -19,11 +19,11 @@ const ShopContextProvider = ({ children }) => {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
 
-  const addToCart = async (id) => {
+  const addToCart = async (id, quantity = 1) => {
     const productId = id.toString();
     setCartItems((prev) => ({
       ...prev,
-      [id]: prev[id] ? prev[id] + 1 : 1,
+      [id]: prev[id] ? prev[id] + quantity : quantity,
     }));
     if (token) {
       await axios.post(

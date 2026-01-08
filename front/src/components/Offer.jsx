@@ -1,13 +1,11 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { all_products } from '../assets/data';
+import  { useContext, useEffect, useState } from 'react';
 import { ShoppingBag } from 'lucide-react';
 import { ShopContext } from '../context/ShopContext';
 import LazyImage from './LazyImage';
-
 const Offer = () => {
-  const { addToCart } = useContext(ShopContext);
+  const { addToCart,url ,all_products} = useContext(ShopContext);
   const [timeLeft, setTimeLeft] = useState({});
-  const [products] = useState(all_products.slice(0, 12));
+  const [products, setProducts] = useState([]);
   useEffect(() => {
     const targetDate = new Date();
     targetDate.setDate(targetDate.getDate() + 5);
@@ -23,6 +21,12 @@ const Offer = () => {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
+  useEffect(() => {
+    if (all_products) {
+      const offerProducts = all_products.slice(0, 8);
+      setProducts(offerProducts);
+    }
+  }, [all_products]);
   // console.log(timeLeft)
   return (
     <section
@@ -71,7 +75,7 @@ const Offer = () => {
                       from-purple-800/40 to-transparent"
               >
                 <LazyImage
-                  src={product.image}
+                  src={`${url}/images/${product.image}`}
                   alt=""
                   className="object-contain w-56 h-56 hover:scale-110
                               transition-transform duration-500"

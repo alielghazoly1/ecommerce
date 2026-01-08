@@ -8,7 +8,7 @@ const addToCart = async (req, res) => {
     if (!userData) {
       return res
         .status(404)
-        .jdon({ success: false, message: 'User Not Found' });
+        .json({ success: false, message: 'User Not Found' });
     }
 
     let cartData = userData.cartData || {};

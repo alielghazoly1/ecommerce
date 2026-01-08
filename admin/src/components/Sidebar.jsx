@@ -7,6 +7,7 @@ import {
   Menu,
   X,
   LogOut,
+  Users,
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -16,6 +17,7 @@ const Sidebar = () => {
     { to: '/admin/add', label: 'إضافة منتج', Icon: PlusCircle },
     { to: '/admin/list', label: 'قائمة المنتجات', Icon: List },
     { to: '/admin/orders', label: 'طلبات العملاء', Icon: ClipboardCheck },
+    { to: '/admin/users', label: 'المستخدمين', Icon: Users },
   ];
   const handleLogout = () => {
     localStorage.removeItem('adminToken');

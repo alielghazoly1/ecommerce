@@ -113,7 +113,7 @@ const placeOrder = async (req, res) => {
       amount: req.body.amount,
       address: req.body.address,
       payment: false, // الدفع عند الاستلام
-      status: 'Pending', // حالة الطلب ابتدائية
+      status: 'pending', // حالة الطلب ابتدائية
     });
 
     // حفظ الطلب في قاعدة البيانات
