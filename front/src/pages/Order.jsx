@@ -3,25 +3,23 @@ import { ShopContext } from '../context/ShopContext';
 import { useNavigate } from 'react-router-dom';
 import LazyImage from '../components/LazyImage';
 import axios from 'axios';
-
 const Order = () => {
-  const { cartItems, all_products, getTotalCartAmount, url, token } =
+  // Get data from ShopContext
+  const { cartItems,clearCart, all_products, getTotalCartAmount, url, token } =
     useContext(ShopContext);
 
   const navigate = useNavigate();
   const total = getTotalCartAmount();
 
-  // Build cart products safely
+  // Build cart products with quantity
   const cartProducts = Object.keys(cartItems)
     .map((id) => {
-      const product = all_products.find(
-        (p) => p._id.toString() === id.toString()
-      );
+      const product = all_products.find((p) => p._id === id);
       return product ? { ...product, quantity: cartItems[id] } : null;
     })
     .filter(Boolean);
 
-  // Shipping state
+  // Shipping form state
   const [shipping, setShipping] = useState({
     name: '',
     address: '',
@@ -29,77 +27,65 @@ const Order = () => {
     phone: '',
   });
 
-
+  // Handle input change
   const handleChange = (e) => {
     setShipping({ ...shipping, [e.target.name]: e.target.value });
   };
 
-  // Place order
   const placeOrder = async (e) => {
-  e.preventDefault();
-
-  if (!shipping.name || !shipping.address || !shipping.city || !shipping.phone) {
-    alert('يرجى ملء جميع بيانات الشحن');
-    return;
-  }
-
-  const orderItems = all_products
-    .filter((item) => cartItems[item._id] > 0)
-    .map((item) => ({ ...item, quantity: cartItems[item._id] }));
-
-  const orderData = {
-    address: shipping,
-    items: orderItems,
-    amount: total + 2,
-  };
-
-  try {
-    const res = await axios.post(`${url}/api/order/place`, orderData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    e.preventDefault();
+    let orderItems = [];
+    all_products.map((item) => {
+      if (cartItems[item._id] > 0) {
+        let itemInfo = item;
+        itemInfo['quantity'] = cartItems[item._id];
+        orderItems.push(itemInfo);
+      }
     });
-
+    let orderData = {
+      address: shipping,
+      items: orderItems,
+      amount: getTotalCartAmount() + 2,
+    };
+    // تأكد من إرسال الهيدر token
+    let res = await axios.post(`${url}/api/order/place`, orderData, {
+      headers: { token },
+    });
     if (res.data.success) {
-      alert('تم إنشاء الطلب بنجاح!');
-    } else {
-      alert(`حدث خطأ: ${res.data.message}`);
-      if (res.data.message.includes('login') || res.data.message.includes('token')) {
-        navigate('/login');
+      if (res.data.session_url) {
+        // لو الدفع أونلاين
+        window.location.replace(res.data.session_url);
+      } else if (res.data.orderId) {
+        // COD: نقدر نروح لصفحة تأكيد الطلب
+        alert('تم إنشاء الطلب بنجاح!');
+        navigate(`/myorders`);
+        await clearCart();
       }
     }
-  } catch (err) {
-    console.log(err.response?.data || err.message);
-    alert('فشل الاتصال بالسيرفر');
-  }
-}; // <-- هذه القوس مهمة جداً لإغلاق placeOrder
-
-// بعد كده UseEffect بييجي برا الدالة
-useEffect(() => {
-  if (!token || total === 0) {
-    navigate('/cart');
-  }
-}, [token, total, navigate]);
-
-  // Guard routes
+  };
   useEffect(() => {
-    if (!token || total === 0) {
+    // إذا token === null ===> ما زال جارٍ تهيئته من الـ context، ننتظر
+    if (token === null) return;
+    if (!token) {
+      navigate('/cart');
+    } else if (getTotalCartAmount() === 0) {
       navigate('/cart');
     }
-  }, [token, total, navigate]);
-
+  }, [token]);
   return (
     <section
       className="relative w-full min-h-screen bg-linear-to-r
-      from-indigo-900 via-purple-900 to-pink-900 text-white py-24 px-6 sm:px-10"
+  from-indigo-900 via-purple-900 to-pink-900 text-white py-24 px-6
+  sm:px-10"
     >
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm pointer-events-none" />
+      {/* Background overlay */}
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm pointer-events-none"></div>
 
       <div className="relative z-10 max-w-5xl mx-auto">
         <h2 className="text-4xl sm:text-5xl font-extrabold mb-12 text-center">
-          إتمام الطلب
+          اتمام الطلب
         </h2>
-
+        {/* بقية الملف كما هو */}
         {cartProducts.length === 0 ? (
           <div className="text-center text-gray-300 mt-20 space-y-5">
             <p className="text-xl">السلة فارغة الآن</p>

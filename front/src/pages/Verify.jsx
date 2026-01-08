@@ -7,7 +7,6 @@ const Verify = () => {
   const [searchParams] = useSearchParams();
   const success = searchParams.get('success');
   const orderId = searchParams.get('orderId');
-  const storedToken = localStorage.getItem('token');
   const [status, setStatus] = useState('loading');
   const navigate = useNavigate();
   
@@ -25,10 +24,11 @@ const Verify = () => {
     if (!token) return;
     const verifyPayment = async () => {
       try {
+        // أضفت إرسال هيدر التوكن هنا
         const res = await axios.post(`${url}/api/order/verify`, {
           success,
           orderId,
-        });
+        }, { headers: { token } });
         if (res.data.success) {
           await clearCart();
           setStatus('success');

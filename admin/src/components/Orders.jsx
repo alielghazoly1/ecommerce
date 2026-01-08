@@ -12,15 +12,14 @@ const Orders = () => {
   const fetchOrders = async () => {
     try {
       const res = await axios.get(`${url}/api/order/list`);
-
       if (res.data.success) {
         setOrders(res.data.data);
       } else {
-        toast.error('Error');
+        toast.error('Error fetching orders');
       }
     } catch (err) {
       console.log(err);
-      toast.error('Error');
+      toast.error('Error fetching orders');
     } finally {
       setLoading(false);
     }
@@ -32,7 +31,6 @@ const Orders = () => {
         orderId,
         status: newStatus,
       });
-
       if (res.data.success) {
         setOrders((prev) =>
           prev.map((order) =>
@@ -40,11 +38,11 @@ const Orders = () => {
           )
         );
       } else {
-        toast.error('Error');
+        toast.error('Error updating status');
       }
     } catch (err) {
       console.log(err);
-      toast.error('Error');
+      toast.error('Error updating status');
     }
   };
 
@@ -64,11 +62,15 @@ const Orders = () => {
   }
 
   return (
-    <section className="relative w-full md:ml-64 min-h-screen bg-linear-to-r from-indigo-900 via-purple-800 to-pink-900 text-white px-6 sm:px-10">
+    <section className="relative w-full md:ml-64 min-h-screen bg-linear-to-r from-indigo-900 via-purple-800 to-pink-900 text-white px-6 sm:px-10 py-10">
+      <h1 className="text-3xl font-bold mb-6 text-center">
+        Orders ({orders.length})
+      </h1>
+
       {orders.length === 0 ? (
-        <p className="text-center text-gray-300 text-xl">No order yet</p>
+        <p className="text-center text-gray-300 text-xl mt-10">No orders yet</p>
       ) : (
-        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <div className="grid gap-y-6 gap-x-6 md:grid-cols-2 lg:grid-cols-3">
           {orders.map((order) => {
             const total = order.items?.reduce(
               (sum, item) => sum + item.price * (item.quantity || 1),
@@ -76,14 +78,13 @@ const Orders = () => {
             );
 
             return (
-              
               <div
                 key={order._id}
-                className="mt-20 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 flex flex-col justify-between shadow-lg hover:scale-105 transform transition-all duration-300 lg:w-[60%] md:w-[60%] md:ml-20 lg:ml-20"
+                className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 flex flex-col justify-between shadow-lg hover:scale-105 transform transition-all duration-300"
               >
                 <div>
                   <h2 className="text-lg font-semibold text-gray-200 mb-2">
-                    Order ID : {order._id.slice(-6).toUpperCase()}
+                    Order ID: {order._id.slice(-6).toUpperCase()}
                   </h2>
 
                   <p className="text-gray-200 mb-1">
@@ -141,7 +142,7 @@ const Orders = () => {
                     </select>
 
                     <span className="font-bold text-gray-100 text-sm">
-                      Total : ${total}
+                      Total: ${total}
                     </span>
                   </div>
                 </div>
