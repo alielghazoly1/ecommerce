@@ -1,3 +1,4 @@
+// adminRoutes.js
 import express from "express"
 
 import {adminLogin} from "../controllers/adminController.js"

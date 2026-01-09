@@ -1,122 +1,183 @@
+// userController.js
 import userModel from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import validator from 'validator';
 
+// =====================
+// Create JWT Token
+// =====================
+const createToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '1d' }
+  );
+};
+
+// =====================
+// Login User
+// =====================
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await userModel.findOne({ email });
+    const user = await userModel
+      .findOne({ email })
+      .select('+password');
+
     if (!user) {
-      return res.json({ success: false, message: "User doesn't exist" });
+      return res.status(404).json({
+        success: false,
+        message: 'User does not exist',
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.json({ success: false, message: 'Invalid credentials' });
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials',
+      });
     }
 
-    const token = createToken(user._id);
+    const token = createToken(user);
     res.json({ success: true, token });
-  } catch (err) {
-    console.log(err);
-    res.json({ success: false, message: 'Error' });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
   }
 };
 
-const createToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET);
-};
-
+// =====================
+// Register User
+// =====================
 const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
+
   try {
     const exists = await userModel.findOne({ email });
     if (exists) {
-      return res.json({ success: false, message: 'User already exists' });
+      return res.status(409).json({
+        success: false,
+        message: 'User already exists',
+      });
     }
 
     if (!validator.isEmail(email)) {
-      return res.json({
+      return res.status(400).json({
         success: false,
-        message: 'Please enter a valid email',
+        message: 'Invalid email',
       });
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = new userModel({
-      name: name,
-      email: email,
+    const user = await userModel.create({
+      name,
+      email,
       password: hashedPassword,
+      role: 'user',
     });
-    const user = await newUser.save();
-    const token = createToken(user._id);
-    res.json({ success: true, token });
-  } catch (err) {
-    console.log(err);
-    res.json({ success: false, message: err.message });
-  }
-};
-export const getAllUsers = async (req, res) => {
-  try {
-    const users = await userModel.find().select('-password');
-    res.json({ success: true, data: users });
-  } catch (err) {
-    console.log(err);
-    res.json({ success: false, message: 'Error' });
-  }
-};
-export const deleteUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedUser = await userModel.findByIdAndDelete(id);
-    if (!deletedUser) {
-      return res.status(500).json({ success: false, message: 'Error' });
-    }
-    res.json({ success: true, message: '' });
-  } catch (err) {
-    console.log(err);
-    res.json({ success: false, message: 'Error' });
+
+    const token = createToken(user);
+    res.status(201).json({ success: true, token });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
   }
 };
 
-export const makeAdmin = async(req,res)=>{
-  try{
-    const {id} = req.params
+// =====================
+// Admin Actions
+// =====================
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await userModel.find();
+    res.json({ success: true, data: users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await userModel.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const makeAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+
     const updatedUser = await userModel.findByIdAndUpdate(
       id,
-      {role:"admin"},
-      {new:true}
-    )
-    if(!updatedUser){
-      return res.status(404).json({success:false , message:"المستخدم غير موجود"})
+      { role: 'admin' },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
-    res.json({success:true , message:"تم ترقية المستخدم إلى مشرف بنجاح", data:updatedUser})
-  }catch(error){
-    console.error("خطأ في ترقية المستخدم",error)
-    res.status(500).json({success:false,message:"حدث خطأ أثناء ترقية المستخدم إلى مشرف"})
+
+    res.json({
+      success: true,
+      message: 'User promoted to admin',
+      data: updatedUser,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
   }
-}
+};
+
 export const demoteToUser = async (req, res) => {
   try {
     const { id } = req.params;
 
     const user = await userModel.findById(id);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
-
-    if (user.role !== "admin") {
-      return res.status(400).json({ success: false, message: "المستخدم ليس ادمن" });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    user.role = "user";
+    if (user.role !== 'admin') {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not admin',
+      });
+    }
+
+    user.role = 'user';
     await user.save();
 
-    res.json({ success: true, message: "تم إعادة المستخدم إلى مستخدم عادي بنجاح", user });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.json({
+      success: true,
+      message: 'Admin demoted to user',
+      data: user,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
+
 export { loginUser, registerUser };

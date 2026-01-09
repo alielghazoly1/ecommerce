@@ -28,6 +28,7 @@ const AdminLogin = () => {
       });
       if (data.success) {
         localStorage.setItem('adminToken', data.token);
+        localStorage.setItem('adminRole', data.role);
         navigate('/admin/list');
       } else {
         setError(data.message);

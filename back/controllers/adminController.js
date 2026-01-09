@@ -5,7 +5,11 @@ import jwt from 'jsonwebtoken';
 export const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await userModel.findOne({ email });
+    console.log('Admin login attempt:', email);
+
+    const user = await userModel.findOne({ email }).select('+password');
+    console.log('Found user:', user);
+
     if (!user) return res.status(400).json({ message: 'User Not Found' });
     if (user.role !== 'admin')
       return res.status(403).json({ message: 'Not an Admin' });
@@ -14,7 +18,7 @@ export const adminLogin = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: 'Invalid password' });
 
     const token = jwt.sign(
-      { id: user._id, isAdmin: user.isAdmin },
+      { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
@@ -25,6 +29,7 @@ export const adminLogin = async (req, res) => {
       user: { name: user.name, email: user.email },
     });
   } catch (err) {
+    console.error('Admin login error:', err);
     res.status(500).json({ message: err.message });
   }
 };

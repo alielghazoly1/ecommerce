@@ -13,8 +13,13 @@ const MyOrders = () => {
       const res = await axios.post(
         `${url}/api/order/userorders`,
         {},
-        { headers: { token } }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
+
       const data = res.data.data;
 
       const ordersData = Array.isArray(data) ? data : [data];
@@ -113,14 +118,15 @@ const MyOrders = () => {
                          : 'text-red-500'
                      }`}
                   >
-                    {order.status === "delivered" && <CheckCircle/>}
-                    {order.status === "pending" && <Loader2 className=' animate-spin'/>}
-                    {order.status === "canceled" && <XCircle/>}
-                    {order.status?.charAt(0).toUpperCase()+ order.status?.slice(1)}
+                    {order.status === 'delivered' && <CheckCircle />}
+                    {order.status === 'pending' && (
+                      <Loader2 className=" animate-spin" />
+                    )}
+                    {order.status === 'canceled' && <XCircle />}
+                    {order.status?.charAt(0).toUpperCase() +
+                      order.status?.slice(1)}
                   </span>
-                  <span className='font-bold text-white'>
-                           Total: ${total}
-                  </span>
+                  <span className="font-bold text-white">Total: ${total}</span>
                 </div>
               </div>
             );

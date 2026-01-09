@@ -1,21 +1,32 @@
-import jwt from "jsonwebtoken"
+// auth.js
+import jwt from 'jsonwebtoken';
 
-const authMiddleware = async(req,res,next)=>{
+const authMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
 
-    const {token} = req.headers
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      success: false,
+      message: 'Please login again',
+    });
+  }
 
-    if(!token){
-        return res.json({success:false , message:"login again"})
-    }
+  const token = authHeader.split(' ')[1];
 
-    try{
-        const token_decode = jwt.verify(token,process.env.JWT_SECRET)
-        req.userId = token_decode.id;
-        next()
-    }catch(err){
-        console.log(err)
-        res.json({success:false , message:err.message})
-    }
-}
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-export default authMiddleware
+    req.user = {
+      id: decoded.id,
+      role: decoded.role,
+    };
+    next();
+  } catch (error) {
+    return res.status(403).json({
+      success: false,
+      message: 'Invalid or expired token',
+    });
+  }
+};
+
+export default authMiddleware;

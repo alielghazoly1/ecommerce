@@ -72,6 +72,7 @@ const Orders = () => {
       ) : (
         <div className="grid gap-y-6 gap-x-6 md:grid-cols-2 lg:grid-cols-3">
           {orders.map((order) => {
+            console.log(order);
             const total = order.items?.reduce(
               (sum, item) => sum + item.price * (item.quantity || 1),
               0
@@ -84,14 +85,35 @@ const Orders = () => {
               >
                 <div>
                   <h2 className="text-lg font-semibold text-gray-200 mb-2">
-                    Order ID: {order._id.slice(-6).toUpperCase()}
+                    Order ID: {order._id}
                   </h2>
+                  {/* user ID */}
+                  <p className="text-gray-200 mb-1">
+                    <span className="font-semibold">User ID: </span>
+                    {order._id}
+                  </p>  
 
                   <p className="text-gray-200 mb-1">
                     <span className="font-semibold">Customer: </span>
-                    {order.user?.name || 'ali'}
+                    {order?.userName}
+                  </p>
+                  <p className="text-gray-200 mb-1">
+                    <span className="font-semibold">Customer Email: </span>
+                    {order?.userEmail}
                   </p>
 
+                  {/* time order */}
+                  <p className="text-gray-200 mb-1">
+                    <span className="font-semibold">Date: </span>
+                  
+                    {new Date(order.date).toLocaleString([], {
+                      year: 'numeric',
+                      month: 'numeric',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
                   <p className="text-gray-200 mb-2 text-sm">
                     <span className="font-semibold">Address: </span>
                     {order.address

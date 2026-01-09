@@ -5,7 +5,7 @@ import LazyImage from '../components/LazyImage';
 import axios from 'axios';
 const Order = () => {
   // Get data from ShopContext
-  const { cartItems,clearCart, all_products, getTotalCartAmount, url, token } =
+  const { cartItems, clearCart, all_products, getTotalCartAmount, url, token } =
     useContext(ShopContext);
 
   const navigate = useNavigate();
@@ -49,7 +49,9 @@ const Order = () => {
     };
     // تأكد من إرسال الهيدر token
     let res = await axios.post(`${url}/api/order/place`, orderData, {
-      headers: { token },
+      headers: {
+        Authorization: `Bearer ${token}`, // هذا الشكل الصحيح
+      },
     });
     if (res.data.success) {
       if (res.data.session_url) {
