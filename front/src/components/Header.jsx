@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import MenuItems from './MenuItems';
 import { Rocket, Menu, X } from 'lucide-react';
 
+
 const Header = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth > 640) setSidebarOpen(false);
@@ -17,12 +17,13 @@ const Header = () => {
   return (
     <>
       {/* Desktop Header */}
-      <header className="hidden md:flex items-center justify-between px-12 py-5 w-full fixed top-0 left-0 
-                         bg-white/80 backdrop-blur-xl shadow-lg z-50">
+      <header
+        className="hidden md:flex items-center justify-between px-12 py-5 w-full fixed top-0 left-0 
+                   bg-white/80 backdrop-blur-xl shadow-lg z-50"
+      >
         <div className="flex items-center gap-4">
-          <Rocket className="w-8 h-8 text-cyan-500 animate-pulse drop-shadow-lg" />
           <h1 className="text-gray-800 font-extrabold text-2xl tracking-widest drop-shadow-sm">
-            Solivera
+            Tota’s Magic Choco🍫🍬
           </h1>
         </div>
         <div className="flex-1 flex justify-end">
@@ -31,19 +32,20 @@ const Header = () => {
       </header>
 
       {/* Mobile Header */}
-      <header className="md:hidden flex justify-between items-center px-6 py-4 w-full fixed top-0
-                         bg-white/90 backdrop-blur-lg shadow-md z-50">
+      <header
+        className="md:hidden flex justify-between items-center px-6 py-4 w-full fixed top-0
+                   bg-white/90 backdrop-blur-lg shadow-md z-50"
+      >
         <div className="flex items-center gap-2">
-          <Rocket className="w-8 h-8 text-cyan-500 animate-pulse drop-shadow-sm" />
-          <h1 className="text-gray-800 font-extrabold text-xl tracking-widest drop-shadow-sm">
-            Solivera
+          <h1 className="text-gray-800 font-extrabold text-lg tracking-widest drop-shadow-sm">
+            Tota’s Magic Choco🍫🍬
           </h1>
         </div>
         <button
           onClick={() => setSidebarOpen(true)}
           className="text-gray-800 p-2 rounded-lg shadow hover:scale-110 transition-transform duration-300"
         >
-          <Menu className="w-6 h-8" />
+          <Menu className="w-6 h-6" />
         </button>
       </header>
 

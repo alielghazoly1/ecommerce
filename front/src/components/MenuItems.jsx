@@ -19,13 +19,15 @@ const menuItemData = [
 ];
 
 const MenuItems = ({ setSidebarOpen, isMobile }) => {
-  const { cartItems, token, setToken } = useContext(ShopContext);
+  const { cartItems, token, setToken, clearCart } = useContext(ShopContext);
   const location = useLocation();
   const navigate = useNavigate();
 
   const totalItems = Object.values(cartItems).reduce((a, b) => a + b, 0);
-
+   const GitToken = localStorage.getItem(cartItems)
   const handleLogout = () => {
+    clearCart(GitToken);
+    localStorage.removeItem('cartItems');
     localStorage.removeItem('token');
     setToken(false);
     navigate('/');

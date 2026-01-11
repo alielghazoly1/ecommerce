@@ -1,6 +1,7 @@
-import heroImage from '../assets/bg.png';
+
 import { ShoppingCart } from 'lucide-react';
 import LazyImage from './LazyImage';
+import Logo from '../assets/logo.svg';
 
 const Hero = () => {
   return (
@@ -45,7 +46,7 @@ const Hero = () => {
         {/* صورة Hero */}
         <div className="flex-1 relative w-full max-w-lg">
           <LazyImage
-            src={heroImage}
+            src={Logo}
             alt="Hero"
             className="w-full h-auto object-cover rounded-3xl shadow-2xl transition-transform
                        transform hover:scale-105"

@@ -1,5 +1,4 @@
 import { createContext, useState, useEffect } from 'react';
-import { all_products } from '../assets/data';
 import axios from 'axios';
 
 export const ShopContext = createContext();
@@ -10,26 +9,30 @@ const ShopContextProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const url = import.meta.env.VITE_API_URL;
 
+  // تحميل السلة من LocalStorage أول مرة
   useEffect(() => {
     const savedCart = localStorage.getItem('cartItems');
     if (savedCart) setCartItems(JSON.parse(savedCart));
   }, []);
 
+  // حفظ السلة في LocalStorage
   useEffect(() => {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
 
+  // جلب المنتجات
   const fetchProductsList = async () => {
     try {
       const res = await axios.get(`${url}/api/product/list`);
-      setProducts(res.data.data || all_products);
+      setProducts(res.data.data);
     } catch (err) {
-      console.log(err);
-      setProducts(all_products);
+      console.error('Failed to fetch products', err);
     }
   };
 
+  // جلب السلة من الـ backend
   const loadCartData = async (userToken) => {
+    if (!userToken) return;
     try {
       const res = await axios.post(
         `${url}/api/cart/get`,
@@ -39,10 +42,11 @@ const ShopContextProvider = ({ children }) => {
       if (res.data.success && res.data.cartData)
         setCartItems(res.data.cartData);
     } catch (err) {
-      console.log(err);
+      console.error('Failed to load cart data', err);
     }
   };
 
+  // Init: جلب المنتجات والسلة وتوكن المستخدم
   useEffect(() => {
     async function init() {
       await fetchProductsList();
@@ -55,49 +59,63 @@ const ShopContextProvider = ({ children }) => {
     init();
   }, []);
 
+  // إضافة عنصر للسلة
   const addToCart = async (id, quantity = 1) => {
     setCartItems((prev) => ({
       ...prev,
       [id]: prev[id] ? prev[id] + quantity : quantity,
     }));
-    if (token)
+    if (!token) return;
+    try {
       await axios.post(
         `${url}/api/cart/add`,
         { id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+    } catch (err) {
+      console.error('Failed to add to cart', err);
+    }
   };
 
+  // إزالة عنصر من السلة أو تصفيره
   const removeFromCart = async (id, removeAll = false) => {
-    setCartItems((prev) => {
-      const updated = { ...prev };
-      if (removeAll || updated[id] === 1) delete updated[id];
-      else updated[id] -= 1;
-      return updated;
-    });
-    if (token)
-      await axios.post(
-        `${url}/api/cart/remove`,
-        { id, removeAll },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-  };
+  if (!token) return;
 
-  const clearCart = async () => {
-    if (!token) return console.log('No token');
-    await axios.post(
-      `${url}/api/cart/clear`,
-      {},
+  try {
+    const res = await axios.post(
+      `${url}/api/cart/${removeAll ? 'remove-all' : 'remove-one'}`,
+      { id, removeAll },
       { headers: { Authorization: `Bearer ${token}` } }
     );
-    setCartItems({});
+
+    if (res.data.success) {
+      setCartItems(res.data.cartData);
+      console.log(res); // حدث state بعد ما backend يرد
+    }
+  } catch (err) {
+    console.error('Failed to remove from cart', err);
+  }
+};
+
+  // تصفير السلة
+  const clearCart = async () => {
+    if (!token) return console.log('No token found');
+    try {
+      await axios.post(
+        `${url}/api/cart/clear`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setCartItems({});
+    } catch (err) {
+      console.error('Failed to clear cart', err);
+    }
   };
 
+  // حساب إجمالي السلة
   const getTotalCartAmount = () => {
     return Object.entries(cartItems).reduce((total, [id, qty]) => {
-      const product =
-        products.find((p) => p._id === id) ||
-        all_products.find((p) => p._id === id);
+      const product = products.find((p) => p._id === id);
       return total + (product ? product.price * qty : 0);
     }, 0);
   };
@@ -115,6 +133,7 @@ const ShopContextProvider = ({ children }) => {
         url,
         setToken,
         setCartItems,
+        loadCartData,
       }}
     >
       {children}
