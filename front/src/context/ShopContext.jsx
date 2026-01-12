@@ -61,41 +61,50 @@ const ShopContextProvider = ({ children }) => {
 
   // إضافة عنصر للسلة
   const addToCart = async (id, quantity = 1) => {
+    // تحديث فوري للـ UI
     setCartItems((prev) => ({
       ...prev,
       [id]: prev[id] ? prev[id] + quantity : quantity,
     }));
-    if (!token) return;
+
+    if (!token) return null;
+
     try {
-      await axios.post(
+      const res = await axios.post(
         `${url}/api/cart/add`,
-        { id },
+        { id, quantity },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      // هنا بقى الـ response متخزن
+      console.log(res.data);
+
+      return res.data; // 👈 تقدر تستخدمه في أي مكان
     } catch (err) {
       console.error('Failed to add to cart', err);
+      return null;
     }
   };
 
   // إزالة عنصر من السلة أو تصفيره
   const removeFromCart = async (id, removeAll = false) => {
-  if (!token) return;
+    if (!token) return;
 
-  try {
-    const res = await axios.post(
-      `${url}/api/cart/${removeAll ? 'remove-all' : 'remove-one'}`,
-      { id, removeAll },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    try {
+      const res = await axios.post(
+        `${url}/api/cart/${removeAll ? 'remove-all' : 'remove-one'}`,
+        { id, removeAll },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    if (res.data.success) {
-      setCartItems(res.data.cartData);
-      console.log(res); // حدث state بعد ما backend يرد
+      if (res.data.success) {
+        setCartItems(res.data.cartData);
+        console.log(res); // حدث state بعد ما backend يرد
+      }
+    } catch (err) {
+      console.error('Failed to remove from cart', err);
     }
-  } catch (err) {
-    console.error('Failed to remove from cart', err);
-  }
-};
+  };
 
   // تصفير السلة
   const clearCart = async () => {

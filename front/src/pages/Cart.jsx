@@ -5,15 +5,25 @@ import { useNavigate } from 'react-router-dom';
 import LazyImage from '../components/LazyImage';
 
 const Cart = () => {
-  const { cartItems, all_products, addToCart, removeFromCart, getTotalCartAmount, url, loadCartData, token } =
-    useContext(ShopContext);
+  const {
+    cartItems,
+    all_products,
+    addToCart,
+    removeFromCart,
+    getTotalCartAmount,
+    url,
+    loadCartData,
+    token,
+  } = useContext(ShopContext);
   const navigate = useNavigate();
   const total = getTotalCartAmount();
   const [loading, setLoading] = useState(false);
 
   const cartProducts = Object.keys(cartItems)
     .map((id) => {
-      const product = all_products.find((p) => p._id.toString() === id.toString());
+      const product = all_products.find(
+        (p) => p._id.toString() === id.toString()
+      );
       return product ? { ...product, quantity: cartItems[id] } : null;
     })
     .filter(Boolean);
@@ -32,7 +42,9 @@ const Cart = () => {
         </h2>
 
         {loading ? (
-          <div className="text-center mt-20 text-gray-600 text-xl">جارٍ تحميل البيانات...</div>
+          <div className="text-center mt-20 text-gray-600 text-xl">
+            جارٍ تحميل البيانات...
+          </div>
         ) : cartProducts.length === 0 ? (
           <div className="text-center mt-20 space-y-6">
             <p className="text-xl font-semibold">عربة التسوق الخاصة بك فارغة</p>
@@ -64,8 +76,12 @@ const Cart = () => {
                   <div className="flex-1 flex flex-col justify-between w-full">
                     <div>
                       <h3 className="text-xl font-bold">{item.name}</h3>
-                      <p className="text-gray-500 text-sm mt-1 line-clamp-2">{item.description}</p>
-                      <p className="text-cyan-600 text-lg font-bold mt-2">${item.price.toFixed(2)}</p>
+                      <p className="text-gray-500 text-sm mt-1 line-clamp-2">
+                        {item.description}
+                      </p>
+                      <p className="text-cyan-600 text-lg font-bold mt-2">
+                        ${item.price.toFixed(2)}
+                      </p>
                     </div>
 
                     <div className="flex items-center gap-4 mt-4">
@@ -75,9 +91,10 @@ const Cart = () => {
                       >
                         <Minus className="w-4 h-4 text-gray-700" />
                       </button>
-                      <span className="text-gray-800 font-semibold">{item.quantity}</span>
+                      <span className="text-gray-800 font-semibold">
+                        {item.quantity}
+                      </span>
                       <button
-                        
                         onClick={() => addToCart(item._id)}
                         className="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition-all"
                       >
@@ -98,11 +115,12 @@ const Cart = () => {
 
             <div className="bg-white shadow-2xl border border-gray-200 p-8 rounded-3xl flex flex-col sm:flex-row justify-between items-center gap-6">
               <div className="text-2xl font-bold text-gray-800">
-                المجموع الكلي : <span className="text-cyan-500 ml-3">${total.toFixed(2)}</span>
+                المجموع الكلي :{' '}
+                <span className="text-cyan-500 ml-3">${total.toFixed(2)}</span>
               </div>
               <button
                 onClick={() => navigate('/order')}
-                className="flex items-center gap-3 bg-gradient-to-r from-cyan-400 to-indigo-400
+                className="flex items-center gap-3 bg-linear-to-r from-cyan-400 to-indigo-400
                          text-white font-semibold px-8 py-4 rounded-2xl text-lg shadow-lg
                          transition-transform transform hover:scale-105 hover:shadow-xl"
               >

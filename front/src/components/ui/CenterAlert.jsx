@@ -59,7 +59,7 @@ const CenterAlert = ({
   open,
   message,
   type = 'info',
-  duration = 2000,
+  duration = 50000,
   onClose,
   link,            // 👉 لينك الانتقال
   linkText = 'الانتقال', // 👉 نص الزرار

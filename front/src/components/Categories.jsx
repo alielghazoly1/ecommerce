@@ -36,7 +36,7 @@ const Categories = () => {
         alert('Please login to add products to cart!');
         return;
       }
-      addToCart(id, Token);
+      addToCart(id)
     },
     [addToCart, Token]
   );
