@@ -1,3 +1,4 @@
+// ShopContext.js
 import { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -7,7 +8,7 @@ const ShopContextProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState({});
   const [products, setProducts] = useState([]);
   const [token, setToken] = useState(null);
-  const url = import.meta.env.VITE_API_URL;
+  const url = "http://localhost:4000";
 
   // تحميل السلة من LocalStorage أول مرة
   useEffect(() => {
@@ -24,7 +25,7 @@ const ShopContextProvider = ({ children }) => {
   const fetchProductsList = async () => {
     try {
       const res = await axios.get(`${url}/api/product/list`);
-      setProducts(res.data.data);
+      setProducts(res.data.data || []);
     } catch (err) {
       console.error('Failed to fetch products', err);
     }
@@ -39,14 +40,15 @@ const ShopContextProvider = ({ children }) => {
         {},
         { headers: { Authorization: `Bearer ${userToken}` } }
       );
-      if (res.data.success && res.data.cartData)
+      if (res.data.success && res.data.cartData) {
         setCartItems(res.data.cartData);
+      }
     } catch (err) {
       console.error('Failed to load cart data', err);
     }
   };
 
-  // Init: جلب المنتجات والسلة وتوكن المستخدم
+  // Init
   useEffect(() => {
     async function init() {
       await fetchProductsList();
@@ -59,16 +61,27 @@ const ShopContextProvider = ({ children }) => {
     init();
   }, []);
 
-  // إضافة عنصر للسلة
+  // إضافة عنصر للسلة (optimistic + async, يرجع Promise)
   const addToCart = async (id, quantity = 1) => {
-    // تحديث فوري للـ UI
+    if (!id) return { success: false, message: 'Invalid id' };
+
+    // حفظ نسخة سابقة للاسترجاع عند الفشل
+    const previous = { ...cartItems };
+
+    // تحديث فوري للـ UI (optimistic)
     setCartItems((prev) => ({
       ...prev,
       [id]: prev[id] ? prev[id] + quantity : quantity,
     }));
 
-    if (!token) return null;
+    // إذا لا يوجد توكن ننتظر مدة صغيرة ليشاهد المستخدم الـ loading (حتى لو لم تريد طلب للسيرفر)
+    if (!token) {
+      // نُرجع Promise بعد تأخير صغير (300ms) لعرض الـ loading في الواجهة
+      await new Promise((r) => setTimeout(r, 300));
+      return { success: false, message: 'No token, saved locally' };
+    }
 
+    // عندما يكون هناك توكن، أرسل للـ backend
     try {
       const res = await axios.post(
         `${url}/api/cart/add`,
@@ -76,13 +89,17 @@ const ShopContextProvider = ({ children }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // هنا بقى الـ response متخزن
-      console.log(res.data);
+      // لو السيرفر رجع كارت محدث، نستخدمه كحالة موثوقة
+      if (res.data && res.data.success && res.data.cartData) {
+        setCartItems(res.data.cartData);
+      }
 
-      return res.data; // 👈 تقدر تستخدمه في أي مكان
+      return res.data || { success: true };
     } catch (err) {
       console.error('Failed to add to cart', err);
-      return null;
+      // استرجاع الحالة السابقة عند الفشل
+      setCartItems(previous);
+      throw err;
     }
   };
 
@@ -99,7 +116,6 @@ const ShopContextProvider = ({ children }) => {
 
       if (res.data.success) {
         setCartItems(res.data.cartData);
-        console.log(res); // حدث state بعد ما backend يرد
       }
     } catch (err) {
       console.error('Failed to remove from cart', err);

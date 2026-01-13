@@ -3,16 +3,10 @@ import React from 'react';
 // import Routes
 import { Routes, Route } from 'react-router';
 // import components
-import Categories from './components/Categories';
-import Features from './components/Features';
-import Footer from './components/Footer';
-import Hero from './components/Hero';
-import Item from './components/Item';
-import Login from './components/Login';
-import MenuItems from './components/MenuItems';
-import Offer from './components/Offer';
-import ProductDisplay from './components/ProductDisplay';
-import SignUp from './components/SignUp';
+
+import Login from './pages/Login';
+
+import SignUp from './pages/SignUp';
 import Header from './components/Header';
 // import pages
 import Home from './pages/Home';
@@ -20,7 +14,8 @@ import Cart from './pages/Cart';
 import MyOrders from './pages/MyOrders';
 import Product from './pages/Product';
 import Verify from './pages/Verify';
-import Order from './pages/Order';
+import Order from './pages/order/Order';
+import Categories from './pages/Categories';
 // context
 import ShopContextProvider from './context/ShopContext';
 const App = () => {
@@ -36,6 +31,7 @@ const App = () => {
         <Route path="/myorders" element={<MyOrders />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/categories" element={<Categories />} />
       </Routes>
     </ShopContextProvider>
   );

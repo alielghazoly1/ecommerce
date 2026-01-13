@@ -43,7 +43,7 @@ const MyOrders = () => {
   return (
     <section className="bg-gray-100 min-h-screen px-6 py-10">
       <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-10 text-center">
-        طلباتك
+        طلباتي
       </h1>
 
       {orders.length === 0 ? (

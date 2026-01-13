@@ -23,7 +23,7 @@ const Hero = () => {
           {/* Buttons */}
           <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
             <button
-              onClick={() => (window.location.href = '/shopping')}
+              onClick={() => (window.location.href = '/categories')}
               className="flex items-center gap-3 bg-gradient-to-r from-cyan-400 to-indigo-400
                          text-white font-semibold px-8 py-4 rounded-2xl text-lg shadow-lg
                          transition-transform transform hover:scale-105 hover:shadow-xl"
@@ -33,7 +33,7 @@ const Hero = () => {
             </button>
 
             <button
-              onClick={() => (window.location.href = '/categories')}
+              onClick={() => (window.location.href = '#categories')}
               className="flex items-center gap-3 bg-gray-200 text-gray-800 font-semibold
                          px-8 py-4 rounded-2xl text-lg shadow-lg transition-transform
                          transform hover:scale-105 hover:shadow-xl"

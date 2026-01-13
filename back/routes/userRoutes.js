@@ -27,4 +27,5 @@ userRouter.get('/test-auth', authMiddleware, (req, res) => {
   res.json({ success: true, user: req.user });
 });
 
+
 export default userRouter;

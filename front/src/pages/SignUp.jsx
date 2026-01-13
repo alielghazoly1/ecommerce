@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import axios from 'axios';
 import { User, Mail, Lock } from 'lucide-react';
+import CenterAlert from '../components/ui/CenterAlert';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -15,35 +16,86 @@ const SignUp = () => {
     confirmPassword: '',
   });
 
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false); // حالة التحميل
+
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSignUp = async (e) => {
     e.preventDefault();
+    if (isLoading) return; // تجنب الإرسال المتكرر
+
     if (formData.password !== formData.confirmPassword) {
-      alert('كلمة المرور غير متطابقة');
+      setErrorMessage('كلمة المرور غير متطابقة');
+      setShowErrorAlert(true);
       return;
     }
 
+    setIsLoading(true);
     try {
-      const res = await axios.post(`${url}/api/user/register`, formData);
+      const res = await axios.post(`${url}/api/user/register`, {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+
       if (res.data.success) {
+        // تعيين التوكن وحفظه
         setToken(res.data.token);
         localStorage.setItem('token', res.data.token);
-        navigate('/');
+
+        setShowSuccessAlert(true);
+
+        // إبقاء الزر في حالة تحميل قليلاً ثم التنقّل
+        setTimeout(() => {
+          setIsLoading(false);
+          navigate('/');
+        }, 1500);
       } else {
-        alert(res.data.message);
+        setErrorMessage(res.data.message || 'فشل إنشاء الحساب');
+        setShowErrorAlert(true);
+        setIsLoading(false);
       }
     } catch (err) {
-      console.log(err);
-      alert('حدث خطأ، حاول مرة أخرى');
+      const status = err.response?.status;
+      if (status === 409) {
+        setErrorMessage('البريد الإلكتروني مستخدم بالفعل');
+      } else {
+        setErrorMessage('حدث خطأ ما');
+      }
+      setShowErrorAlert(true);
+      setIsLoading(false);
     }
   };
 
   return (
     <section className="relative w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100">
-      {/* Overlay blur card */}
+      {/* ✅ Success Alert */}
+      <CenterAlert
+        open={showSuccessAlert}
+        onClose={() => setShowSuccessAlert(false)}
+        type="success"
+        message={'تم إنشاء الحساب بنجاح\nاهلا بك في عالم توتا 🎉'}
+        duration={6000}
+        link={'/shop'}
+        linkText="الذهاب الي المتجر"
+        autoNavigate={true}
+      />
+
+      {/* ❌ Error Alert */}
+      <CenterAlert
+        open={showErrorAlert}
+        onClose={() => setShowErrorAlert(false)}
+        type="error"
+        message={errorMessage}
+        duration={2000}
+      />
+
+      {/* Card */}
       <div className="relative z-10 w-full max-w-md bg-white/30 backdrop-blur-xl p-10 rounded-3xl shadow-2xl">
         <h2 className="text-4xl font-extrabold text-gray-800 mb-8 text-center">
           إنشاء حساب جديد
@@ -113,14 +165,44 @@ const SignUp = () => {
           {/* Submit */}
           <button
             type="submit"
-            className="w-full py-3 rounded-2xl bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500
-              text-white font-bold text-lg shadow-lg hover:scale-105 transition-transform"
+            disabled={isLoading}
+            className={`w-full py-3 rounded-2xl ${
+              isLoading
+                ? 'bg-gray-300 text-gray-700 cursor-wait'
+                : 'bg-linear-to-r from-cyan-400 via-blue-500 to-indigo-500 text-white hover:scale-105'
+            } font-bold text-lg shadow-lg transition-transform flex items-center justify-center gap-3`}
           >
-            إنشاء حساب
+            {isLoading ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 100 24v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
+                  ></path>
+                </svg>
+                جاري إنشاء الحساب...
+              </>
+            ) : (
+              'إنشاء حساب'
+            )}
           </button>
         </form>
 
-        {/* Redirect to login */}
+        {/* Redirect */}
         <p className="mt-6 text-gray-700 text-center">
           لديك حساب بالفعل؟{' '}
           <span
