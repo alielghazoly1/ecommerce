@@ -1,2 +1,5 @@
 .env
 back/.env
+
+# Node modules
+back/node_modules
