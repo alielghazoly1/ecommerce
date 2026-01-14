@@ -9,7 +9,7 @@ const ShopContextProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [token, setToken] = useState(null);
   const [authLoading, setAuthLoading] = useState(true); // ✅ new
-  const url = "http://localhost:4000";
+  const url = "https://ecommerce-d4caul1f6-alielghazoly1s-projects.vercel.app";
 
   // تحميل السلة من LocalStorage
   useEffect(() => {
