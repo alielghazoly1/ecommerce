@@ -9,7 +9,7 @@ const ShopContextProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [token, setToken] = useState(null);
   const [authLoading, setAuthLoading] = useState(true); // ✅ new
-  const url = "https://ecommerce-d4caul1f6-alielghazoly1s-projects.vercel.app";
+  const url = 'https://ecommerce-d4caul1f6-alielghazoly1s-projects.vercel.app';
 
   // تحميل السلة من LocalStorage
   useEffect(() => {
@@ -60,7 +60,6 @@ const ShopContextProvider = ({ children }) => {
     }
     init();
   }, []);
-
 
   // إضافة عنصر للسلة (optimistic + async, يرجع Promise)
   const addToCart = async (id, quantity = 1) => {
@@ -160,7 +159,7 @@ const ShopContextProvider = ({ children }) => {
         setToken,
         setCartItems,
         loadCartData,
-        authLoading
+        authLoading,
       }}
     >
       {children}

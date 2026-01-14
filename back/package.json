@@ -15,6 +15,7 @@
     "node": "24.11.0",
     "npm": "11.6.2"
   },
+  "current": { "node": "v24.13.0", "npm": "11.6.2" },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.1",
