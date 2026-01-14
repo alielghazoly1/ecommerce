@@ -16,6 +16,8 @@ import Product from './pages/Product';
 import Verify from './pages/Verify';
 import Order from './pages/order/Order';
 import Categories from './pages/Categories';
+import Profile from './pages/Profile';
+
 // context
 import ShopContextProvider from './context/ShopContext';
 const App = () => {
@@ -32,6 +34,9 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/categories" element={<Categories />} />
+        <Route path="/profile" element={<Profile />} />
+
+
       </Routes>
     </ShopContextProvider>
   );

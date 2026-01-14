@@ -56,52 +56,51 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
           : 'flex-row w-full items-center gap-4'
       } font-sans`}
     >
-     {menuItemData.map(({ to, label, Icon }) => {
-  // ✅ استثناء "categories" تروح صفحة جديدة
-  if (to === 'categories') {
-    return (
-      <button
-        key={to}
-        onClick={() => {
-          navigate('/categories');
-          setSidebarOpen && setSidebarOpen(false);
-        }}
-        className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all shrink-0 min-w-20 text-gray-800 hover:bg-gray-100 hover:shadow-md"
-      >
-        <Icon className="w-6 h-6 text-gray-700" />
-        <span className="font-medium text-base">{label}</span>
-      </button>
-    );
-  }
+      {menuItemData.map(({ to, label, Icon }) => {
+        // ✅ استثناء "categories" تروح صفحة جديدة
+        if (to === 'categories') {
+          return (
+            <button
+              key={to}
+              onClick={() => {
+                navigate('/categories');
+                setSidebarOpen && setSidebarOpen(false);
+              }}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all shrink-0 min-w-20 text-gray-800 hover:bg-gray-100 hover:shadow-md"
+            >
+              <Icon className="w-6 h-6 text-gray-700" />
+              <span className="font-medium text-base">{label}</span>
+            </button>
+          );
+        }
 
-  // باقي العناصر
-  return location.pathname === '/' ? (
-    <ScrollLink
-      key={to}
-      to={to}
-      smooth
-      duration={500}
-      offset={-80}
-      spy
-      onClick={() => setSidebarOpen && setSidebarOpen(false)}
-      className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all shrink-0 min-w-20 text-gray-800 hover:bg-gray-100 hover:shadow-md cursor-pointer"
-      activeClass="bg-cyan-100 text-cyan-700 shadow-lg"
-    >
-      <Icon className="w-6 h-6 text-gray-700" />
-      <span className="font-medium text-base">{label}</span>
-    </ScrollLink>
-  ) : (
-    <button
-      key={to}
-      onClick={() => handleNavigateAndScroll(to)}
-      className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all shrink-0 min-w-20 text-gray-800 hover:bg-gray-100 hover:shadow-md"
-    >
-      <Icon className="w-6 h-6 text-gray-700" />
-      <span className="font-medium text-base">{label}</span>
-    </button>
-  );
-})}
-
+        // باقي العناصر
+        return location.pathname === '/' ? (
+          <ScrollLink
+            key={to}
+            to={to}
+            smooth
+            duration={500}
+            offset={-80}
+            spy
+            onClick={() => setSidebarOpen && setSidebarOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all shrink-0 min-w-20 text-gray-800 hover:bg-gray-100 hover:shadow-md cursor-pointer"
+            activeClass="bg-cyan-100 text-cyan-700 shadow-lg"
+          >
+            <Icon className="w-6 h-6 text-gray-700" />
+            <span className="font-medium text-base">{label}</span>
+          </ScrollLink>
+        ) : (
+          <button
+            key={to}
+            onClick={() => handleNavigateAndScroll(to)}
+            className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all shrink-0 min-w-20 text-gray-800 hover:bg-gray-100 hover:shadow-md"
+          >
+            <Icon className="w-6 h-6 text-gray-700" />
+            <span className="font-medium text-base">{label}</span>
+          </button>
+        );
+      })}
 
       {/* 🛒 Cart */}
       <button
@@ -131,7 +130,12 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
         </button>
       ) : (
         <div className="flex items-center gap-4">
-          <User className="w-6 h-6 text-gray-700" />
+          <User
+            className="w-6 h-6 text-gray-700 hover:cursor-pointer hover:text-cyan-600"
+            onClick={() => {
+              navigate('/profile');
+            }}
+          />
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 px-4 py-3 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition-all"

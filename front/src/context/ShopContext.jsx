@@ -8,20 +8,19 @@ const ShopContextProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState({});
   const [products, setProducts] = useState([]);
   const [token, setToken] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true); // ✅ new
   const url = "http://localhost:4000";
 
-  // تحميل السلة من LocalStorage أول مرة
+  // تحميل السلة من LocalStorage
   useEffect(() => {
     const savedCart = localStorage.getItem('cartItems');
     if (savedCart) setCartItems(JSON.parse(savedCart));
   }, []);
 
-  // حفظ السلة في LocalStorage
   useEffect(() => {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // جلب المنتجات
   const fetchProductsList = async () => {
     try {
       const res = await axios.get(`${url}/api/product/list`);
@@ -31,7 +30,6 @@ const ShopContextProvider = ({ children }) => {
     }
   };
 
-  // جلب السلة من الـ backend
   const loadCartData = async (userToken) => {
     if (!userToken) return;
     try {
@@ -48,18 +46,21 @@ const ShopContextProvider = ({ children }) => {
     }
   };
 
-  // Init
+  // Init minimal change
   useEffect(() => {
     async function init() {
       await fetchProductsList();
+
       const storedToken = localStorage.getItem('token');
       if (storedToken) {
         setToken(storedToken);
         await loadCartData(storedToken);
       }
+      setAuthLoading(false); // ✅ finished loading token
     }
     init();
   }, []);
+
 
   // إضافة عنصر للسلة (optimistic + async, يرجع Promise)
   const addToCart = async (id, quantity = 1) => {
@@ -159,6 +160,7 @@ const ShopContextProvider = ({ children }) => {
         setToken,
         setCartItems,
         loadCartData,
+        authLoading
       }}
     >
       {children}

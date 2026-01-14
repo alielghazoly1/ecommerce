@@ -1,4 +1,3 @@
-
 import { ShoppingCart } from 'lucide-react';
 import LazyImage from './LazyImage';
 import Logo from '../assets/logo.svg';
@@ -16,21 +15,25 @@ const Hero = () => {
             اكتشف أفضل المنتجات <br /> بأفضل الأسعار
           </h1>
           <p className="text-gray-700 text-lg sm:text-xl md:text-2xl max-w-xl">
-            تسوق من مجموعتنا الواسعة من المنتجات عالية الجودة المصممة لتلبية جميع احتياجاتك.
-            استمتع بتجربة تسوق سلسة مع خدمة عملاء ممتازة وتوصيل سريع.
+            تسوق من مجموعتنا الواسعة من المنتجات عالية الجودة المصممة لتلبية
+            جميع احتياجاتك. استمتع بتجربة تسوق سلسة مع خدمة عملاء ممتازة وتوصيل
+            سريع.
           </p>
 
           {/* Buttons */}
           <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
-            <button
-              onClick={() => (window.location.href = '/categories')}
-              className="flex items-center gap-3 bg-gradient-to-r from-cyan-400 to-indigo-400
-                         text-white font-semibold px-8 py-4 rounded-2xl text-lg shadow-lg
-                         transition-transform transform hover:scale-105 hover:shadow-xl"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              تسوق الآن
-            </button>
+            <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
+              <button
+                onClick={() => (window.location.href = '/categories')}
+                className="flex items-center gap-3
+               bg-[#542917] 
+               text-white font-semibold px-8 py-4 rounded-2xl text-lg shadow-lg
+               transition-transform transform hover:scale-105 hover:shadow-xl hover:bg-[#3e1f12]"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                تسوق الآن
+              </button>
+            </div>
 
             <button
               onClick={() => (window.location.href = '#categories')}
@@ -53,8 +56,10 @@ const Hero = () => {
           />
 
           {/* Badge خصم */}
-          <div className="absolute top-4 left-4 bg-red-400 text-white px-4 py-2 rounded-full
-                          font-semibold shadow-lg animate-pulse text-base">
+          <div
+            className="absolute top-4 left-4 bg-red-400 text-white px-4 py-2 rounded-full
+                          font-semibold shadow-lg animate-pulse text-base"
+          >
             خصم 50% لفترة محدودة!
           </div>
         </div>

@@ -69,9 +69,11 @@ const Add = () => {
   }, [image]);
 
   return (
-    <section className="relative w-full md:ml-64 min-h-screen bg-linear-to-r
+    <section
+      className="relative w-full md:ml-64 min-h-screen bg-linear-to-r
     from-indigo-900 via-purple-800 to-pink-900 text-white py-24 px-6
-    sm:px-10">
+    sm:px-10"
+    >
       <form onSubmit={onSubmitHandler}>
         <div className="relative z-10 max-w-3xl mx-auto bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-xl">
           <h2 className="text-3xl font-bold mb-6 text-center">
@@ -113,13 +115,17 @@ const Add = () => {
               name="category"
               value={data.category}
               onChange={onChangeHandler}
-              className="w-full px-4 py-3 rounded-xl bg-white/15 text-white focus:ring-2 focus:ring-cyan-400 outline-none"
+              className="w-full px-4 py-3 rounded-xl bg-gray-800 text-white focus:ring-2 focus:ring-cyan-400 outline-none appearance-none"
             >
-              <option value="Men">Men</option>
-              <option value="Women">Women</option>
-              <option value="Kids">Kids</option>
-              <option value="Electronics">Electronics</option>
-              <option value="Cosmetics">Cosmetics</option>
+              <option className="bg-gray-800 text-white" value="شوكلاتة">
+                شوكلاتة
+              </option>
+              <option className="bg-gray-800 text-white" value="مكسرات">
+                مكسرات
+              </option>
+              <option className="bg-gray-800 text-white" value="ياميش">
+                ياميش
+              </option>
             </select>
 
             <input

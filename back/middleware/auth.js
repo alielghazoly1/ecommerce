@@ -1,7 +1,7 @@
-// auth.js
 import jwt from 'jsonwebtoken';
+import User from '../models/userModel.js'; // استبدل بالمسار الصحيح للـ model
 
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -16,10 +16,14 @@ const authMiddleware = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = {
-      id: decoded.id,
-      role: decoded.role,
-    };
+    // fetch كامل بيانات المستخدم من قاعدة البيانات
+    const user = await User.findById(decoded.id).select('-password'); // ما نرجعش الباسورد
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    req.user = user; // ✅ بيانات كاملة جاهزة لأي endpoint
     next();
   } catch (error) {
     return res.status(403).json({

@@ -36,7 +36,7 @@ const Header = () => {
           onClick={() => navigate('/')}
           className="cursor-pointer text-lg font-bold text-gray-800"
         >
-          Tota’s 🍫
+          Tota’s Magic 🍫
         </h1>
 
         <button

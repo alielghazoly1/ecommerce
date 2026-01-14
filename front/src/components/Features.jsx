@@ -46,7 +46,7 @@ const Features = () => {
               transition-transform transform hover:scale-105 hover:shadow-xl"
             >
               <div
-                className={`w-20 h-20 mb-6 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center shadow-md`}
+                className={`w-20 h-20 mb-6 rounded-2xl bg-linear-to-br ${color} flex items-center justify-center shadow-md`}
               >
                 <Icon className="w-10 h-10 text-white" />
               </div>
