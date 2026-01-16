@@ -11,9 +11,6 @@ import cartRouter from './routes/cartRoutes.js';
 import adminRouter from './routes/adminRoutes.js';
 
 const app = express();
-app.all('*', (req, res) => {
-  res.status(404).send('Route not found');
-});
 
 // Middlewares
 app.use(express.json());
@@ -22,7 +19,7 @@ app.use(compression());
 app.use(cors());
 
 // Routes
-app.use('/images', express.static('uploads')); // لو Local فقط، أو استخدم external storage على Vercel
+app.use('/images', express.static('uploads')); // لو Local فقط
 app.use('/api/user', userRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/product', productRouter);
@@ -32,6 +29,11 @@ app.use('/api/admin', adminRouter);
 // Root & test routes
 app.get('/', (req, res) => res.send('API working'));
 app.get('/test', (req, res) => res.send('API working'));
+
+// Catch-all 404 (بعد كل الـ routes)
+app.all('*', (req, res) => {
+  res.status(404).send('Route not found');
+});
 
 // Connect to MongoDB
 connectDB()
