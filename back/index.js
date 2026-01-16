@@ -11,6 +11,9 @@ import cartRouter from './routes/cartRoutes.js';
 import adminRouter from './routes/adminRoutes.js';
 
 const app = express();
+app.all('*', (req, res) => {
+  res.status(404).send('Route not found');
+});
 
 // Middlewares
 app.use(express.json());

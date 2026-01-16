@@ -8,5 +8,8 @@
     },
     { "src": "back/index.js", "use": "@vercel/node" }
   ],
-  "routes": [{ "src": "/api/(.*)", "dest": "/back/index.js" }]
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/back/index.js" },
+    { "src": "/(.*)", "dest": "/front/dist/$1" } // لو frontend موجود
+  ]
 }
