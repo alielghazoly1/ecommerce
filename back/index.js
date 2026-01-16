@@ -39,10 +39,6 @@ app.use('/api/admin', adminRouter);
 app.get('/', (req, res) => res.send('API working'));
 app.get('/test', (req, res) => res.send('API working'));
 
-// Catch-all 404 (Express v5 compatible)
-app.all(/.*/, (req, res) => {
-  res.status(404).send('Route not found');
-});
 
 // Connect to MongoDB only if MONGODB_URI present
 if (process.env.MONGODB_URI) {
