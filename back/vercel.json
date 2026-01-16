@@ -5,7 +5,8 @@
       "src": "front/package.json",
       "use": "@vercel/static-build",
       "config": { "distDir": "dist" }
-    }
+    },
+    { "src": "back/index.js", "use": "@vercel/node" }
   ],
   "routes": [{ "src": "/api/(.*)", "dest": "/back/index.js" }]
 }

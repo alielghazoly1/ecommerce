@@ -19,17 +19,18 @@ app.use(compression());
 app.use(cors());
 
 // Routes
-app.use('/images', express.static('uploads'));
+app.use('/images', express.static('uploads')); // لو Local فقط، أو استخدم external storage على Vercel
 app.use('/api/user', userRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/product', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/admin', adminRouter);
 
-// Root route
+// Root & test routes
 app.get('/', (req, res) => res.send('API working'));
+app.get('/test', (req, res) => res.send('API working'));
 
-// Connect DB immediately (locally will work too)
+// Connect to MongoDB
 connectDB()
   .then(() => console.log('DB connected'))
   .catch((err) => console.error('DB connection failed', err));
@@ -37,7 +38,7 @@ connectDB()
 // Export for Vercel
 export const handler = serverless(app);
 
-// Optionally: تشغيل محلي (Local dev)
+// Local dev
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 4000;
   app.listen(PORT, () => console.log(`Server running locally on port ${PORT}`));
