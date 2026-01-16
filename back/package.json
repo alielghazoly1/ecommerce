@@ -9,11 +9,10 @@
   "scripts": {
     "server": "nodemon index.js",
     "start": "node index.js",
-    
   },
-
+  "author": "",
   "engines": {
-    "node": ">=24.11.0",
+    "node": "<=24.11.0",
     "npm": ">=11.6.2"
   },
   "current": {
