@@ -3,21 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "license": "ISC",
-  "author": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "server": "nodemon index.js",
-    "start": "node index.js",
+    "start": "node index.js"
   },
   "author": "",
   "engines": {
-    "node": ">=24.11.0",
-    "npm": ">=11.6.2"
-  },
-  "current": {
-    "node": "v24.13.0",
-    "npm": "11.6.2"
+    "node": "18.x",
+    "npm": "8.x"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
