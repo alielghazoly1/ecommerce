@@ -3,7 +3,7 @@ import serverless from 'serverless-http';
 import cors from 'cors';
 import compression from 'compression';
 import connectDB from './config/db.js';
-import 'dotenv/config.js';
+import 'dotenv/config'; // <--- تصحيح هنا (بدون .js)
 import userRouter from './routes/userRoutes.js';
 import orderRouter from './routes/orderRoutes.js';
 import productRouter from './routes/productRoutes.js';
@@ -12,6 +12,14 @@ import adminRouter from './routes/adminRoutes.js';
 
 const app = express();
 
+// Global error logging for debugging
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION:', err && (err.stack || err));
+});
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err && (err.stack || err));
+});
+
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -19,14 +27,13 @@ app.use(compression());
 app.use(cors());
 
 // Routes
-app.use('/images', express.static('uploads')); // لو Local فقط
+app.use('/images', express.static('uploads')); // إن لم تستخدم التخزين، خليه للاختبار المحلي فقط
 app.use('/api/user', userRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/product', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/admin', adminRouter);
 
-// Root & test routes
 // Root & test routes
 app.get('/', (req, res) => res.send('API working'));
 app.get('/test', (req, res) => res.send('API working'));
@@ -36,10 +43,14 @@ app.all(/.*/, (req, res) => {
   res.status(404).send('Route not found');
 });
 
-// Connect to MongoDB
-connectDB()
-  .then(() => console.log('DB connected'))
-  .catch((err) => console.error('DB connection failed', err));
+// Connect to MongoDB only if MONGODB_URI present
+if (process.env.MONGODB_URI) {
+  connectDB()
+    .then(() => console.log('DB connected'))
+    .catch((err) => console.error('DB connection failed', err));
+} else {
+  console.warn('MONGODB_URI not set — skipping DB connection (useful for quick runtime tests)');
+}
 
 // Export for Vercel
 export const handler = serverless(app);

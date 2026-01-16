@@ -8,14 +8,10 @@ import {
 
 const productRouter = express.Router();
 
-const storage = multer.diskStorage({
-  destination: 'uploads',
-  filename: (req, file, cb) => {
-    return cb(null, `${Date.now()} ${file.originalname}`);
-  },
-});
+// Use memory storage in serverless to avoid ENOENT when 'uploads' folder doesn't exist
+const storage = multer.memoryStorage();
 
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
 productRouter.post('/add', upload.single('image'), addProduct);
 productRouter.get('/list', listProducts);
