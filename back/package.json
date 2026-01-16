@@ -8,13 +8,14 @@
   "type": "module",
   "scripts": {
     "server": "nodemon index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    
   },
   "author": "",
-  "engines": {
-    "node": ">=24.11.0",
-    "npm": ">=11.6.2"
-  },
+  // "engines": {
+  //   "node": "<=24.11.0",
+  //   "npm": ">=11.6.2"
+  // },
   "current": {
     "node": "v24.13.0",
     "npm": "11.6.2"

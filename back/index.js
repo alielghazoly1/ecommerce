@@ -30,7 +30,9 @@ app.use('/api/admin', adminRouter);
 app.get('/', (req, res) => res.send('API working'));
 
 // Connect DB immediately (locally will work too)
-connectDB().then(() => console.log('DB connected')).catch(err => console.error('DB connection failed', err));
+connectDB()
+  .then(() => console.log('DB connected'))
+  .catch((err) => console.error('DB connection failed', err));
 
 // Export for Vercel
 export const handler = serverless(app);
