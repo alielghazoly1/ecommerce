@@ -28,44 +28,27 @@ app.use(express.urlencoded({ extended: true }));
 app.use(compression());
 app.use(cors());
 
-// Health + favicon early to avoid hitting DB or heavy routes
+// Quick health + favicon handlers to avoid hitting heavy routes for these requests
 app.get('/', (req, res) => res.send('API running'));
 app.get('/test', (req, res) => res.send('API working'));
-app.get('/favicon.ico', (req, res) => res.status(204).end()); // fast no-content
-
-// Static images (keep this, but note vercel routes must not override /images)
-app.use('/images', express.static('uploads'));
-
-// Middleware to ensure DB connected only when needed
-const ensureDb = async (req, res, next) => {
-  // Only try to connect if MONGODB_URI is set and mongoose isn't already connected
-  if (process.env.MONGODB_URI) {
-    try {
-      await connectDB(); // connectDB will be idempotent / fast-fail (see config/db.js)
-      return next();
-    } catch (err) {
-      // If DB unreachable, log and optionally allow endpoints that don't need DB to run
-      console.error('ensureDb: DB connect failed', err && (err.message || err));
-      // If the route definitely needs DB, respond with 503
-      const routesThatNeedDb = ['/api/user', '/api/order', '/api/product', '/api/cart', '/api/admin'];
-      if (routesThatNeedDb.some(r => req.path.startsWith(r))) {
-        return res.status(503).json({ error: 'Database unavailable. Please try later.' });
-      }
-      // Otherwise continue (for static or health checks)
-    }
-  }
-  next();
-};
-
-// Attach ensureDb middleware before API routes
-app.use(ensureDb);
+app.get('/favicon.ico', (req, res) => res.status(204).end()); // Return no-content fast
 
 // Routes
+app.use('/images', express.static('uploads'));
 app.use('/api/user', userRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/product', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/admin', adminRouter);
+
+// DB
+if (process.env.MONGODB_URI) {
+  connectDB()
+    .then(() => console.log('DB connected'))
+    .catch((err) => console.error('DB connection failed', err));
+} else {
+  console.warn('MONGODB_URI not set — skipping DB connection');
+}
 
 // Local dev only
 if (process.env.NODE_ENV !== 'production') {
