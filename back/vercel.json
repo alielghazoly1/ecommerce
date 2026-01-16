@@ -3,11 +3,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "back/index.js",
+      "src": "index.js",
       "use": "@vercel/node"
     },
     {
-      "src": "back/**/*",
+      "src": "**/*",
       "use": "@vercel/static"
     }
   ],
