@@ -27,11 +27,12 @@ app.use('/api/cart', cartRouter);
 app.use('/api/admin', adminRouter);
 
 // Root & test routes
+// Root & test routes
 app.get('/', (req, res) => res.send('API working'));
 app.get('/test', (req, res) => res.send('API working'));
 
-// Catch-all 404 (بعد كل الـ routes)
-app.all('*', (req, res) => {
+// Catch-all 404 (Express v5 compatible)
+app.all(/.*/, (req, res) => {
   res.status(404).send('Route not found');
 });
 
