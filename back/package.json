@@ -11,8 +11,8 @@
   },
   "author": "",
   "engines": {
-    "node": "18.x",
-    "npm": "8.x"
+    "node": "24.x",
+    "npm": "11.x"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
