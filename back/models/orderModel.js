@@ -158,7 +158,6 @@ const orderSchema = new mongoose.Schema(
 // =====================
 orderSchema.index({ userId: 1, createdAt: -1 }); // User's recent orders
 orderSchema.index({ status: 1, createdAt: -1 }); // Orders by status
-orderSchema.index({ orderNumber: 1 }); // Quick order lookup
 
 // =====================
 // Virtual: Total Items Count
