@@ -1,10 +1,34 @@
-// adminRoutes.js
-import express from "express"
+// routes/adminRoutes.js - IMPROVED VERSION
+import express from 'express';
+import { adminLogin } from '../controllers/adminController.js';
+import authMiddleware from '../middleware/auth.js';
+import { adminOnly } from '../middleware/adminOnly.js';
+import { validateLogin } from '../middleware/validation.js';
+import { authRateLimiter } from '../middleware/rateLimiter.js';
+const adminRouter = express.Router();
 
-import {adminLogin} from "../controllers/adminController.js"
+// =====================
+// PUBLIC ROUTE - Admin Login
+// =====================
+adminRouter.post('/login',authRateLimiter, validateLogin, adminLogin);
 
-const adminRouter = express.Router()
+// =====================
+// PROTECTED ADMIN ROUTES
+// =====================
 
-adminRouter.post("/login", adminLogin)
 
-export default adminRouter
+// Verify admin token
+adminRouter.get('/verify', authMiddleware, adminOnly, (req, res) => {
+  res.json({
+    success: true,
+    message: 'Valid admin token',
+    admin: {
+      id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+    },
+  });
+});
+
+export default adminRouter;

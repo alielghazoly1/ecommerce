@@ -1,19 +1,36 @@
-// orderRoutes.js
+// routes/orderRoutes.js - FIXED & PROTECTED
 import express from 'express';
 import {
   placeOrder,
-  // verifyOrder,
   userOrders,
   listOrders,
   updateStatus,
 } from '../controllers/orderController.js';
 import authMiddleware from '../middleware/auth.js';
+import { adminOnly } from '../middleware/adminOnly.js';
+import {
+  validateOrder,
+  validateOrderStatus,
+} from '../middleware/validation.js';
+
 const orderRouter = express.Router();
 
-orderRouter.post('/place', authMiddleware, placeOrder);
-// orderRouter.post('/verify', verifyOrder);
+// =====================
+// USER ROUTES (محمية بـ auth فقط)
+// =====================
+orderRouter.post('/place', authMiddleware, validateOrder, placeOrder);
 orderRouter.post('/userorders', authMiddleware, userOrders);
-orderRouter.get('/list', listOrders);
-orderRouter.post('/status', updateStatus);
+
+// =====================
+// ADMIN ROUTES (محمية بـ auth + adminOnly)
+// =====================
+orderRouter.get('/list', authMiddleware, adminOnly, listOrders);
+orderRouter.post(
+  '/status',
+  authMiddleware,
+  adminOnly,
+  validateOrderStatus,
+  updateStatus,
+);
 
 export default orderRouter;

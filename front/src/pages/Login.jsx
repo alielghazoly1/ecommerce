@@ -28,7 +28,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const res = await axios.post(`${url}/api/user/login`, formData);
+      const res = await axios.post(`${url}/api/users/login`, formData);
 
       if (res.data.success) {
         console.log('Login successful:', res.data);

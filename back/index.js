@@ -1,4 +1,4 @@
-// index.js
+// index.js - FINAL PRODUCTION READY VERSION
 import express from 'express';
 import serverless from 'serverless-http';
 import cors from 'cors';
@@ -6,80 +6,157 @@ import compression from 'compression';
 import connectDB from './config/db.js';
 import 'dotenv/config';
 
+// Routes
 import userRouter from './routes/userRoutes.js';
 import orderRouter from './routes/orderRoutes.js';
 import productRouter from './routes/productRoutes.js';
 import cartRouter from './routes/cartRoutes.js';
 import adminRouter from './routes/adminRoutes.js';
 
+// Middleware
+import errorHandler, { notFoundHandler } from './middleware/errorHandler.js';
+import rateLimiter from './middleware/rateLimiter.js';
+
 const app = express();
 
-// Global error logging
+// =====================
+// Global Error Handlers
+// =====================
 process.on('unhandledRejection', (err) => {
-  console.error('UNHANDLED REJECTION:', err && (err.stack || err));
+  console.error('💥 UNHANDLED REJECTION:', err?.stack || err);
 });
+
 process.on('uncaughtException', (err) => {
-  console.error('UNCAUGHT EXCEPTION:', err && (err.stack || err));
+  console.error('💥 UNCAUGHT EXCEPTION:', err?.stack || err);
 });
 
-// Middlewares
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// =====================
+// Security & Performance Middleware
+// =====================
+
+// Body parsing with size limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Compression
 app.use(compression());
-app.use(cors());
 
-// Health + favicon early to avoid hitting DB or heavy routes
-app.get('/', (req, res) => res.send('API running'));
-app.get('/test', (req, res) => res.send('API working'));
-app.get('/favicon.ico', (req, res) => res.status(204).end()); // fast no-content
+// CORS Configuration
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+app.use(cors(corsOptions));
 
-// Static images (keep this, but note vercel routes must not override /images)
+// Basic security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
+
+// =====================
+// Health Check Routes (no DB needed)
+// =====================
+app.get('/', (req, res) => {
+  res.json({
+    status: 'API is running',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+  });
+});
+
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
+// =====================
+// Static Files
+// =====================
 app.use('/images', express.static('uploads'));
 
-// Middleware to ensure DB connected only when needed
+// =====================
+// Database Connection Middleware
+// =====================
 const ensureDb = async (req, res, next) => {
-  // Only try to connect if MONGODB_URI is set and mongoose isn't already connected
-  if (process.env.MONGODB_URI) {
-    try {
-      await connectDB(); // connectDB will be idempotent / fast-fail (see config/db.js)
-      return next();
-    } catch (err) {
-      // If DB unreachable, log and optionally allow endpoints that don't need DB to run
-      console.error('ensureDb: DB connect failed', err && (err.message || err));
-      // If the route definitely needs DB, respond with 503
-      const routesThatNeedDb = [
-        '/api/users',
-        '/api/order',
-        '/api/product',
-        '/api/cart',
-        '/api/admin',
-      ];
-      if (routesThatNeedDb.some((r) => req.path.startsWith(r))) {
-        return res
-          .status(503)
-          .json({ error: 'Database unavailable. Please try later.' });
-      }
-      // Otherwise continue (for static or health checks)
-    }
+  if (!process.env.MONGODB_URI) {
+    console.warn('⚠️  MONGODB_URI not set - skipping DB connection');
+    return next();
   }
-  next();
+
+  // Check if route needs database
+  const dbRoutes = ['/api/users', '/api/order', '/api/product', '/api/cart', '/api/admin'];
+  const needsDb = dbRoutes.some((route) => req.path.startsWith(route));
+
+  if (!needsDb) {
+    return next();
+  }
+
+  // Connect to database
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('❌ Database connection failed:', err?.message);
+    return res.status(503).json({
+      success: false,
+      message: 'Database unavailable. Please try again later.',
+    });
+  }
 };
 
-// Attach ensureDb middleware before API routes
 app.use(ensureDb);
 
-// Routes
+// =====================
+// Rate Limiting (apply to all API routes)
+// =====================
+app.use('/api/', rateLimiter);
+
+// =====================
+// API Routes
+// =====================
 app.use('/api/users', userRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/product', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/admin', adminRouter);
 
-// Local dev only
+// =====================
+// Error Handlers (must be last)
+// =====================
+
+// 404 Not Found
+app.use(notFoundHandler);
+
+// Global Error Handler
+app.use(errorHandler);
+
+// =====================
+// Local Development Server
+// =====================
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 4000;
-  app.listen(PORT, () => console.log(`Server running locally on port ${PORT}`));
+  app.listen(PORT, () => {
+    console.log('='.repeat(50));
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 Local: http://localhost:${PORT}`);
+    console.log('='.repeat(50));
+  });
 }
 
-// ✅ EXPORT MUST BE LAST
+// =====================
+// Export for Serverless (Vercel)
+// =====================
 export default serverless(app);

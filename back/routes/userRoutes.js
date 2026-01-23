@@ -1,4 +1,4 @@
-// userRoutes.js 
+// routes/userRoutes.js - IMPROVED VERSION
 import express from 'express';
 import {
   loginUser,
@@ -11,21 +11,59 @@ import {
 
 import authMiddleware from '../middleware/auth.js';
 import { adminOnly } from '../middleware/adminOnly.js';
-
+import {
+  validateLogin,
+  validateRegister,
+  validateMongoId,
+} from '../middleware/validation.js';
+import { authRateLimiter } from '../middleware/rateLimiter.js';
 const userRouter = express.Router();
 
-// Auth
-userRouter.post('/login', loginUser);
-userRouter.post('/register', registerUser);
+// =====================
+// PUBLIC ROUTES (أي حد يقدر يوصلها)
+// =====================
+userRouter.post('/login', authRateLimiter, validateLogin, loginUser);
+userRouter.post('/register', authRateLimiter, validateRegister, registerUser);
 
-// Admin only
-userRouter.get('/list', authMiddleware, adminOnly, getAllUsers);
-userRouter.delete('/delete/:id', authMiddleware, adminOnly, deleteUser);
-userRouter.put('/make-admin/:id', authMiddleware, adminOnly, makeAdmin);
-userRouter.put('/demote/:id', authMiddleware, adminOnly, demoteToUser);
-userRouter.get('/test-auth', authMiddleware, (req, res) => {
-  res.json({ success: true, user: req.user });
+// =====================
+// PROTECTED USER ROUTES (لازم يكون مسجل دخول)
+// =====================
+userRouter.get('/profile', authMiddleware, (req, res) => {
+  res.json({
+    success: true,
+    user: {
+      id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+    },
+  });
 });
 
+// =====================
+// ADMIN ONLY ROUTES (لازم يكون admin)
+// =====================
+userRouter.get('/list', authMiddleware, adminOnly, getAllUsers);
+userRouter.delete(
+  '/delete/:id',
+  authMiddleware,
+  adminOnly,
+  validateMongoId('id'),
+  deleteUser,
+);
+userRouter.put(
+  '/make-admin/:id',
+  authMiddleware,
+  adminOnly,
+  validateMongoId('id'),
+  makeAdmin,
+);
+userRouter.put(
+  '/demote/:id',
+  authMiddleware,
+  adminOnly,
+  validateMongoId('id'),
+  demoteToUser,
+);
 
 export default userRouter;
