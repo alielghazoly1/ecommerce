@@ -48,7 +48,7 @@ const ensureDb = async (req, res, next) => {
       console.error('ensureDb: DB connect failed', err && (err.message || err));
       // If the route definitely needs DB, respond with 503
       const routesThatNeedDb = [
-        '/api/user',
+        '/api/users',
         '/api/order',
         '/api/product',
         '/api/cart',
@@ -69,7 +69,7 @@ const ensureDb = async (req, res, next) => {
 app.use(ensureDb);
 
 // Routes
-app.use('/api/user', userRouter);
+app.use('/api/users', userRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/product', productRouter);
 app.use('/api/cart', cartRouter);

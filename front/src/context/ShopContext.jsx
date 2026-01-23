@@ -9,7 +9,7 @@ const ShopContextProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [token, setToken] = useState(null);
   const [authLoading, setAuthLoading] = useState(true); // ✅ new
-  const url = 'https://ecommerce-nine-theta-34.vercel.app';
+  const url = 'http://localhost:4000';
 
   // تحميل السلة من LocalStorage
   useEffect(() => {
