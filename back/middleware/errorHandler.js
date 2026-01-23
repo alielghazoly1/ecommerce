@@ -1,11 +1,17 @@
 // middleware/errorHandler.js - Global Error Handler
+import logger from '../utils/logger.js';
+
 const errorHandler = (err, req, res, next) => {
-  console.error('='.repeat(50));
-  console.error('[ERROR HANDLER]');
-  console.error('Path:', req.path);
-  console.error('Method:', req.method);
-  console.error('Error:', err);
-  console.error('='.repeat(50));
+  // Log error with full details
+  logger.error('Error Handler Caught Exception', {
+    path: req.path,
+    method: req.method,
+    requestId: req.requestId,
+    userId: req.user?.id,
+    errorName: err.name,
+    errorMessage: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+  });
 
   // Default error values
   let statusCode = err.statusCode || 500;

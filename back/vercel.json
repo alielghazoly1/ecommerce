@@ -1,10 +1,53 @@
 {
-  "installCommand": "npm install --legacy-peer-deps",
   "version": 2,
-  "builds": [{ "src": "index.js", "use": "@vercel/node" }],
+  "name": "ecommerce-api",
+  "installCommand": "npm install --legacy-peer-deps",
+  "buildCommand": "echo 'No build step required'",
+  "builds": [
+    {
+      "src": "index.js",
+      "use": "@vercel/node",
+      "config": {
+        "maxLambdaSize": "50mb",
+        "includeFiles": ["**"]
+      }
+    }
+  ],
   "routes": [
-    { "src": "/favicon.ico", "dest": "/favicon.ico" },
-    { "src": "/images/(.*)", "dest": "/images/$1" },
-    { "src": "/(.*)", "dest": "/index.js" }
-  ]
+    {
+      "src": "/favicon.ico",
+      "dest": "/favicon.ico",
+      "headers": {
+        "cache-control": "public, max-age=86400"
+      }
+    },
+    {
+      "src": "/images/(.*)",
+      "dest": "/images/$1",
+      "headers": {
+        "cache-control": "public, max-age=31536000"
+      }
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "/index.js",
+      "headers": {
+        "cache-control": "s-maxage=0"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "regions": ["iad1"],
+  "functions": {
+    "index.js": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  }
 }
