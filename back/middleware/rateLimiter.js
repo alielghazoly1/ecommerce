@@ -95,7 +95,8 @@ const cleanupInterval = setInterval(() => {
   let cleaned = 0;
 
   for (const [ip, record] of requestCounts.entries()) {
-    if (now > record.resetTime) {
+    // ✅ Add 1 minute buffer to prevent edge cases
+    if (now > record.resetTime + 60000) {
       requestCounts.delete(ip);
       cleaned++;
     }
@@ -104,7 +105,7 @@ const cleanupInterval = setInterval(() => {
   if (cleaned > 0) {
     console.log(`[Rate Limiter] Cleaned ${cleaned} expired entries`);
   }
-}, 60 * 60 * 1000); // Every hour
+}, 15 * 60 * 1000); // Every 15 minutes
 
 // Cleanup on process exit
 process.on('SIGINT', () => {

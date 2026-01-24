@@ -106,18 +106,16 @@ app.use(compression());
 // =====================
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000', 'http://localhost:5173'];
+  : ['http://localhost:5173'];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-
+    if (!origin) return callback(null, true); // Postman أو موبيل
     if (allowedOrigins.includes(origin)) {
-      callback(null, true);
+      return callback(null, true);
     } else {
       logger.warn('CORS blocked request', { origin });
-      callback(new Error('Not allowed by CORS'));
+      return callback(null, false); // ⚠️ بدل throw Error
     }
   },
   credentials: true,
@@ -125,7 +123,7 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 600, // 10 minutes
+  maxAge: 600,
 };
 
 app.use(cors(corsOptions));

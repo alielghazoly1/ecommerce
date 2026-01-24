@@ -9,7 +9,7 @@ const lastAddTimestamps = new Map();
 // =====================
 const addToCart = async (req, res) => {
   try {
-    console.log('[addToCart] incoming', {
+    logger.info('[addToCart] incoming', {
       user: req.user && req.user.id,
       body: req.body,
       time: new Date().toISOString(),
@@ -18,7 +18,7 @@ const addToCart = async (req, res) => {
     const userId = req.user && req.user.id;
     const { id: itemId, quantity = 1 } = req.body;
     if (!userId) {
-      console.log('[addToCart] missing req.user');
+      logger.info('[addToCart] missing req.user');
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
@@ -30,7 +30,7 @@ const addToCart = async (req, res) => {
 
     // تجاهل إذا أرسل الـ client كامل cartData (safety)
     if (req.body.cartData) {
-      console.log('[addToCart] client sent cartData - ignoring that field');
+      logger.info('[addToCart] client sent cartData - ignoring that field');
     }
 
     // dedupe بسيط: إذا نفس المستخدم أرسل نفس العنصر خلال 800ms اعتبره مكرر
@@ -38,7 +38,7 @@ const addToCart = async (req, res) => {
     const now = Date.now();
     const last = lastAddTimestamps.get(key) || 0;
     if (now - last < 800) {
-      console.log('[addToCart] duplicate request detected, rejecting', {
+      logger.info('[addToCart] duplicate request detected, rejecting', {
         key,
         now,
         last,
@@ -62,7 +62,7 @@ const addToCart = async (req, res) => {
         .json({ success: false, message: 'User Not Found' });
     }
 
-    console.log('[addToCart] updated cart', { userId, cart: updated.cartData });
+    logger.info('[addToCart] updated cart', { userId, cart: updated.cartData });
     // نرجّع الكارت المحدث (يمكن حذفه إن أردت)
     res.json({
       success: true,
@@ -70,7 +70,7 @@ const addToCart = async (req, res) => {
       cartData: updated.cartData || {},
     });
   } catch (err) {
-    console.error('[addToCart] error', err);
+    logger.error('[addToCart] error', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -80,7 +80,7 @@ const addToCart = async (req, res) => {
 // =====================
 const removeOneFromCart = async (req, res) => {
   try {
-    console.log('[removeOneFromCart] incoming', {
+    logger.info('[removeOneFromCart] incoming', {
       user: req.user && req.user.id,
       body: req.body,
     });
@@ -123,13 +123,13 @@ const removeOneFromCart = async (req, res) => {
       );
     }
 
-    console.log('[removeOneFromCart] updated cart', {
+    logger.info('[removeOneFromCart] updated cart', {
       userId,
       cart: updated.cartData,
     });
     res.json({ success: true, cartData: updated.cartData || {} });
   } catch (err) {
-    console.error('[removeOneFromCart] error', err);
+    logger.error('[removeOneFromCart] error', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -137,7 +137,7 @@ const removeOneFromCart = async (req, res) => {
 // إزالة المنتج بشكل كامل من السلة
 const removeFromCart = async (req, res) => {
   try {
-    console.log('[removeFromCart] incoming', {
+    logger.info('[removeFromCart] incoming', {
       user: req.user && req.user.id,
       body: req.body,
     });
@@ -170,13 +170,13 @@ const removeFromCart = async (req, res) => {
       { new: true }
     );
 
-    console.log('[removeFromCart] updated cart', {
+    logger.info('[removeFromCart] updated cart', {
       userId,
       cart: updated.cartData,
     });
     res.json({ success: true, cartData: updated.cartData || {} });
   } catch (err) {
-    console.error('[removeFromCart] error', err);
+    logger.error('[removeFromCart] error', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -186,7 +186,7 @@ const removeFromCart = async (req, res) => {
 // =====================
 const getCart = async (req, res) => {
   try {
-    console.log('[getCart] incoming', { user: req.user && req.user.id });
+    logger.info('[getCart] incoming', { user: req.user && req.user.id });
     const userId = req.user && req.user.id;
     if (!userId)
       return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -199,7 +199,7 @@ const getCart = async (req, res) => {
 
     res.json({ success: true, cartData: user.cartData || {} });
   } catch (err) {
-    console.error('[getCart] error', err);
+    logger.error('[getCart] error', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -209,7 +209,7 @@ const getCart = async (req, res) => {
 // =====================
 const clearCart = async (req, res) => {
   try {
-    console.log('[clearCart] incoming', { user: req.user && req.user.id });
+    logger.info('[clearCart] incoming', { user: req.user && req.user.id });
     const userId = req.user && req.user.id;
     if (!userId)
       return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -224,14 +224,14 @@ const clearCart = async (req, res) => {
     user.cartData = {};
     await user.save();
 
-    console.log('[clearCart] cleared', { userId, previousCart });
+    logger.info('[clearCart] cleared', { userId, previousCart });
     res.json({
       success: true,
       message: 'Cart fetched and cleared successfully',
       cartData: previousCart,
     });
   } catch (err) {
-    console.error('[clearCart] error', err);
+    logger.error('[clearCart] error', err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
