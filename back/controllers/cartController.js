@@ -1,112 +1,125 @@
-// cartController.js
+// controllers/cartController.js - FIXED
 import userModel from '../models/userModel.js';
 
-// مؤقتًا: خريطة في الذاكرة لمنع النداءات المكررة السريعة (debug only)
 const lastAddTimestamps = new Map();
 
 // =====================
-// إضافة عنصر للسلة (atomic) + logging + dedupe
+// Add to Cart
 // =====================
 const addToCart = async (req, res) => {
   try {
-    logger.info('[addToCart] incoming', {
-      user: req.user && req.user.id,
+    console.log('[addToCart] Request:', {
+      user: req.user?._id,
       body: req.body,
-      time: new Date().toISOString(),
     });
 
-    const userId = req.user && req.user.id;
+    const userId = req.user?._id; // ✅ استخدم _id مش id
     const { id: itemId, quantity = 1 } = req.body;
+
     if (!userId) {
-      logger.info('[addToCart] missing req.user');
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Unauthorized' 
+      });
     }
 
     if (!itemId) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Item id is required' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Product ID is required' 
+      });
     }
 
-    // تجاهل إذا أرسل الـ client كامل cartData (safety)
-    if (req.body.cartData) {
-      logger.info('[addToCart] client sent cartData - ignoring that field');
-    }
-
-    // dedupe بسيط: إذا نفس المستخدم أرسل نفس العنصر خلال 800ms اعتبره مكرر
+    // Dedupe check
     const key = `${userId}_${itemId}`;
     const now = Date.now();
     const last = lastAddTimestamps.get(key) || 0;
+    
     if (now - last < 800) {
-      logger.info('[addToCart] duplicate request detected, rejecting', {
-        key,
-        now,
-        last,
+      console.log('[addToCart] Duplicate request detected');
+      return res.status(429).json({ 
+        success: false, 
+        message: 'Please wait before adding again' 
       });
-      return res
-        .status(429)
-        .json({ success: false, message: 'Duplicate request' });
     }
+    
     lastAddTimestamps.set(key, now);
 
-    // إجراء آتومي لزيادة الكمية
+    // Update cart atomically
     const updated = await userModel.findByIdAndUpdate(
       userId,
-      { $inc: { [`cartData.${itemId}`]: quantity } }, // 👈 استخدم الـ quantity من الـ body
+      { $inc: { [`cartData.${itemId}`]: quantity } },
       { new: true }
     );
 
     if (!updated) {
-      return res
-        .status(404)
-        .json({ success: false, message: 'User Not Found' });
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
     }
 
-    logger.info('[addToCart] updated cart', { userId, cart: updated.cartData });
-    // نرجّع الكارت المحدث (يمكن حذفه إن أردت)
+    console.log('[addToCart] Success:', { userId, itemId, quantity });
+
     res.json({
       success: true,
-      message: 'Added to Cart',
+      message: 'Added to cart',
       cartData: updated.cartData || {},
     });
   } catch (err) {
-    logger.error('[addToCart] error', err);
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[addToCart] Error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: err.message || 'Failed to add to cart' 
+    });
   }
 };
 
 // =====================
-// إزالة عنصر واحد من السلة أو حذف المفتاح تمامًا + logging
+// Remove One from Cart
 // =====================
 const removeOneFromCart = async (req, res) => {
   try {
-    logger.info('[removeOneFromCart] incoming', {
-      user: req.user && req.user.id,
+    console.log('[removeOneFromCart] Request:', {
+      user: req.user?._id,
       body: req.body,
     });
 
-    const userId = req.user && req.user.id;
+    const userId = req.user?._id;
     const { id: itemId } = req.body;
 
-    if (!userId)
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
-    if (!itemId)
-      return res
-        .status(400)
-        .json({ success: false, message: 'Item id is required' });
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Unauthorized' 
+      });
+    }
+
+    if (!itemId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Product ID is required' 
+      });
+    }
 
     const userData = await userModel.findById(userId);
-    if (!userData)
-      return res
-        .status(404)
-        .json({ success: false, message: 'User Not Found' });
+    
+    if (!userData) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
 
     const cartData = userData.cartData || {};
-    const currentQty = Number(cartData[itemId] || 0);
-    if (currentQty === 0)
-      return res
-        .status(404)
-        .json({ success: false, message: 'Item not in cart' });
+    const currentQty = Number(cartData.get(itemId) || 0);
+
+    if (currentQty === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Item not in cart' 
+      });
+    }
 
     let updated;
     if (currentQty > 1) {
@@ -123,45 +136,64 @@ const removeOneFromCart = async (req, res) => {
       );
     }
 
-    logger.info('[removeOneFromCart] updated cart', {
-      userId,
-      cart: updated.cartData,
+    console.log('[removeOneFromCart] Success');
+
+    res.json({ 
+      success: true, 
+      cartData: updated.cartData || {} 
     });
-    res.json({ success: true, cartData: updated.cartData || {} });
   } catch (err) {
-    logger.error('[removeOneFromCart] error', err);
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[removeOneFromCart] Error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: err.message 
+    });
   }
 };
 
-// إزالة المنتج بشكل كامل من السلة
+// =====================
+// Remove All from Cart
+// =====================
 const removeFromCart = async (req, res) => {
   try {
-    logger.info('[removeFromCart] incoming', {
-      user: req.user && req.user.id,
+    console.log('[removeFromCart] Request:', {
+      user: req.user?._id,
       body: req.body,
     });
 
-    const userId = req.user && req.user.id;
+    const userId = req.user?._id;
     const { id: itemId } = req.body;
-    if (!userId)
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
-    if (!itemId)
-      return res
-        .status(400)
-        .json({ success: false, message: 'Item id is required' });
+
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Unauthorized' 
+      });
+    }
+
+    if (!itemId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Product ID is required' 
+      });
+    }
 
     const userData = await userModel.findById(userId);
-    if (!userData)
-      return res
-        .status(404)
-        .json({ success: false, message: 'User Not Found' });
+    
+    if (!userData) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
 
     const cartData = userData.cartData || {};
-    if (!Object.prototype.hasOwnProperty.call(cartData, itemId)) {
-      return res
-        .status(404)
-        .json({ success: false, message: 'Item not in cart' });
+    
+    if (!cartData.has(itemId)) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Item not in cart' 
+      });
     }
 
     const updated = await userModel.findByIdAndUpdate(
@@ -170,69 +202,102 @@ const removeFromCart = async (req, res) => {
       { new: true }
     );
 
-    logger.info('[removeFromCart] updated cart', {
-      userId,
-      cart: updated.cartData,
+    console.log('[removeFromCart] Success');
+
+    res.json({ 
+      success: true, 
+      cartData: updated.cartData || {} 
     });
-    res.json({ success: true, cartData: updated.cartData || {} });
   } catch (err) {
-    logger.error('[removeFromCart] error', err);
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[removeFromCart] Error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: err.message 
+    });
   }
 };
 
 // =====================
-// جلب محتويات السلة + logging
+// Get Cart
 // =====================
 const getCart = async (req, res) => {
   try {
-    logger.info('[getCart] incoming', { user: req.user && req.user.id });
-    const userId = req.user && req.user.id;
-    if (!userId)
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    console.log('[getCart] Request:', { user: req.user?._id });
+
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Unauthorized' 
+      });
+    }
 
     const user = await userModel.findById(userId);
-    if (!user)
-      return res
-        .status(404)
-        .json({ success: false, message: 'User Not Found' });
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
 
-    res.json({ success: true, cartData: user.cartData || {} });
+    res.json({ 
+      success: true, 
+      cartData: user.cartData || {} 
+    });
   } catch (err) {
-    logger.error('[getCart] error', err);
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[getCart] Error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: err.message 
+    });
   }
 };
 
 // =====================
-// تصفير السلة وإرجاعها (يرجع الكارت القديم ثم يفرغه)
+// Clear Cart
 // =====================
 const clearCart = async (req, res) => {
   try {
-    logger.info('[clearCart] incoming', { user: req.user && req.user.id });
-    const userId = req.user && req.user.id;
-    if (!userId)
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    console.log('[clearCart] Request:', { user: req.user?._id });
+
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Unauthorized' 
+      });
+    }
 
     const user = await userModel.findById(userId);
-    if (!user)
-      return res
-        .status(404)
-        .json({ success: false, message: 'User not found' });
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
 
     const previousCart = user.cartData || {};
-    user.cartData = {};
+    
+    user.cartData = new Map();
     await user.save();
 
-    logger.info('[clearCart] cleared', { userId, previousCart });
+    console.log('[clearCart] Success');
+
     res.json({
       success: true,
-      message: 'Cart fetched and cleared successfully',
+      message: 'Cart cleared',
       cartData: previousCart,
     });
   } catch (err) {
-    logger.error('[clearCart] error', err);
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[clearCart] Error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: err.message 
+    });
   }
 };
 

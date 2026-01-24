@@ -1,10 +1,31 @@
 {
-  "installCommand": "npm install --legacy-peer-deps",
   "version": 2,
-  "builds": [{ "src": "index.js", "use": "@vercel/node" }],
+  "name": "ecommerce-api",
+  "installCommand": "npm install --legacy-peer-deps --production",
+  "builds": [
+    {
+      "src": "index.js",
+      "use": "@vercel/node",
+      "config": {
+        "maxLambdaSize": "15mb"
+      }
+    }
+  ],
   "routes": [
-    { "src": "/favicon.ico", "dest": "/favicon.ico" },
-    { "src": "/images/(.*)", "dest": "/images/$1" },
-    { "src": "/(.*)", "dest": "/index.js" }
-  ]
+    {
+      "src": "/favicon.ico",
+      "dest": "/favicon.ico"
+    },
+    {
+      "src": "/images/(.*)",
+      "dest": "/images/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.js"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
 }

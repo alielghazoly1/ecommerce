@@ -1,5 +1,6 @@
+// middleware/auth.js - CORRECT VERSION
 import jwt from 'jsonwebtoken';
-import User from '../models/userModel.js'; // استبدل بالمسار الصحيح للـ model
+import User from '../models/userModel.js';
 
 const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -16,16 +17,21 @@ const authMiddleware = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // fetch كامل بيانات المستخدم من قاعدة البيانات
-    const user = await User.findById(decoded.id).select('-password'); // ما نرجعش الباسورد
+    // ✅ المفروض decoded.id يكون _id بتاع اليوزر
+    const user = await User.findById(decoded.id).select('-password');
 
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
     }
 
-    req.user = user; // ✅ بيانات كاملة جاهزة لأي endpoint
+    // ✅ احفظ كل بيانات اليوزر في req.user
+    req.user = user;
     next();
   } catch (error) {
+    console.error('[authMiddleware] Error:', error);
     return res.status(403).json({
       success: false,
       message: 'Invalid or expired token',

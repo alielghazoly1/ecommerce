@@ -1,23 +1,13 @@
 {
   "name": "back",
   "version": "1.0.0",
-  "description": "Backend for ecommerce",
-  "main": "index.js",
   "type": "module",
   "scripts": {
-    "server": "nodemon index.js",
+    "dev": "nodemon index.js",
     "start": "node index.js"
-  },
-  "author": "",
-  "license": "ISC",
-  "engines": {
-    "node": "24.x",
-    "npm": "11.x"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "body-parser": "^2.2.1",
-    "cloudinary": "^2.9.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -25,9 +15,13 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.4",
     "multer": "^2.0.2",
-    "nodemon": "^3.1.11",
     "serverless-http": "^4.0.0",
-    "stripe": "^20.1.0",
     "validator": "^13.15.26"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  },
+  "engines": {
+    "node": "24.x"
   }
 }

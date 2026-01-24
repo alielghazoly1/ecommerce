@@ -21,11 +21,11 @@ const requestLogger = (req, res, next) => {
     startTime,
   });
 
-  // Log incoming request
+  // Log incoming request (without body to avoid size issues)
   logger.http(`Incoming ${req.method} ${req.originalUrl}`, {
     requestId,
     ip: req.ip || req.connection.remoteAddress,
-    userAgent: req.get('user-agent'),
+    userAgent: req.get('user-agent') ? req.get('user-agent').substring(0, 100) : 'unknown',
     userId: req.user?.id || 'anonymous',
   });
 

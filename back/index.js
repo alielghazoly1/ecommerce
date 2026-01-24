@@ -20,9 +20,7 @@ import monitoringRouter from './routes/monitoringRoutes.js';
 // Middleware
 import errorHandler, { notFoundHandler } from './middleware/errorHandler.js';
 import rateLimiter from './middleware/rateLimiter.js';
-import requestLogger, {
-  performanceMonitor,
-} from './middleware/requestLogger.js';
+import requestLogger, { performanceMonitor } from './middleware/requestLogger.js';
 
 // Security Middleware
 import {
@@ -73,20 +71,16 @@ app.use(ipBlacklist);
 // =====================
 // Body Parsing with Security
 // =====================
-app.use(
-  express.json({
-    limit: process.env.MAX_REQUEST_SIZE || '10mb',
-    strict: true,
-  }),
-);
+app.use(express.json({ 
+  limit: '1mb', // تقليل الحد الأقصى
+  strict: true,
+}));
 
-app.use(
-  express.urlencoded({
-    extended: true,
-    limit: process.env.MAX_REQUEST_SIZE || '10mb',
-    parameterLimit: 100,
-  }),
-);
+app.use(express.urlencoded({ 
+  extended: true, 
+  limit: '1mb',
+  parameterLimit: 100,
+}));
 
 // =====================
 // Input Sanitization & Security
@@ -104,18 +98,20 @@ app.use(compression());
 // =====================
 // CORS Configuration (STRICT)
 // =====================
-const allowedOrigins = process.env.ALLOWED_ORIGINS
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:5173'];
+  : ['http://localhost:3000', 'http://localhost:5173'];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // Postman أو موبيل
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
     if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
+      callback(null, true);
     } else {
       logger.warn('CORS blocked request', { origin });
-      return callback(null, false); // ⚠️ بدل throw Error
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
@@ -123,7 +119,7 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 600,
+  maxAge: 600, // 10 minutes
 };
 
 app.use(cors(corsOptions));
@@ -163,13 +159,10 @@ app.get('/favicon.ico', (req, res) => res.status(204).end());
 // =====================
 // Static Files (with caching)
 // =====================
-app.use(
-  '/images',
-  express.static('uploads', {
-    maxAge: '1d',
-    etag: true,
-  }),
-);
+app.use('/images', express.static('uploads', {
+  maxAge: '1d',
+  etag: true,
+}));
 
 // =====================
 // Database Connection Middleware
@@ -180,13 +173,7 @@ const ensureDb = async (req, res, next) => {
     return next();
   }
 
-  const dbRoutes = [
-    '/api/users',
-    '/api/order',
-    '/api/product',
-    '/api/cart',
-    '/api/admin',
-  ];
+  const dbRoutes = ['/api/users', '/api/order', '/api/product', '/api/cart', '/api/admin'];
   const needsDb = dbRoutes.some((route) => req.path.startsWith(route));
 
   if (!needsDb) return next();
@@ -233,14 +220,14 @@ app.use(errorHandler);
 // =====================
 const gracefulShutdown = (signal) => {
   logger.info(`${signal} received: closing server gracefully`);
-
+  
   // Close server
   if (server) {
     server.close(() => {
       logger.info('HTTP server closed');
     });
   }
-
+  
   // Close database connection
   import('mongoose').then((mongoose) => {
     mongoose.connection.close(false, () => {
@@ -273,9 +260,7 @@ if (process.env.NODE_ENV !== 'production') {
       pid: process.pid,
     });
     logger.info(`📍 Local: http://localhost:${PORT}`);
-    logger.info(
-      `📊 Monitoring: http://localhost:${PORT}/api/monitoring/dashboard`,
-    );
+    logger.info(`📊 Monitoring: http://localhost:${PORT}/api/monitoring/dashboard`);
     logger.info(`🔒 Security: All security features enabled`);
   });
 }

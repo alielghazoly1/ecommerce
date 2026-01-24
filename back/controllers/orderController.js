@@ -1,10 +1,9 @@
 // =====================
-// orderController.js - FIXED VERSION (بدون الكود المكرر)
+// orderController.js - UPDATED with new Order Model features
 // =====================
 import orderModel from '../models/orderModel.js';
 import userModel from '../models/userModel.js';
 import productModel from '../models/productModel.js';
-import logger from '../utils/logger.js';
 
 const placeOrder = async (req, res) => {
   try {
@@ -24,7 +23,7 @@ const placeOrder = async (req, res) => {
 
     for (const item of items) {
       const product = await productModel.findById(item.id);
-
+      
       if (!product) {
         return res.status(404).json({
           success: false,
@@ -55,7 +54,7 @@ const placeOrder = async (req, res) => {
 
     // Create order with new schema
     const newOrder = new orderModel({
-      userId: req.user.id,
+      userId: req.user._id, // ✅ استخدم _id
       items: orderItems,
       totalAmount: calculatedTotal,
       shippingAddress: {
@@ -73,20 +72,13 @@ const placeOrder = async (req, res) => {
     await newOrder.save();
 
     // Update user metadata
-    await userModel.findByIdAndUpdate(req.user.id, {
+    await userModel.findByIdAndUpdate(req.user._id, { // ✅ استخدم _id
       cartData: {},
-      $inc: {
-        'metadata.totalOrders': 1,
-        'metadata.totalSpent': calculatedTotal,
-      },
+      $inc: { 'metadata.totalOrders': 1, 'metadata.totalSpent': calculatedTotal },
       'metadata.lastOrderDate': new Date(),
     });
 
-    logger.info('[placeOrder] Order created', {
-      orderNumber: newOrder.orderNumber,
-      userId: req.user.id,
-      total: calculatedTotal,
-    });
+    console.log('[placeOrder] Order created:', newOrder.orderNumber);
 
     res.json({
       success: true,
@@ -100,7 +92,7 @@ const placeOrder = async (req, res) => {
       },
     });
   } catch (err) {
-    logger.error('[placeOrder] Error', { error: err.message, stack: err.stack });
+    console.error('[placeOrder] Error:', err);
     res.status(500).json({
       success: false,
       message: err.message || 'Failed to place order',
@@ -127,18 +119,13 @@ const userOrders = async (req, res) => {
       shippingAddress: order.shippingAddress,
     }));
 
-    logger.info('[userOrders] Fetched orders', {
-      userId: req.user.id,
-      count: formattedOrders.length,
-    });
-
     res.json({
       success: true,
       data: formattedOrders,
       count: formattedOrders.length,
     });
   } catch (err) {
-    logger.error('[userOrders] Error', { error: err.message });
+    console.error('[userOrders] Error:', err);
     res.status(500).json({
       success: false,
       message: err.message || 'Failed to fetch orders',
@@ -177,18 +164,13 @@ const listOrders = async (req, res) => {
       trackingNumber: order.trackingNumber,
     }));
 
-    logger.info('[listOrders] Admin fetched orders', {
-      count: formattedOrders.length,
-      filter: status || 'all',
-    });
-
     res.json({
       success: true,
       data: formattedOrders,
       count: formattedOrders.length,
     });
   } catch (err) {
-    logger.error('[listOrders] Error', { error: err.message });
+    console.error('[listOrders] Error:', err);
     res.status(500).json({
       success: false,
       message: err.message || 'Failed to fetch orders',
@@ -224,11 +206,7 @@ const updateStatus = async (req, res) => {
       await order.save();
     }
 
-    logger.info('[updateStatus] Order updated', {
-      orderId,
-      status,
-      trackingNumber,
-    });
+    console.log('[updateStatus] Order updated:', orderId, 'Status:', status);
 
     res.json({
       success: true,
@@ -241,7 +219,7 @@ const updateStatus = async (req, res) => {
       },
     });
   } catch (err) {
-    logger.error('[updateStatus] Error', { error: err.message });
+    console.error('[updateStatus] Error:', err);
     res.status(500).json({
       success: false,
       message: err.message || 'Failed to update status',
@@ -249,22 +227,18 @@ const updateStatus = async (req, res) => {
   }
 };
 
-// Get today's orders
+// New: Get today's orders
 const getTodaysOrders = async (req, res) => {
   try {
     const orders = await orderModel.getTodaysOrders();
-
-    logger.info("[getTodaysOrders] Fetched today's orders", {
-      count: orders.length,
-    });
-
+    
     res.json({
       success: true,
       count: orders.length,
       data: orders,
     });
   } catch (err) {
-    logger.error('[getTodaysOrders] Error', { error: err.message });
+    console.error('[getTodaysOrders] Error:', err);
     res.status(500).json({
       success: false,
       message: err.message,
@@ -273,3 +247,110 @@ const getTodaysOrders = async (req, res) => {
 };
 
 export { placeOrder, userOrders, listOrders, updateStatus, getTodaysOrders };
+
+// =====================
+// productController.js - UPDATED additions
+// =====================
+
+// Get featured products
+export const getFeaturedProducts = async (req, res) => {
+  try {
+    const products = await productModel.getFeaturedProducts(10);
+    
+    res.json({
+      success: true,
+      data: products,
+      count: products.length,
+    });
+  } catch (err) {
+    console.error('[getFeaturedProducts] Error:', err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+// Get best sellers
+export const getBestSellers = async (req, res) => {
+  try {
+    const products = await productModel.getBestSellers(10);
+    
+    res.json({
+      success: true,
+      data: products,
+      count: products.length,
+    });
+  } catch (err) {
+    console.error('[getBestSellers] Error:', err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+// Search products
+export const searchProducts = async (req, res) => {
+  try {
+    const { q } = req.query;
+    
+    if (!q || q.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search query is required',
+      });
+    }
+
+    const products = await productModel.searchProducts(q, 50);
+    
+    res.json({
+      success: true,
+      data: products,
+      count: products.length,
+    });
+  } catch (err) {
+    console.error('[searchProducts] Error:', err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+// Add review to product
+export const addProductReview = async (req, res) => {
+  try {
+    const { productId, rating, comment } = req.body;
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rating must be between 1 and 5',
+      });
+    }
+
+    const product = await productModel.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found',
+      });
+    }
+
+    await product.addReview(req.user.id, req.user.name, rating, comment);
+
+    res.json({
+      success: true,
+      message: 'Review added successfully',
+      ratings: product.ratings,
+    });
+  } catch (err) {
+    console.error('[addProductReview] Error:', err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
