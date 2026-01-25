@@ -1,6 +1,7 @@
 // middleware/auth.js - CORRECT VERSION
 import jwt from 'jsonwebtoken';
 import User from '../models/userModel.js';
+import logger from '../utils/logger.js';
 
 const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -31,7 +32,7 @@ const authMiddleware = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    console.error('[authMiddleware] Error:', error);
+    logger.error('Authentication error', { error: error.message, token: token.substring(0, 20) + '...' });
     return res.status(403).json({
       success: false,
       message: 'Invalid or expired token',

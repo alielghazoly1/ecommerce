@@ -68,7 +68,7 @@ const Cart = () => {
                   hover:shadow-cyan-400/30 transition-all duration-300"
                 >
                   <LazyImage
-                    src={`${url}/images/${item.image}`}
+                    src={item.image}
                     alt={item.name}
                     className="w-32 h-32 object-contain rounded-2xl"
                   />

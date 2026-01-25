@@ -7,7 +7,7 @@ const errorHandler = (err, req, res, next) => {
     path: req.path,
     method: req.method,
     requestId: req.requestId,
-    userId: req.user?.id,
+    userId: req.user?._id,
     errorName: err.name,
     errorMessage: err.message,
     stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,

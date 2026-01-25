@@ -1,1 +1,32 @@
 @import "tailwindcss";
+
+/* تحسين الخطوط العربية */
+* {
+  font-family: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  direction: rtl;
+  text-align: right;
+}
+
+/* تحسين عرض النصوص العربية */
+h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea, select, label {
+  font-family: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  letter-spacing: 0;
+}
+
+/* تحسين عرض الأرقام */
+input[type="number"] {
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  text-align: right;
+}
+
+/* تحسين الخطوط في العناصر التفاعلية */
+button, input, textarea, select {
+  font-family: 'Cairo', 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}

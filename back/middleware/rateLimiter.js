@@ -1,4 +1,5 @@
 // middleware/rateLimiter.js - Rate Limiting System
+import logger from '../utils/logger.js';
 
 // Store for request counts
 const requestCounts = new Map();
@@ -103,7 +104,7 @@ const cleanupInterval = setInterval(() => {
   }
 
   if (cleaned > 0) {
-    console.log(`[Rate Limiter] Cleaned ${cleaned} expired entries`);
+    logger.debug(`Rate limiter cleaned ${cleaned} expired entries`);
   }
 }, 15 * 60 * 1000); // Every 15 minutes
 

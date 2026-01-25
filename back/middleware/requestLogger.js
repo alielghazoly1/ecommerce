@@ -26,7 +26,7 @@ const requestLogger = (req, res, next) => {
     requestId,
     ip: req.ip || req.connection.remoteAddress,
     userAgent: req.get('user-agent') ? req.get('user-agent').substring(0, 100) : 'unknown',
-    userId: req.user?.id || 'anonymous',
+    userId: req.user?._id || 'anonymous',
   });
 
   // Capture response

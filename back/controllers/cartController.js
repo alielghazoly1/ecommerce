@@ -1,16 +1,18 @@
 // controllers/cartController.js - FIXED
 import userModel from '../models/userModel.js';
+import logger from '../utils/logger.js';
+import { asyncHandler } from '../middleware/errorHandler.js';
 
 const lastAddTimestamps = new Map();
 
 // =====================
 // Add to Cart
 // =====================
-const addToCart = async (req, res) => {
-  try {
-    console.log('[addToCart] Request:', {
-      user: req.user?._id,
-      body: req.body,
+const addToCart = asyncHandler(async (req, res) => {
+    logger.debug('Add to cart request', {
+      userId: req.user?._id,
+      itemId: req.body.id,
+      quantity: req.body.quantity,
     });
 
     const userId = req.user?._id; // ✅ استخدم _id مش id
@@ -36,7 +38,7 @@ const addToCart = async (req, res) => {
     const last = lastAddTimestamps.get(key) || 0;
     
     if (now - last < 800) {
-      console.log('[addToCart] Duplicate request detected');
+      logger.warn('Duplicate add to cart request detected', { userId, itemId });
       return res.status(429).json({ 
         success: false, 
         message: 'Please wait before adding again' 
@@ -59,30 +61,22 @@ const addToCart = async (req, res) => {
       });
     }
 
-    console.log('[addToCart] Success:', { userId, itemId, quantity });
+    logger.info('Item added to cart successfully', { userId, itemId, quantity });
 
     res.json({
       success: true,
       message: 'Added to cart',
       cartData: updated.cartData || {},
     });
-  } catch (err) {
-    console.error('[addToCart] Error:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: err.message || 'Failed to add to cart' 
-    });
-  }
-};
+});
 
 // =====================
 // Remove One from Cart
 // =====================
-const removeOneFromCart = async (req, res) => {
-  try {
-    console.log('[removeOneFromCart] Request:', {
-      user: req.user?._id,
-      body: req.body,
+const removeOneFromCart = asyncHandler(async (req, res) => {
+    logger.debug('Remove one from cart request', {
+      userId: req.user?._id,
+      itemId: req.body.id,
     });
 
     const userId = req.user?._id;
@@ -136,29 +130,21 @@ const removeOneFromCart = async (req, res) => {
       );
     }
 
-    console.log('[removeOneFromCart] Success');
+    logger.info('Item quantity decreased in cart', { userId, itemId });
 
     res.json({ 
       success: true, 
       cartData: updated.cartData || {} 
     });
-  } catch (err) {
-    console.error('[removeOneFromCart] Error:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: err.message 
-    });
-  }
-};
+});
 
 // =====================
 // Remove All from Cart
 // =====================
-const removeFromCart = async (req, res) => {
-  try {
-    console.log('[removeFromCart] Request:', {
-      user: req.user?._id,
-      body: req.body,
+const removeFromCart = asyncHandler(async (req, res) => {
+    logger.debug('Remove from cart request', {
+      userId: req.user?._id,
+      itemId: req.body.id,
     });
 
     const userId = req.user?._id;
@@ -202,27 +188,19 @@ const removeFromCart = async (req, res) => {
       { new: true }
     );
 
-    console.log('[removeFromCart] Success');
+    logger.info('Item removed from cart', { userId, itemId });
 
     res.json({ 
       success: true, 
       cartData: updated.cartData || {} 
     });
-  } catch (err) {
-    console.error('[removeFromCart] Error:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: err.message 
-    });
-  }
-};
+});
 
 // =====================
 // Get Cart
 // =====================
-const getCart = async (req, res) => {
-  try {
-    console.log('[getCart] Request:', { user: req.user?._id });
+const getCart = asyncHandler(async (req, res) => {
+    logger.debug('Get cart request', { userId: req.user?._id });
 
     const userId = req.user?._id;
 
@@ -246,21 +224,13 @@ const getCart = async (req, res) => {
       success: true, 
       cartData: user.cartData || {} 
     });
-  } catch (err) {
-    console.error('[getCart] Error:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: err.message 
-    });
-  }
-};
+});
 
 // =====================
 // Clear Cart
 // =====================
-const clearCart = async (req, res) => {
-  try {
-    console.log('[clearCart] Request:', { user: req.user?._id });
+const clearCart = asyncHandler(async (req, res) => {
+    logger.debug('Clear cart request', { userId: req.user?._id });
 
     const userId = req.user?._id;
 
@@ -285,20 +255,13 @@ const clearCart = async (req, res) => {
     user.cartData = new Map();
     await user.save();
 
-    console.log('[clearCart] Success');
+    logger.info('Cart cleared successfully', { userId });
 
     res.json({
       success: true,
       message: 'Cart cleared',
       cartData: previousCart,
     });
-  } catch (err) {
-    console.error('[clearCart] Error:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: err.message 
-    });
-  }
-};
+});
 
 export { addToCart, removeFromCart, removeOneFromCart, getCart, clearCart };

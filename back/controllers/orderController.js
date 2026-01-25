@@ -4,10 +4,11 @@
 import orderModel from '../models/orderModel.js';
 import userModel from '../models/userModel.js';
 import productModel from '../models/productModel.js';
+import logger from '../utils/logger.js';
+import { asyncHandler } from '../middleware/errorHandler.js';
 
-const placeOrder = async (req, res) => {
-  try {
-    const { items, address, amount, paymentMethod = 'cash', notes } = req.body;
+const placeOrder = asyncHandler(async (req, res) => {
+  const { items, address, amount, paymentMethod = 'cash', notes } = req.body;
 
     // Validation (already done in middleware, but double-check)
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -78,7 +79,7 @@ const placeOrder = async (req, res) => {
       'metadata.lastOrderDate': new Date(),
     });
 
-    console.log('[placeOrder] Order created:', newOrder.orderNumber);
+    logger.info('Order created successfully', { orderNumber: newOrder.orderNumber, orderId: newOrder._id });
 
     res.json({
       success: true,
@@ -91,19 +92,11 @@ const placeOrder = async (req, res) => {
         itemsCount: newOrder.itemsCount,
       },
     });
-  } catch (err) {
-    console.error('[placeOrder] Error:', err);
-    res.status(500).json({
-      success: false,
-      message: err.message || 'Failed to place order',
-    });
-  }
-};
+});
 
-const userOrders = async (req, res) => {
-  try {
+const userOrders = asyncHandler(async (req, res) => {
     // Use static method from model
-    const orders = await orderModel.getUserOrders(req.user.id, 50);
+    const orders = await orderModel.getUserOrders(req.user._id, 50);
 
     const formattedOrders = orders.map((order) => ({
       _id: order._id,
@@ -124,17 +117,9 @@ const userOrders = async (req, res) => {
       data: formattedOrders,
       count: formattedOrders.length,
     });
-  } catch (err) {
-    console.error('[userOrders] Error:', err);
-    res.status(500).json({
-      success: false,
-      message: err.message || 'Failed to fetch orders',
-    });
-  }
-};
+});
 
-const listOrders = async (req, res) => {
-  try {
+const listOrders = asyncHandler(async (req, res) => {
     const { status, limit = 100 } = req.query;
 
     let orders;
@@ -169,17 +154,9 @@ const listOrders = async (req, res) => {
       data: formattedOrders,
       count: formattedOrders.length,
     });
-  } catch (err) {
-    console.error('[listOrders] Error:', err);
-    res.status(500).json({
-      success: false,
-      message: err.message || 'Failed to fetch orders',
-    });
-  }
-};
+});
 
-const updateStatus = async (req, res) => {
-  try {
+const updateStatus = asyncHandler(async (req, res) => {
     const { orderId, status, trackingNumber } = req.body;
 
     const order = await orderModel.findById(orderId);
@@ -206,7 +183,7 @@ const updateStatus = async (req, res) => {
       await order.save();
     }
 
-    console.log('[updateStatus] Order updated:', orderId, 'Status:', status);
+    logger.info('Order status updated', { orderId, status, trackingNumber });
 
     res.json({
       success: true,
@@ -218,139 +195,17 @@ const updateStatus = async (req, res) => {
         trackingNumber: order.trackingNumber,
       },
     });
-  } catch (err) {
-    console.error('[updateStatus] Error:', err);
-    res.status(500).json({
-      success: false,
-      message: err.message || 'Failed to update status',
-    });
-  }
-};
+});
 
 // New: Get today's orders
-const getTodaysOrders = async (req, res) => {
-  try {
-    const orders = await orderModel.getTodaysOrders();
-    
-    res.json({
-      success: true,
-      count: orders.length,
-      data: orders,
-    });
-  } catch (err) {
-    console.error('[getTodaysOrders] Error:', err);
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
+const getTodaysOrders = asyncHandler(async (req, res) => {
+  const orders = await orderModel.getTodaysOrders();
+  
+  res.json({
+    success: true,
+    count: orders.length,
+    data: orders,
+  });
+});
 
 export { placeOrder, userOrders, listOrders, updateStatus, getTodaysOrders };
-
-// =====================
-// productController.js - UPDATED additions
-// =====================
-
-// Get featured products
-export const getFeaturedProducts = async (req, res) => {
-  try {
-    const products = await productModel.getFeaturedProducts(10);
-    
-    res.json({
-      success: true,
-      data: products,
-      count: products.length,
-    });
-  } catch (err) {
-    console.error('[getFeaturedProducts] Error:', err);
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-// Get best sellers
-export const getBestSellers = async (req, res) => {
-  try {
-    const products = await productModel.getBestSellers(10);
-    
-    res.json({
-      success: true,
-      data: products,
-      count: products.length,
-    });
-  } catch (err) {
-    console.error('[getBestSellers] Error:', err);
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-// Search products
-export const searchProducts = async (req, res) => {
-  try {
-    const { q } = req.query;
-    
-    if (!q || q.trim().length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Search query is required',
-      });
-    }
-
-    const products = await productModel.searchProducts(q, 50);
-    
-    res.json({
-      success: true,
-      data: products,
-      count: products.length,
-    });
-  } catch (err) {
-    console.error('[searchProducts] Error:', err);
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-// Add review to product
-export const addProductReview = async (req, res) => {
-  try {
-    const { productId, rating, comment } = req.body;
-
-    if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({
-        success: false,
-        message: 'Rating must be between 1 and 5',
-      });
-    }
-
-    const product = await productModel.findById(productId);
-
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found',
-      });
-    }
-
-    await product.addReview(req.user.id, req.user.name, rating, comment);
-
-    res.json({
-      success: true,
-      message: 'Review added successfully',
-      ratings: product.ratings,
-    });
-  } catch (err) {
-    console.error('[addProductReview] Error:', err);
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};

@@ -45,6 +45,28 @@ productRouter.post(
   authMiddleware,
   adminOnly,
   upload.single('image'),
+  (err, req, res, next) => {
+    // Handle multer errors
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+          success: false,
+          message: 'File size is too large. Maximum size is 5MB',
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: err.message || 'File upload error',
+      });
+    }
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message || 'File upload error',
+      });
+    }
+    next();
+  },
   validateProduct,
   addProduct,
 );
@@ -56,6 +78,5 @@ productRouter.post(
   validateMongoId('id'),
   removeProduct,
 );
-
 
 export default productRouter;

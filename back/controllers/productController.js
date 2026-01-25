@@ -1,189 +1,155 @@
-// controllers/productController.js - Cloudinary Solution
+// productController.js - LOCAL STORAGE VERSION (بديل Cloudinary)
 import productModel from '../models/productModel.js';
-import { v2 as cloudinary } from 'cloudinary';
+import path from 'path';
+import fs from 'fs';
+import logger from '../utils/logger.js';
+import { asyncHandler } from '../middleware/errorHandler.js';
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-// Helper: Upload buffer to Cloudinary
-const uploadToCloudinary = (buffer, folder = 'ecommerce-products') => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: folder,
-        resource_type: 'auto',
-        transformation: [
-          { width: 800, height: 800, crop: 'limit' },
-          { quality: 'auto' },
-          { fetch_format: 'auto' },
-        ],
-      },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
-      },
-    );
-    uploadStream.end(buffer);
+// ✅ حفظ الصورة محلياً (بديل Cloudinary)
+const addProduct = asyncHandler(async (req, res) => {
+  logger.info('Add product request received', {
+    hasFile: !!req.file,
+    productName: req.body.name,
   });
-};
 
-// Helper: Delete from Cloudinary
-const deleteFromCloudinary = (publicId) => {
-  return cloudinary.uploader.destroy(publicId);
-};
-
-// =====================
-// Add Product with Cloudinary
-// =====================
-const addProduct = async (req, res) => {
-  try {
-    console.log('--- New addProduct request ---');
-    console.log('req.body:', req.body);
-    console.log('req.file:', req.file);
-    console.log('[addProduct] Request received:', {
-      body: req.body,
-      hasFile: !!req.file,
+  // Validation - Image
+  if (!req.file) {
+    return res.status(400).json({
+      success: false,
+      message: 'صورة المنتج مطلوبة',
     });
+  }
 
-    // Validation
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'Image is required',
-      });
+  const { name, description, price, category } = req.body;
+
+  // Validation - Fields
+  if (!name || !description || !price || !category) {
+    return res.status(400).json({
+      success: false,
+      message: 'جميع الحقول مطلوبة',
+    });
+  }
+
+  // Validation - Price
+  const parsedPrice = Number(price);
+  if (isNaN(parsedPrice) || parsedPrice <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'السعر يجب أن يكون رقماً موجباً',
+    });
+  }
+
+  try {
+    // ✅ احفظ الصورة محلياً
+    const uploadsDir = path.join(process.cwd(), 'uploads', 'images');
+    
+    // تأكد من وجود المجلد
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
-    const { name, description, price, category } = req.body;
+    // اسم فريد للصورة
+    const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}${path.extname(req.file.originalname)}`;
+    const filepath = path.join(uploadsDir, filename);
 
-    if (!name || !description || !price || !category) {
-      return res.status(400).json({
-        success: false,
-        message: 'All fields are required',
-      });
-    }
+    // احفظ الملف
+    fs.writeFileSync(filepath, req.file.buffer);
 
-    // Upload to Cloudinary
-    console.log('[addProduct] Uploading to Cloudinary...');
-    const uploadResult = await uploadToCloudinary(req.file.buffer);
-    console.log('[addProduct] Upload successful:', uploadResult.secure_url);
+    logger.info('Image saved locally', { filename });
 
+    // ✅ احفظ في Database
     const product = new productModel({
       name: name.trim(),
       description: description.trim(),
-      price: Number(price),
-      category: category.trim(),
-      image: uploadResult.secure_url, // Store Cloudinary URL
-      cloudinary_id: uploadResult.public_id, // Store public_id for deletion
+      price: parsedPrice,
+      category: category.trim().toLowerCase(),
+      image: filename, // ✅ احفظ اسم الملف فقط
     });
 
     await product.save();
-    console.log('[addProduct] Product saved successfully:', product._id);
+    logger.info('Product added successfully', { 
+      productId: product._id, 
+      name: product.name 
+    });
 
     res.json({
       success: true,
-      message: 'Product Added Successfully',
+      message: 'تم إضافة المنتج بنجاح',
       product: {
         id: product._id,
         name: product.name,
         price: product.price,
-        image: product.image,
+        category: product.category,
+        image: filename,
       },
     });
-  } catch (err) {
-    console.error('[addProduct] Error:', err);
-    res.status(500).json({
+
+  } catch (error) {
+    logger.error('Error in addProduct', { 
+      error: error.message,
+      stack: error.stack,
+    });
+
+    return res.status(500).json({
       success: false,
-      message: err.message || 'Failed to add product',
+      message: 'حدث خطأ أثناء إضافة المنتج',
+      details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
     });
   }
-};
+});
 
-// =====================
-// List All Products
-// =====================
-const listProducts = async (req, res) => {
-  try {
-    console.log('[listProducts] Fetching all products');
+// ✅ حذف المنتج (مع حذف الصورة المحلية)
+const removeProduct = asyncHandler(async (req, res) => {
+  const { id } = req.body;
 
-    const products = await productModel.find({});
-
-    console.log('[listProducts] Found products:', products.length);
-
-    res.json({
-      success: true,
-      data: products,
-      count: products.length,
-    });
-  } catch (err) {
-    console.error('[listProducts] Error:', err);
-    res.status(500).json({
+  if (!id) {
+    return res.status(400).json({
       success: false,
-      message: err.message || 'Failed to fetch products',
+      message: 'Product ID is required',
     });
   }
-};
 
-// =====================
-// Remove Product (with Cloudinary cleanup)
-// =====================
-const removeProduct = async (req, res) => {
-  try {
-    console.log('[removeProduct] Request:', req.body);
+  const product = await productModel.findById(id);
 
-    const { id } = req.body;
+  if (!product) {
+    return res.status(404).json({
+      success: false,
+      message: 'Product not found',
+    });
+  }
 
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: 'Product ID is required',
-      });
-    }
-
-    const product = await productModel.findById(id);
-
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found',
-      });
-    }
-
-    // Delete from Cloudinary if cloudinary_id exists
-    if (product.cloudinary_id) {
+  // ✅ احذف الصورة من المجلد
+  if (product.image) {
+    const filepath = path.join(process.cwd(), 'uploads', 'images', product.image);
+    
+    if (fs.existsSync(filepath)) {
       try {
-        await deleteFromCloudinary(product.cloudinary_id);
-        console.log(
-          '[removeProduct] Deleted from Cloudinary:',
-          product.cloudinary_id,
-        );
-      } catch (cloudinaryErr) {
-        console.error(
-          '[removeProduct] Cloudinary delete error:',
-          cloudinaryErr,
-        );
-        // Continue anyway - we still want to delete from DB
+        fs.unlinkSync(filepath);
+        logger.info('Image deleted from local storage', { filename: product.image });
+      } catch (err) {
+        logger.warn('Failed to delete image from local storage', { error: err.message });
       }
     }
-
-    // Delete from database
-    await productModel.findByIdAndDelete(id);
-    console.log('[removeProduct] Product deleted from DB:', id);
-
-    res.json({
-      success: true,
-      message: 'Product Removed Successfully',
-    });
-  } catch (err) {
-    console.error('[removeProduct] Error:', err);
-    res.status(500).json({
-      success: false,
-      message: err.message || 'Failed to remove product',
-    });
   }
-};
+
+  // احذف من Database
+  await productModel.findByIdAndDelete(id);
+  logger.info('Product deleted successfully', { productId: id });
+
+  res.json({
+    success: true,
+    message: 'Product Removed Successfully',
+  });
+});
+
+// باقي الـ functions كما هي...
+const listProducts = asyncHandler(async (req, res) => {
+  const products = await productModel.find({ isActive: true });
+  res.json({
+    success: true,
+    data: products,
+    count: products.length,
+  });
+});
 
 export { addProduct, listProducts, removeProduct };

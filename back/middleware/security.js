@@ -7,25 +7,24 @@ import logger from '../utils/logger.js';
 // =====================
 export const sanitizeInput = (req, res, next) => {
   // Sanitize body
-if (req.body) {
-  Object.keys(req.body).forEach(key => {
-    req.body[key] = sanitizeValue(req.body[key]);
-  });
-}
+  if (req.body) {
+    Object.keys(req.body).forEach(key => {
+      req.body[key] = sanitizeValue(req.body[key]);
+    });
+  }
   // Sanitize query params
- if (req.query) {
-  Object.keys(req.query).forEach(key => {
-    req.query[key] = sanitizeValue(req.query[key]);
-  });
-}
-
+  if (req.query) {
+    Object.keys(req.query).forEach(key => {
+      req.query[key] = sanitizeValue(req.query[key]);
+    });
+  }
 
   // Sanitize URL params
-if (req.params) {
-  Object.keys(req.params).forEach(key => {
-    req.params[key] = sanitizeValue(req.params[key]);
-  });
-}
+  if (req.params) {
+    Object.keys(req.params).forEach(key => {
+      req.params[key] = sanitizeValue(req.params[key]);
+    });
+  }
 
   next();
 };

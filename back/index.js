@@ -3,6 +3,7 @@ import express from 'express';
 import serverless from 'serverless-http';
 import cors from 'cors';
 import compression from 'compression';
+import mongoose from 'mongoose';
 import connectDB from './config/db.js';
 import 'dotenv/config';
 
@@ -229,12 +230,14 @@ const gracefulShutdown = (signal) => {
   }
   
   // Close database connection
-  import('mongoose').then((mongoose) => {
+  if (mongoose.connection && mongoose.connection.readyState === 1) {
     mongoose.connection.close(false, () => {
       logger.info('MongoDB connection closed');
       process.exit(0);
     });
-  });
+  } else {
+    process.exit(0);
+  }
 
   // Force close after 10 seconds
   setTimeout(() => {

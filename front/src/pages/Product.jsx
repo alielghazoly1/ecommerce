@@ -185,7 +185,7 @@ const Product = () => {
               }}
             >
               <LazyImage
-                src={`${url}/images/${images[activeIndex]}`}
+                src={images[activeIndex]}
                 alt={product.name}
                 className="max-h-full object-contain"
               />
@@ -208,7 +208,7 @@ const Product = () => {
                   aria-label={`عرض الصورة ${i + 1}`}
                 >
                   <LazyImage
-                    src={`${url}/images/${img}`}
+                    src={img}
                     alt={`${product.name} ${i + 1}`}
                     className="w-full h-full object-cover"
                   />
@@ -363,7 +363,7 @@ const Product = () => {
                   >
                     <div className="w-full h-28 mb-2 flex items-center justify-center">
                       <LazyImage
-                        src={`${url}/images/${r.image}`}
+                        src={r.image}
                         alt={r.name}
                         className="max-h-full object-contain"
                       />

@@ -1,54 +1,121 @@
-// import { useState } from 'react';
-import Users from './components/Users';
+// src/App.jsx
+import { Route, Routes, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminLogin from './components/AdminLogin';
+import Sidebar from './components/Sidebar';
 import Add from './components/Add';
 import List from './components/List';
 import Orders from './components/Orders';
-import Sidebar from './components/Sidebar';
-import ProductedRoute from './components/ProductedRoute';
-import { Route, Routes } from 'react-router-dom';
-import AdminLogin from './components/AdminLogin';
-import {Toaster} from "react-hot-toast"
+import Users from './components/Users';
+
+const DashboardLayout = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/30 to-slate-900">
+      {isAuthenticated && <Sidebar />}
+      <div className={isAuthenticated ? 'md:ml-72' : ''}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
   return (
-    <>
-      <Toaster />
-      <Sidebar />
-      <Routes>
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route
-          path="/admin/add"
-          element={
-            <ProductedRoute>
-              <Add />
-            </ProductedRoute>
-          }
-        />
-        <Route
-          path="/admin/list"
-          element={
-            <ProductedRoute>
-              <List />
-            </ProductedRoute>
-          }
-        />
-        <Route
-          path="/admin/orders"
-          element={
-            <ProductedRoute>
-              <Orders />
-            </ProductedRoute>
-          }
-        />
-        <Route
-          path="/admin/users"
-          element={
-            <ProductedRoute>
-              <Users />
-            </ProductedRoute>
-          }
-        />
-      </Routes>
-    </>
+    <AuthProvider>
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#1e293b',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '12px',
+            padding: '16px',
+            fontFamily: 'system-ui, -apple-system, sans-serif'
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
+      
+      <DashboardLayout>
+        <Routes>
+          <Route path="/admin/login" element={<AdminLogin />} />
+
+          <Route
+            path="/admin/add"
+            element={
+              <ProtectedRoute>
+                <Add />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/admin/list"
+            element={
+              <ProtectedRoute>
+                <List />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/admin/orders"
+            element={
+              <ProtectedRoute>
+                <Orders />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute>
+                <Users />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="/" element={<Navigate to="/admin/list" replace />} />
+          <Route path="/admin" element={<Navigate to="/admin/list" replace />} />
+
+          <Route 
+            path="*" 
+            element={
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center text-white">
+                  <h1 className="text-6xl font-bold mb-4">404</h1>
+                  <p className="text-xl mb-6 text-gray-400">الصفحة غير موجودة</p>
+                  <a 
+                    href="/admin/list" 
+                    className="inline-block bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all"
+                  >
+                    العودة للرئيسية
+                  </a>
+                </div>
+              </div>
+            } 
+          />
+        </Routes>
+      </DashboardLayout>
+    </AuthProvider>
   );
 };
 

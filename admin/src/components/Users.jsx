@@ -1,216 +1,364 @@
+// src/components/Users.jsx
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Trash2, Shield, User } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import axios from '../config/axiosConfig';
+import toast from 'react-hot-toast';
+import { Trash2, Shield, User, Users as UsersIcon, Loader2, Search } from 'lucide-react';
 
 const Users = () => {
-  const url = import.meta.env.VITE_API_URL;
+  const { token, isAuthenticated, user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState({}); // لتتبع كل زرار
+  const [actionLoading, setActionLoading] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
 
-  const token = localStorage.getItem('adminToken');
-  const headers = { Authorization: `Bearer ${token}` };
-
-  // =====================
-  // Fetch Users
-  // =====================
   const fetchUsers = async () => {
+    if (!token) {
+      toast.error('يجب تسجيل الدخول أولاً');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await axios.get(`${url}/api/users/list`, { headers });
+      const res = await axios.get('/users/list', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
       if (res.data && res.data.success) {
         setUsers(res.data.data || []);
       } else {
         setUsers([]);
+        toast.error(res.data?.message || 'فشل تحميل المستخدمين');
       }
-    } catch (err) {
-      console.error('❌ Error fetching users:', err);
+    } catch (error) {
+      console.error('Error fetching users:', error);
       setUsers([]);
+      toast.error(error.response?.data?.message || 'فشل تحميل المستخدمين');
     } finally {
       setLoading(false);
     }
   };
 
-  // =====================
-  // Delete User
-  // =====================
   const deleteUser = async (id) => {
     if (!window.confirm('هل أنت متأكد من حذف هذا المستخدم؟')) return;
 
+    if (!token) {
+      toast.error('يجب تسجيل الدخول أولاً');
+      return;
+    }
+
+    setActionLoading(prev => ({ ...prev, [id]: true }));
+
     try {
-      setActionLoading((prev) => ({ ...prev, [id]: true }));
-      const res = await axios.delete(`${url}/api/users/delete/${id}`, {
-        headers,
+      const res = await axios.delete(`/users/delete/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
+
       if (res.data?.success) {
-        setUsers((prev) => prev.filter((u) => u._id !== id));
-        alert('✅ تم حذف المستخدم بنجاح');
+        setUsers(prev => prev.filter(u => u._id !== id));
+        toast.success('تم حذف المستخدم بنجاح');
       } else {
-        alert(res.data?.message || '❌ لم يتم الحذف');
+        toast.error(res.data?.message || 'فشل الحذف');
       }
-    } catch (err) {
-      console.error('❌ Error deleting user:', err);
-      alert(err.response?.data?.message || 'فشل في الحذف');
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error(error.response?.data?.message || 'فشل الحذف');
     } finally {
-      setActionLoading((prev) => ({ ...prev, [id]: false }));
+      setActionLoading(prev => ({ ...prev, [id]: false }));
     }
   };
 
-  // =====================
-  // Promote to Admin
-  // =====================
   const promoteToAdmin = async (id) => {
+    if (!token) {
+      toast.error('يجب تسجيل الدخول أولاً');
+      return;
+    }
+
+    setActionLoading(prev => ({ ...prev, [id]: true }));
+
     try {
-      setActionLoading((prev) => ({ ...prev, [id]: true }));
-      const res = await axios.put(
-        `${url}/api/users/make-admin/${id}`,
-        {},
-        { headers }
-      );
+      const res = await axios.put(`/users/make-admin/${id}`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
       if (res.data?.success) {
-        setUsers((prev) =>
-          prev.map((u) => (u._id === id ? { ...u, role: 'admin' } : u))
+        setUsers(prev =>
+          prev.map(u => (u._id === id ? { ...u, role: 'admin' } : u))
         );
-        alert('✅ تم ترقية المستخدم إلى أدمن بنجاح');
+        toast.success('تم الترقية بنجاح');
       } else {
-        alert(res.data?.message || '❌ فشل الترقية');
+        toast.error(res.data?.message || 'فشل الترقية');
       }
-    } catch (err) {
-      console.error('❌ Error promoting user:', err);
-      alert(err.response?.data?.message || 'فشل الترقية');
+    } catch (error) {
+      console.error('Error promoting user:', error);
+      toast.error(error.response?.data?.message || 'فشل الترقية');
     } finally {
-      setActionLoading((prev) => ({ ...prev, [id]: false }));
+      setActionLoading(prev => ({ ...prev, [id]: false }));
     }
   };
 
-  // =====================
-  // Demote to User
-  // =====================
   const demoteToUser = async (id) => {
+    if (!token) {
+      toast.error('يجب تسجيل الدخول أولاً');
+      return;
+    }
+
+    setActionLoading(prev => ({ ...prev, [id]: true }));
+
     try {
-      setActionLoading((prev) => ({ ...prev, [id]: true }));
-      const res = await axios.put(
-        `${url}/api/users/demote/${id}`,
-        {},
-        { headers }
-      );
+      const res = await axios.put(`/users/demote/${id}`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
       if (res.data?.success) {
-        setUsers((prev) =>
-          prev.map((u) => (u._id === id ? { ...u, role: 'user' } : u))
+        setUsers(prev =>
+          prev.map(u => (u._id === id ? { ...u, role: 'user' } : u))
         );
-        alert('✅ تم إعادة المستخدم إلى مستخدم عادي بنجاح');
+        toast.success('تم إعادة الدور بنجاح');
       } else {
-        alert(res.data?.message || '❌ فشل إعادة الدور');
+        toast.error(res.data?.message || 'فشل إعادة الدور');
       }
-    } catch (err) {
-      console.error('❌ Error demoting user:', err);
-      alert(err.response?.data?.message || 'فشل إعادة الدور');
+    } catch (error) {
+      console.error('Error demoting user:', error);
+      toast.error(error.response?.data?.message || 'فشل إعادة الدور');
     } finally {
-      setActionLoading((prev) => ({ ...prev, [id]: false }));
+      setActionLoading(prev => ({ ...prev, [id]: false }));
     }
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (isAuthenticated && token) {
+      fetchUsers();
+    }
+  }, [token, isAuthenticated]);
+
+  // Filter users
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = 
+      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    
+    return matchesSearch && matchesRole;
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-purple-400 mx-auto mb-4" />
+          <p className="text-gray-400">جاري تحميل المستخدمين...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <section className="md:ml-64 min-h-screen bg-linear-to-r from-indigo-900 via-purple-900 to-pink-900 text-white py-24 sm:px-10 px-6">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-4xl sm:text-5xl font-extrabold mb-12 text-center">
-          إدارة المستخدمين
-        </h2>
+    <div className="min-h-screen p-6 md:p-10">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+            <UsersIcon className="w-8 h-8 text-purple-400" />
+            إدارة المستخدمين
+          </h1>
+          <p className="text-gray-400">
+            إجمالي المستخدمين: <span className="text-white font-semibold">{users.length}</span>
+            {' '}•{' '}
+            أدمن: <span className="text-yellow-400 font-semibold">{users.filter(u => u.role === 'admin').length}</span>
+            {' '}•{' '}
+            مستخدمين: <span className="text-blue-400 font-semibold">{users.filter(u => u.role === 'user').length}</span>
+          </p>
+        </div>
 
-        {loading ? (
-          <div className="text-center text-gray-300 text-lg">
-            جاري التحميل...
+        {/* Search & Filter */}
+        {users.length > 0 && (
+          <div className="mb-6 flex flex-col sm:flex-row gap-4">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+              <input
+                type="text"
+                placeholder="بحث عن مستخدم..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-3 pr-10 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+              />
+            </div>
+
+            {/* Role Filter */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setRoleFilter('all')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  roleFilter === 'all'
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
+              >
+                الكل
+              </button>
+              <button
+                onClick={() => setRoleFilter('admin')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  roleFilter === 'admin'
+                    ? 'bg-yellow-500 text-black'
+                    : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
+              >
+                أدمن
+              </button>
+              <button
+                onClick={() => setRoleFilter('user')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  roleFilter === 'user'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
+              >
+                مستخدمين
+              </button>
+            </div>
           </div>
-        ) : users.length === 0 ? (
-          <div className="text-center text-gray-300 text-lg">
-            لا يوجد مستخدمين
+        )}
+
+        {/* Users Grid */}
+        {users.length === 0 ? (
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-12 text-center">
+            <UsersIcon className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-400 text-lg">لا يوجد مستخدمين</p>
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-12 text-center">
+            <Search className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-400 text-lg">لا توجد نتائج للبحث</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {users.map((user) => (
-              <div
-                key={user._id}
-                className="bg-white/10 border border-white/20 backdrop:blur-md p-6 rounded-3xl shadow-lg flex flex-col items-center text-center hover:scale-[1.03] hover:shadow-indigo-500/40 transition-all"
-              >
-                <div className="w-20 h-20 rounded-full bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center mb-4 overflow-hidden">
-                  {user.avatar ? (
-                    <img
-                      src={user.avatar}
-                      className="w-20 h-20 rounded-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-12 h-12 text-white" />
-                  )}
-                </div>
-
-                <h3 className="text-2xl font-bold mb-2">
-                  {user.name || 'مستخدم بدون اسم'}
-                </h3>
-                <p className="text-gray-300 text-sm mb-3">{user.email}</p>
-
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredUsers.map((user) => {
+              const isCurrentUser = currentUser?.email === user.email;
+              
+              return (
                 <div
-                  className={`px-3 py-1 rounded-full mb-4 text-sm font-semibold ${
-                    user.role === 'admin'
-                      ? 'bg-yellow-400/80 text-black flex items-center gap-1'
-                      : 'bg-cyan-500/30 text-white'
+                  key={user._id}
+                  className={`bg-white/5 backdrop-blur-xl rounded-2xl border p-6 transition-all ${
+                    isCurrentUser 
+                      ? 'border-purple-500/50 ring-2 ring-purple-500/20' 
+                      : 'border-white/10 hover:border-purple-500/30'
                   }`}
                 >
-                  {user.role === 'admin' && <Shield className="w-4 h-4" />}
-                  {user.role === 'admin' ? 'أدمن' : 'مستخدم عادي'}
+                  {/* Avatar & Info */}
+                  <div className="flex items-center gap-4 mb-4 pb-4 border-b border-white/10">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                      {user.avatar ? (
+                        <img
+                          src={user.avatar}
+                          alt={user.name}
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-7 h-7 text-white" />
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-lg font-semibold text-white truncate flex items-center gap-2">
+                        {user.name || 'مستخدم'}
+                        {isCurrentUser && (
+                          <span className="text-xs bg-purple-500 px-2 py-0.5 rounded">أنت</span>
+                        )}
+                      </h3>
+                      <p className="text-sm text-gray-400 truncate">{user.email}</p>
+                    </div>
+                  </div>
+
+                  {/* Role Badge */}
+                  <div className="mb-4">
+                    <span
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${
+                        user.role === 'admin'
+                          ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                          : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                      }`}
+                    >
+                      {user.role === 'admin' && <Shield className="w-4 h-4" />}
+                      {user.role === 'admin' ? 'أدمن' : 'مستخدم عادي'}
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="space-y-2">
+                    {/* Delete */}
+                    <button
+                      onClick={() => deleteUser(user._id)}
+                      disabled={user.role !== 'user' || actionLoading[user._id] || isCurrentUser}
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        user.role !== 'user' || isCurrentUser
+                          ? 'bg-gray-700/20 text-gray-500 cursor-not-allowed'
+                          : 'bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20'
+                      }`}
+                    >
+                      {actionLoading[user._id] ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                      <span>{isCurrentUser ? 'لا يمكن حذف نفسك' : 'حذف المستخدم'}</span>
+                    </button>
+
+                    {/* Promote */}
+                    <button
+                      onClick={() => promoteToAdmin(user._id)}
+                      disabled={user.role !== 'user' || actionLoading[user._id]}
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        user.role !== 'user'
+                          ? 'bg-gray-700/20 text-gray-500 cursor-not-allowed'
+                          : 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-black border border-yellow-500/20'
+                      }`}
+                    >
+                      {actionLoading[user._id] ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Shield className="w-4 h-4" />
+                      )}
+                      <span>ترقية لأدمن</span>
+                    </button>
+
+                    {/* Demote */}
+                    <button
+                      onClick={() => demoteToUser(user._id)}
+                      disabled={user.role !== 'admin' || actionLoading[user._id] || isCurrentUser}
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        user.role !== 'admin' || isCurrentUser
+                          ? 'bg-gray-700/20 text-gray-500 cursor-not-allowed'
+                          : 'bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white border border-blue-500/20'
+                      }`}
+                    >
+                      {actionLoading[user._id] ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <User className="w-4 h-4" />
+                      )}
+                      <span>{isCurrentUser ? 'لا يمكن تغيير دورك' : 'إعادة لمستخدم'}</span>
+                    </button>
+                  </div>
                 </div>
-
-                <div className="flex flex-col gap-2 w-44">
-                  {/* Delete User */}
-                  <button
-                    onClick={() => deleteUser(user._id)}
-                    disabled={user.role !== 'user' || actionLoading[user._id]}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      user.role !== 'user'
-                        ? 'bg-gray-700/40 text-gray-400 cursor-not-allowed'
-                        : 'bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white'
-                    }`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    {actionLoading[user._id] ? 'جارٍ...' : 'حذف المستخدم'}
-                  </button>
-
-                  {/* Promote */}
-                  <button
-                    onClick={() => promoteToAdmin(user._id)}
-                    disabled={user.role !== 'user' || actionLoading[user._id]}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      user.role !== 'user'
-                        ? 'bg-gray-700/40 text-gray-400 cursor-not-allowed'
-                        : 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500 hover:text-black'
-                    }`}
-                  >
-                    <Shield className="w-4 h-4" />
-                    {actionLoading[user._id] ? 'جارٍ...' : 'ترقية إلى أدمن'}
-                  </button>
-
-                  {/* Demote */}
-                  <button
-                    onClick={() => demoteToUser(user._id)}
-                    disabled={user.role !== 'admin' || actionLoading[user._id]}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      user.role !== 'admin'
-                        ? 'bg-gray-700/40 text-gray-400 cursor-not-allowed'
-                        : 'bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white'
-                    }`}
-                  >
-                    <User className="w-4 h-4" />
-                    {actionLoading[user._id] ? 'جارٍ...' : 'إعادة إلى مستخدم'}
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
-    </section>
+    </div>
   );
 };
 

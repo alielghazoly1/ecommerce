@@ -142,7 +142,7 @@ const Categories = () => {
                     className="relative w-full h-64 flex items-center justify-center bg-gray-100"
                   >
                     <LazyImage
-                      src={`${url}/images/${product.image}`}
+                      src={product.image}
                       alt={product.name}
                       className="object-contain w-56 h-56"
                     />

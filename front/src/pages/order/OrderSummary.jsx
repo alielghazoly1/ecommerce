@@ -43,7 +43,7 @@ const OrderSummary = ({
           >
             <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
               <LazyImage
-                src={`${url}/images/${it.image}`}
+                src={it.image}
                 alt={it.name}
                 className="object-contain w-full h-full"
               />

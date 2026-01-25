@@ -129,7 +129,7 @@ const Offer = () => {
                   )}
 
                   <div className="relative w-full h-64 flex items-center justify-center bg-gray-100">
-                    <LazyImage src={`${url}/images/${p.image}`} alt={p.name} className="object-contain w-56 h-56 transition-transform duration-500 hover:scale-105" />
+                    <LazyImage src={p.image} alt={p.name} className="object-contain w-56 h-56 transition-transform duration-500 hover:scale-105" />
                   </div>
 
                   <div className="p-5">
