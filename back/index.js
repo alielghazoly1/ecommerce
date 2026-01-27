@@ -153,7 +153,7 @@ if (process.env.ENABLE_REQUEST_LOGGING !== 'false') {
 }
 
 // =====================
-// Health Check Routes (PUBLIC - NO AUTH) ✅
+// Health Check Routes (PUBLIC - NO AUTH - NO DB) ✅
 // =====================
 app.get('/', (req, res) => {
   res.status(200).json({
@@ -167,6 +167,10 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
+  // Simple health check without DB
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 
+                   mongoose.connection.readyState === 2 ? 'connecting' : 'disconnected';
+  
   res.status(200).json({
     success: true,
     status: 'healthy',
@@ -176,7 +180,7 @@ app.get('/health', (req, res) => {
       used: `${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB`,
       total: `${(process.memoryUsage().heapTotal / 1024 / 1024).toFixed(2)} MB`,
     },
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    database: dbStatus,
   });
 });
 
@@ -228,6 +232,11 @@ app.use(
 // Database Connection Middleware
 // =====================
 const ensureDb = async (req, res, next) => {
+  // Skip DB for health checks
+  if (req.path === '/' || req.path === '/health' || req.path === '/favicon.ico') {
+    return next();
+  }
+
   if (!process.env.MONGODB_URI) {
     logger.warn('MONGODB_URI not set');
     return next();
@@ -245,9 +254,18 @@ const ensureDb = async (req, res, next) => {
   if (!needsDb) return next();
 
   try {
-    if (mongoose.connection.readyState !== 1) {
-      await connectDB();
+    // Check if already connected
+    if (mongoose.connection.readyState === 1) {
+      return next();
     }
+
+    // Try to connect with timeout
+    const connectPromise = connectDB();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Database connection timeout')), 5000)
+    );
+
+    await Promise.race([connectPromise, timeoutPromise]);
     next();
   } catch (err) {
     logger.error('Database connection failed', { error: err.message });
