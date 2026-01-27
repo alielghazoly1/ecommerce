@@ -9,16 +9,15 @@ import Add from './components/Add';
 import List from './components/List';
 import Orders from './components/Orders';
 import Users from './components/Users';
+import Dashboard from './components/Dashboard';
 
 const DashboardLayout = ({ children }) => {
   const { isAuthenticated } = useAuth();
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/30 to-slate-900">
       {isAuthenticated && <Sidebar />}
-      <div className={isAuthenticated ? 'md:ml-72' : ''}>
-        {children}
-      </div>
+      <div className={isAuthenticated ? 'md:ml-72' : ''}>{children}</div>
     </div>
   );
 };
@@ -26,7 +25,7 @@ const DashboardLayout = ({ children }) => {
 const App = () => {
   return (
     <AuthProvider>
-      <Toaster 
+      <Toaster
         position="top-center"
         toastOptions={{
           duration: 4000,
@@ -36,7 +35,7 @@ const App = () => {
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: '12px',
             padding: '16px',
-            fontFamily: 'system-ui, -apple-system, sans-serif'
+            fontFamily: 'system-ui, -apple-system, sans-serif',
           },
           success: {
             iconTheme: {
@@ -52,7 +51,7 @@ const App = () => {
           },
         }}
       />
-      
+
       <DashboardLayout>
         <Routes>
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -65,7 +64,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          
+
           <Route
             path="/admin/list"
             element={
@@ -74,7 +73,15 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/admin/orders"
             element={
@@ -83,7 +90,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          
+
           <Route
             path="/admin/users"
             element={
@@ -94,24 +101,29 @@ const App = () => {
           />
 
           <Route path="/" element={<Navigate to="/admin/list" replace />} />
-          <Route path="/admin" element={<Navigate to="/admin/list" replace />} />
+          <Route
+            path="/admin"
+            element={<Navigate to="/admin/list" replace />}
+          />
 
-          <Route 
-            path="*" 
+          <Route
+            path="*"
             element={
               <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center text-white">
                   <h1 className="text-6xl font-bold mb-4">404</h1>
-                  <p className="text-xl mb-6 text-gray-400">الصفحة غير موجودة</p>
-                  <a 
-                    href="/admin/list" 
+                  <p className="text-xl mb-6 text-gray-400">
+                    الصفحة غير موجودة
+                  </p>
+                  <a
+                    href="/admin/list"
                     className="inline-block bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all"
                   >
                     العودة للرئيسية
                   </a>
                 </div>
               </div>
-            } 
+            }
           />
         </Routes>
       </DashboardLayout>

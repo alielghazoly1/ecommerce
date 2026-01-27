@@ -1,4 +1,4 @@
-// models/orderModel.js - IMPROVED VERSION
+// models/orderModel.js - IMPROVED VERSION (FIXED)
 import mongoose from 'mongoose';
 
 const orderItemSchema = new mongoose.Schema({
@@ -168,8 +168,9 @@ orderSchema.virtual('itemsCount').get(function () {
 
 // =====================
 // Pre-save Middleware: Generate Order Number
+// ✅ FIXED: Using async function without next()
 // =====================
-orderSchema.pre('save', async function (next) {
+orderSchema.pre('save', async function () {
   if (!this.orderNumber) {
     const date = new Date();
     const year = date.getFullYear();
@@ -181,7 +182,7 @@ orderSchema.pre('save', async function (next) {
 
     this.orderNumber = `ORD-${year}${month}${day}-${random}`;
   }
-  next();
+  // ✅ No next() needed in async functions
 });
 
 // =====================

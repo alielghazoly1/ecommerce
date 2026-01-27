@@ -1,123 +1,350 @@
 import { useContext, useEffect, useState } from 'react';
 import { ShopContext } from '../context/ShopContext';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import {
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Package,
+  Truck,
+  Clock,
+  MapPin,
+  Phone,
+  Calendar,
+  ShoppingBag,
+} from 'lucide-react';
 
 const MyOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const { url, token } = useContext(ShopContext);
+  const navigate = useNavigate();
 
   const fetchOrders = async () => {
     try {
+      setLoading(true);
       const res = await axios.post(
         `${url}/api/order/userorders`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      const data = res.data.data;
-      const ordersData = Array.isArray(data) ? data : [data];
-      setOrders(ordersData);
-      setLoading(false);
+
+      if (res.data?.success) {
+        const ordersData = Array.isArray(res.data.data)
+          ? res.data.data
+          : [res.data.data];
+        setOrders(ordersData);
+      } else {
+        setError('فشل تحميل الطلبات');
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Orders fetch error:', err);
+      setError('حدث خطأ في تحميل الطلبات');
       setOrders([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (token) fetchOrders();
-  }, [token]);
+    if (token) {
+      fetchOrders();
+    } else {
+      // navigate('/login');
+    }
+  }, [token, navigate]);
 
-  if (loading)
+  // Format date
+  const formatDate = (date) => {
+    if (!date) return '';
+    return new Intl.DateTimeFormat('ar-EG', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(date));
+  };
+
+  // Format price
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('ar-EG', {
+      style: 'currency',
+      currency: 'EGP',
+      maximumFractionDigits: 2,
+    }).format(price);
+  };
+
+  // Get status config
+  const getStatusConfig = (status) => {
+    const configs = {
+      pending: {
+        label: 'قيد المراجعة',
+        icon: Clock,
+        color: 'text-amber-600',
+        bg: 'bg-amber-50',
+        border: 'border-amber-200',
+      },
+      processing: {
+        label: 'قيد التجهيز',
+        icon: Package,
+        color: 'text-blue-600',
+        bg: 'bg-blue-50',
+        border: 'border-blue-200',
+      },
+      shipped: {
+        label: 'تم الشحن',
+        icon: Truck,
+        color: 'text-purple-600',
+        bg: 'bg-purple-50',
+        border: 'border-purple-200',
+      },
+      delivered: {
+        label: 'تم التوصيل',
+        icon: CheckCircle,
+        color: 'text-green-600',
+        bg: 'bg-green-50',
+        border: 'border-green-200',
+      },
+      cancelled: {
+        label: 'ملغي',
+        icon: XCircle,
+        color: 'text-red-600',
+        bg: 'bg-red-50',
+        border: 'border-red-200',
+      },
+    };
+    return configs[status] || configs.pending;
+  };
+
+  if (loading) {
     return (
-      <section className="min-h-screen flex items-center justify-center bg-gray-100 px-6">
+      <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-6">
         <div className="flex flex-col items-center">
-          <Loader2 className="w-20 h-20 animate-spin text-gray-400 mb-6" />
-          <h2 className="text-2xl font-semibold text-gray-700">جاري تحميل الطلبات...</h2>
-          <p className="text-gray-500 mt-2">انتظر قليلاً من فضلك</p>
+          <div className="relative">
+            <Loader2 className="w-20 h-20 animate-spin text-cyan-600" />
+            <div className="absolute inset-0 w-20 h-20 rounded-full border-4 border-cyan-100"></div>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mt-6">
+            جاري تحميل طلباتك...
+          </h2>
+          <p className="text-gray-500 mt-2">لحظة من فضلك</p>
         </div>
       </section>
     );
+  }
+
+  if (error) {
+    return (
+      <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-6">
+        <div className="text-center">
+          <XCircle className="w-24 h-24 text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">{error}</h2>
+          <button
+            onClick={fetchOrders}
+            className="mt-4 px-6 py-2.5 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
+          >
+            إعادة المحاولة
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="bg-gray-100 min-h-screen px-6 py-10">
-      <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-10 text-center">
-        طلباتي
-      </h1>
+    <section className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-2xl mb-4 shadow-lg">
+            <ShoppingBag className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-3">
+            طلباتي
+          </h1>
+          <p className="text-gray-600 text-lg">
+            {orders.length > 0
+              ? `لديك ${orders.length} ${orders.length === 1 ? 'طلب' : 'طلبات'}`
+              : 'لا توجد طلبات بعد'}
+          </p>
+        </div>
 
-      {orders.length === 0 ? (
-        <p className="text-center text-gray-500 text-xl mt-20">لا توجد طلبات بعد.</p>
-      ) : (
-        <div className=" grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {orders.map((order) => {
-            const total =
-              order.items?.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0) || 0;
-            return (
-              <div
-                key={order._id}
-                className="relative bg-white shadow-md rounded-2xl p-6 flex flex-col justify-between
-                  hover:shadow-lg transition-all duration-300"
+        {/* Empty State */}
+        {orders.length === 0 ? (
+          <div className="max-w-md mx-auto text-center py-20">
+            <div className="bg-white rounded-3xl shadow-lg p-12">
+              <div className="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
+                <ShoppingBag className="w-16 h-16 text-gray-400" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-3">
+                لا توجد طلبات بعد
+              </h3>
+              <p className="text-gray-600 mb-6">
+                ابدأ التسوق الآن واستمتع بتجربة فريدة
+              </p>
+              <button
+                onClick={() => navigate('/')}
+                className="px-8 py-3 bg-gradient-to-r from-cyan-600 to-cyan-700 text-white rounded-xl font-semibold hover:from-cyan-700 hover:to-cyan-800 transition-all shadow-lg hover:shadow-xl"
               >
-                {/* Decorative top bar */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-gray-300 rounded-t-2xl"></div>
+                تصفح المنتجات
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Orders Grid */
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {orders.map((order) => {
+              const statusConfig = getStatusConfig(order.status);
+              const StatusIcon = statusConfig.icon;
+              const total = order.totalAmount || 0;
+              const itemsCount = order.itemsCount || order.items?.length || 0;
 
-                <div className="mb-4">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                    Order ID: {order._id.slice(-6).toUpperCase()}
-                  </h2>
-                  <p className="text-gray-600 mb-4">
-                    {order.items?.length || 0} منتج{order.items && order.items.length > 1 ? 's' : ''}
-                  </p>
+              return (
+                <div
+                  key={order._id}
+                  className="group bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                >
+                  {/* Status Bar */}
+                  <div
+                    className={`h-2 ${statusConfig.bg} ${statusConfig.border} border-b-2`}
+                  ></div>
 
-                  <div className="space-y-2 max-h-52 overflow-y-auto pr-2">
-                    {order.items?.map((item) => (
-                      <div
-                        key={item._id}
-                        className="flex justify-between items-center bg-gray-50 rounded-lg p-2"
-                      >
-                        <div className="flex items-center gap-3">
-                          {item.image && (
-                            <img
-                              src={`${url}/images/${item.image}`}
-                              alt={item.name}
-                              className="w-14 h-14 object-cover rounded-lg shadow-sm"
-                            />
-                          )}
-                          <p className="text-gray-700 font-medium">{item.name} x {item.quantity || 1}</p>
-                        </div>
-                        <p className="text-gray-800 font-semibold">${(item.price * (item.quantity || 1)).toFixed(2)}</p>
+                  <div className="p-6">
+                    {/* Order Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-500 mb-1">
+                          رقم الطلب
+                        </h3>
+                        <p className="text-lg font-bold text-gray-900">
+                          {order.orderNumber || `#${order._id.slice(-8).toUpperCase()}`}
+                        </p>
                       </div>
-                    ))}
+                      <div
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${statusConfig.bg} ${statusConfig.border} border`}
+                      >
+                        <StatusIcon className={`w-4 h-4 ${statusConfig.color}`} />
+                        <span className={`text-sm font-semibold ${statusConfig.color}`}>
+                          {statusConfig.label}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Order Date */}
+                    {order.createdAt && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+                        <Calendar className="w-4 h-4" />
+                        <span>{formatDate(order.createdAt)}</span>
+                      </div>
+                    )}
+
+                    {/* Items Preview */}
+                    <div className="mb-4">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <Package className="w-4 h-4" />
+                        المنتجات ({itemsCount})
+                      </h4>
+                      <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+                        {order.items?.map((item, idx) => (
+                          <div
+                            key={item._id || idx}
+                            className="flex items-center gap-3 bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors"
+                          >
+                            {item.image && (
+                              <div className="w-12 h-12 bg-white rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
+                                <img
+                                  src={item.image}
+                                  alt={item.name}
+                                  className="w-full h-full object-contain p-1"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {item.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                الكمية: {item.quantity || 1}
+                              </p>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {formatPrice(item.price * (item.quantity || 1))}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Shipping Address */}
+                    {order.shippingAddress && (
+                      <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                        <h4 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                          <MapPin className="w-3.5 h-3.5" />
+                          عنوان التوصيل
+                        </h4>
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                          {order.shippingAddress.street}, {order.shippingAddress.city}
+                          {order.shippingAddress.state && `, ${order.shippingAddress.state}`}
+                        </p>
+                        {order.shippingAddress.phone && (
+                          <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            <Phone className="w-3 h-3" />
+                            {order.shippingAddress.phone}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Tracking Number */}
+                    {order.trackingNumber && (
+                      <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                        <h4 className="text-xs font-semibold text-purple-700 mb-1">
+                          رقم التتبع
+                        </h4>
+                        <p className="text-sm font-mono text-purple-900">
+                          {order.trackingNumber}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Total Amount */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-600">
+                          الإجمالي
+                        </span>
+                        <span className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-cyan-700 bg-clip-text text-transparent">
+                          {formatPrice(total)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-                <div className="flex justify-between items-center mt-6">
-                  <span
-                    className={`flex items-center gap-2 font-semibold text-sm
-                      ${
-                        order.status === 'delivered'
-                          ? 'text-green-500'
-                          : order.status === 'pending'
-                          ? 'text-yellow-500'
-                          : 'text-red-500'
-                      }`}
-                  >
-                    {order.status === 'delivered' && <CheckCircle className="w-5 h-5" />}
-                    {order.status === 'pending' && <Loader2 className="w-5 h-5 animate-spin" />}
-                    {order.status === 'canceled' && <XCircle className="w-5 h-5" />}
-                    {order.status?.charAt(0).toUpperCase() + order.status?.slice(1)}
-                  </span>
-
-                  <span className="font-bold text-gray-800 text-lg bg-gray-200 px-4 py-2 rounded-lg shadow-sm">
-                    Total: ${total.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {/* Custom Scrollbar Styles */}
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+      `}</style>
     </section>
   );
 };

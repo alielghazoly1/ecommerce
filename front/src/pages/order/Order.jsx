@@ -32,7 +32,7 @@ const Order = () => {
   const subtotal = useMemo(() => {
     return cartProducts.reduce(
       (sum, item) => sum + Number(item.price) * Number(item.quantity),
-      0
+      0,
     );
   }, [cartProducts]);
 
@@ -41,9 +41,10 @@ const Order = () => {
   const shippingFee = shippingMethod === 'express' ? 50 : 20;
 
   const [shipping, setShipping] = useState({
-    name: '',
-    address: '',
+    street: '',
     city: '',
+    state: '',
+    zipCode: '',
     phone: '',
   });
 
@@ -75,9 +76,8 @@ const Order = () => {
 
   const validate = () => {
     const e = {};
-    if (!shipping.name) e.name = 'الاسم مطلوب';
-    if (!shipping.address) e.address = 'العنوان مطلوب';
-    if (!shipping.city) e.city = 'المدينة مطلوبة';
+    if (!shipping.street?.trim()) e.street = 'العنوان مطلوب';
+    if (!shipping.city?.trim()) e.city = 'المدينة مطلوبة';
     if (!/^\+?\d{7,15}$/.test(shipping.phone)) e.phone = 'رقم هاتف غير صحيح';
 
     setErrors(e);
@@ -85,10 +85,11 @@ const Order = () => {
   };
 
   const applyCoupon = () => {
-    if (coupon.trim().toUpperCase() === 'TAWA10') {
+    const trimmedCoupon = coupon.trim().toUpperCase();
+    if (trimmedCoupon === 'TAWA10') {
       setDiscountPercent(10);
       setToast({ message: 'تم تطبيق خصم 10%', type: 'success' });
-    } else {
+    } else if (trimmedCoupon) {
       setDiscountPercent(0);
       setToast({ message: 'كود خصم غير صالح', type: 'error' });
     }
@@ -112,23 +113,27 @@ const Order = () => {
     submittingRef.current = true;
     setLoading(true);
 
+    // ✅ حساب المبلغ النهائي
     const discountAmount = (subtotal * discountPercent) / 100;
-    const amount = subtotal - discountAmount + shippingFee;
+    const totalAmount = subtotal - discountAmount + shippingFee;
 
+    // ✅ تنسيق البيانات بما يتوافق مع الـ Backend
     const payload = {
-      address: shipping,
       items: cartProducts.map((p) => ({
-        productId: p._id,
-        name: p.name,
-        price: p.price,
+        id: p._id,           // ✅ Backend expects "id"
         quantity: p.quantity,
-        image: p.image,
       })),
-      subtotal,
-      shippingFee,
-      discount: discountPercent,
-      amount,
-      shippingMethod,
+      address: {
+        street: shipping.street,       // ✅ Backend expects "street"
+        city: shipping.city,
+        state: shipping.state || '',
+        zipCode: shipping.zipCode || '',
+        country: 'Egypt',
+        phone: shipping.phone,
+      },
+      amount: totalAmount,             // ✅ Backend expects "amount"
+      paymentMethod: 'cash',
+      notes: coupon ? `كوبون: ${coupon} (${discountPercent}% خصم)` : '',
     };
 
     try {
@@ -139,17 +144,21 @@ const Order = () => {
       });
 
       if (res.data?.success) {
-        setToast({ message: 'تم إنشاء الطلب بنجاح', type: 'success' });
+        setToast({ message: 'تم إنشاء الطلب بنجاح ✓', type: 'success' });
         await clearCart();
-        setTimeout(() => navigate('/myorders'), 700);
+        setTimeout(() => navigate('/myorders'), 800);
       } else {
         setToast({
-          message: res.data?.message || 'حدث خطأ',
+          message: res.data?.message || 'حدث خطأ في إنشاء الطلب',
           type: 'error',
         });
       }
     } catch (err) {
-      setToast({ message: 'فشل الاتصال بالسيرفر', type: 'error' });
+      console.error('Order Error:', err.response?.data || err.message);
+      const errorMsg =
+        err.response?.data?.message ||
+        'فشل الاتصال بالسيرفر. تحقق من الاتصال بالإنترنت';
+      setToast({ message: errorMsg, type: 'error' });
     } finally {
       submittingRef.current = false;
       setLoading(false);

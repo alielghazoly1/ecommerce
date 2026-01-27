@@ -1,4 +1,4 @@
-// index.js - FINAL PRODUCTION-READY VERSION
+// index.js - FINAL PRODUCTION-READY VERSION ✅
 import express from 'express';
 import serverless from 'serverless-http';
 import cors from 'cors';
@@ -21,7 +21,9 @@ import monitoringRouter from './routes/monitoringRoutes.js';
 // Middleware
 import errorHandler, { notFoundHandler } from './middleware/errorHandler.js';
 import rateLimiter from './middleware/rateLimiter.js';
-import requestLogger, { performanceMonitor } from './middleware/requestLogger.js';
+import requestLogger, {
+  performanceMonitor,
+} from './middleware/requestLogger.js';
 
 // Security Middleware
 import {
@@ -72,16 +74,20 @@ app.use(ipBlacklist);
 // =====================
 // Body Parsing with Security
 // =====================
-app.use(express.json({ 
-  limit: '1mb', // تقليل الحد الأقصى
-  strict: true,
-}));
+app.use(
+  express.json({
+    limit: '1mb',
+    strict: true,
+  }),
+);
 
-app.use(express.urlencoded({ 
-  extended: true, 
-  limit: '1mb',
-  parameterLimit: 100,
-}));
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: '1mb',
+    parameterLimit: 100,
+  }),
+);
 
 // =====================
 // Input Sanitization & Security
@@ -99,15 +105,14 @@ app.use(compression());
 // =====================
 // CORS Configuration (STRICT)
 // =====================
-const allowedOrigins = process.env.ALLOWED_ORIGINS 
+const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : ['http://localhost:3000', 'http://localhost:5173'];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -120,7 +125,7 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 600, // 10 minutes
+  maxAge: 600,
 };
 
 app.use(cors(corsOptions));
@@ -158,12 +163,41 @@ app.get('/health', (req, res) => {
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // =====================
-// Static Files (with caching)
+// Static Files (SECURED) ✅
 // =====================
-app.use('/images', express.static('uploads', {
-  maxAge: '1d',
-  etag: true,
-}));
+app.use(
+  '/images',
+  (req, res, next) => {
+    // ✅ منع directory listing
+    if (req.path === '/' || req.path === '') {
+      return res.status(403).json({
+        success: false,
+        error: 'Directory listing forbidden',
+      });
+    }
+
+    // ✅ منع الوصول للملفات خارج مجلد images
+    if (req.path.includes('..')) {
+      return res.status(403).json({
+        success: false,
+        error: 'Invalid path',
+      });
+    }
+
+    next();
+  },
+  express.static('uploads/images', {
+    maxAge: '7d', // ✅ Cache للأداء
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, path) => {
+      // ✅ أمان إضافي
+      res.set('X-Content-Type-Options', 'nosniff');
+      res.set('Cache-Control', 'public, max-age=604800'); // 7 days
+    },
+    fallthrough: true, // ✅ إذا الملف مش موجود، يروح للـ 404 handler العام
+  }),
+);
 
 // =====================
 // Database Connection Middleware
@@ -174,7 +208,13 @@ const ensureDb = async (req, res, next) => {
     return next();
   }
 
-  const dbRoutes = ['/api/users', '/api/order', '/api/product', '/api/cart', '/api/admin'];
+  const dbRoutes = [
+    '/api/users',
+    '/api/order',
+    '/api/product',
+    '/api/cart',
+    '/api/admin',
+  ];
   const needsDb = dbRoutes.some((route) => req.path.startsWith(route));
 
   if (!needsDb) return next();
@@ -221,15 +261,13 @@ app.use(errorHandler);
 // =====================
 const gracefulShutdown = (signal) => {
   logger.info(`${signal} received: closing server gracefully`);
-  
-  // Close server
+
   if (server) {
     server.close(() => {
       logger.info('HTTP server closed');
     });
   }
-  
-  // Close database connection
+
   if (mongoose.connection && mongoose.connection.readyState === 1) {
     mongoose.connection.close(false, () => {
       logger.info('MongoDB connection closed');
@@ -239,7 +277,6 @@ const gracefulShutdown = (signal) => {
     process.exit(0);
   }
 
-  // Force close after 10 seconds
   setTimeout(() => {
     logger.error('Forced shutdown after timeout');
     process.exit(1);
@@ -262,9 +299,12 @@ if (process.env.NODE_ENV !== 'production') {
       nodeVersion: process.version,
       pid: process.pid,
     });
-    logger.info(`📍 Local: http://localhost:${PORT}`);
-    logger.info(`📊 Monitoring: http://localhost:${PORT}/api/monitoring/dashboard`);
+    logger.info(`🔗 Local: http://localhost:${PORT}`);
+    logger.info(
+      `📊 Monitoring: http://localhost:${PORT}/api/monitoring/dashboard`,
+    );
     logger.info(`🔒 Security: All security features enabled`);
+    logger.info(`📁 Images: http://localhost:${PORT}/images/`);
   });
 }
 

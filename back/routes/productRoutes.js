@@ -31,6 +31,26 @@ const upload = multer({
     }
   },
 });
+// ✅ تحسين معالجة أخطاء multer
+(upload.single('image'),
+  (err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({
+        success: false,
+        message:
+          err.code === 'LIMIT_FILE_SIZE'
+            ? 'حجم الملف كبير جداً. الحد الأقصى 5MB'
+            : err.message,
+      });
+    }
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message || 'خطأ في رفع الملف',
+      });
+    }
+    next();
+  });
 
 // =====================
 // PUBLIC ROUTES (أي حد يقدر يشوف المنتجات)

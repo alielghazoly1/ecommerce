@@ -1,4 +1,4 @@
-// userController.js - FIXED VERSION
+// userController.js - ENHANCED VERSION
 import userModel from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
@@ -16,7 +16,7 @@ const createToken = (user) => {
       role: user.role,
     },
     process.env.JWT_SECRET,
-    { expiresIn: '1d' }
+    { expiresIn: '1d' },
   );
 };
 
@@ -26,9 +26,7 @@ const createToken = (user) => {
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await userModel
-    .findOne({ email })
-    .select('+password');
+  const user = await userModel.findOne({ email }).select('+password');
 
   if (!user) {
     return res.status(404).json({
@@ -44,6 +42,9 @@ const loginUser = asyncHandler(async (req, res) => {
       message: 'Invalid credentials',
     });
   }
+
+  // Update last login
+  await user.updateLastLogin();
 
   const token = createToken(user);
   res.json({ success: true, token });
@@ -70,18 +71,111 @@ const registerUser = asyncHandler(async (req, res) => {
     });
   }
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-
+  // Password will be hashed by the pre-save middleware
   const user = await userModel.create({
     name,
     email,
-    password: hashedPassword,
+    password,
     role: 'user',
   });
 
   const token = createToken(user);
   res.status(201).json({ success: true, token });
+});
+
+// =====================
+// Get User Profile (Enhanced)
+// =====================
+export const getUserProfile = asyncHandler(async (req, res) => {
+  const user = await userModel
+    .findById(req.user._id)
+    .select('-password -emailVerificationToken -passwordResetToken');
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found',
+    });
+  }
+
+  // Calculate cart statistics
+  const cartStats = {
+    itemsCount: user.cartItemsCount || 0,
+    totalItems: Array.from(user.cartData.values()).reduce((sum, qty) => sum + qty, 0),
+  };
+
+  res.json({
+    success: true,
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      avatar: user.avatar,
+      role: user.role,
+      isEmailVerified: user.isEmailVerified,
+      isActive: user.isActive,
+      
+      // Cart & Wishlist
+      cartData: user.cartData,
+      wishlist: user.wishlist,
+      cartStats,
+      
+      // Addresses
+      addresses: user.addresses,
+      
+      // Preferences
+      preferences: user.preferences,
+      
+      // Metadata & Statistics
+      metadata: {
+        totalOrders: user.metadata?.totalOrders || 0,
+        totalSpent: user.metadata?.totalSpent || 0,
+        lastOrderDate: user.metadata?.lastOrderDate,
+      },
+      
+      // Account Info
+      lastLogin: user.lastLogin,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    },
+  });
+});
+
+// =====================
+// Update User Profile
+// =====================
+export const updateProfile = asyncHandler(async (req, res) => {
+  const { name, phone, preferences } = req.body;
+  
+  const user = await userModel.findById(req.user._id);
+  
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found',
+    });
+  }
+  
+  // Update allowed fields
+  if (name) user.name = name;
+  if (phone) user.phone = phone;
+  if (preferences) {
+    user.preferences = { ...user.preferences, ...preferences };
+  }
+  
+  await user.save();
+  
+  res.json({
+    success: true,
+    message: 'Profile updated successfully',
+    user: {
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      preferences: user.preferences,
+    },
+  });
 });
 
 // =====================
@@ -95,7 +189,6 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 export const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  // ✅ Validation
   if (!id) {
     return res.status(400).json({
       success: false,
@@ -106,24 +199,23 @@ export const deleteUser = asyncHandler(async (req, res) => {
   const deleted = await userModel.findByIdAndDelete(id);
 
   if (!deleted) {
-    return res.status(404).json({ 
-      success: false, 
-      message: 'User not found' 
+    return res.status(404).json({
+      success: false,
+      message: 'User not found',
     });
   }
 
   logger.info('User deleted', { userId: id });
 
-  res.json({ 
-    success: true, 
-    message: 'User deleted successfully' 
+  res.json({
+    success: true,
+    message: 'User deleted successfully',
   });
 });
 
 export const makeAdmin = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  // ✅ Validation
   if (!id) {
     return res.status(400).json({
       success: false,
@@ -134,13 +226,12 @@ export const makeAdmin = asyncHandler(async (req, res) => {
   const user = await userModel.findById(id);
 
   if (!user) {
-    return res.status(404).json({ 
-      success: false, 
-      message: 'User not found' 
+    return res.status(404).json({
+      success: false,
+      message: 'User not found',
     });
   }
 
-  // ✅ تحقق من الدور الحالي
   if (user.role === 'admin') {
     return res.status(400).json({
       success: false,
@@ -149,7 +240,7 @@ export const makeAdmin = asyncHandler(async (req, res) => {
   }
 
   user.role = 'admin';
-  await user.save({ validateBeforeSave: false }); // ✅ تعطيل validation
+  await user.save({ validateBeforeSave: false });
 
   logger.info('User promoted to admin', { userId: id });
 
@@ -165,11 +256,9 @@ export const makeAdmin = asyncHandler(async (req, res) => {
   });
 });
 
-// ✅ FIXED: demoteToUser
 export const demoteToUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  // ✅ Validation
   if (!id) {
     return res.status(400).json({
       success: false,
@@ -180,13 +269,12 @@ export const demoteToUser = asyncHandler(async (req, res) => {
   const user = await userModel.findById(id);
 
   if (!user) {
-    return res.status(404).json({ 
-      success: false, 
-      message: 'User not found' 
+    return res.status(404).json({
+      success: false,
+      message: 'User not found',
     });
   }
 
-  // ✅ تحقق من الدور الحالي
   if (user.role !== 'admin') {
     return res.status(400).json({
       success: false,
@@ -194,12 +282,11 @@ export const demoteToUser = asyncHandler(async (req, res) => {
     });
   }
 
-  // ✅ تحديث الدور مع تعطيل validation
   user.role = 'user';
-  
+
   try {
-    await user.save({ validateBeforeSave: false }); // ✅ تعطيل validation للـ password
-    
+    await user.save({ validateBeforeSave: false });
+
     logger.info('Admin demoted to user', { userId: id });
 
     res.json({
@@ -214,13 +301,14 @@ export const demoteToUser = asyncHandler(async (req, res) => {
     });
   } catch (saveError) {
     logger.error('Error saving user', { error: saveError.message, userId: id });
-    
-    // ✅ محاولة بديلة باستخدام findByIdAndUpdate
-    const updatedUser = await userModel.findByIdAndUpdate(
-      id,
-      { role: 'user' },
-      { new: true, runValidators: false }
-    ).select('-password');
+
+    const updatedUser = await userModel
+      .findByIdAndUpdate(
+        id,
+        { role: 'user' },
+        { new: true, runValidators: false },
+      )
+      .select('-password');
 
     if (updatedUser) {
       return res.json({

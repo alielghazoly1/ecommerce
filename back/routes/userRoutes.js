@@ -1,8 +1,10 @@
-// routes/userRoutes.js - IMPROVED VERSION
+// routes/userRoutes.js - ENHANCED VERSION
 import express from 'express';
 import {
   loginUser,
   registerUser,
+  getUserProfile,
+  updateProfile,
   demoteToUser,
   getAllUsers,
   deleteUser,
@@ -17,6 +19,7 @@ import {
   validateMongoId,
 } from '../middleware/validation.js';
 import { authRateLimiter } from '../middleware/rateLimiter.js';
+
 const userRouter = express.Router();
 
 // =====================
@@ -28,17 +31,8 @@ userRouter.post('/register', authRateLimiter, validateRegister, registerUser);
 // =====================
 // PROTECTED USER ROUTES (لازم يكون مسجل دخول)
 // =====================
-userRouter.get('/profile', authMiddleware, (req, res) => {
-  res.json({
-    success: true,
-    user: {
-      id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-      role: req.user.role,
-    },
-  });
-});
+userRouter.get('/profile', authMiddleware, getUserProfile);
+userRouter.put('/profile', authMiddleware, updateProfile);
 
 // =====================
 // ADMIN ONLY ROUTES (لازم يكون admin)

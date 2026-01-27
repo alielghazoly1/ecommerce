@@ -1,7 +1,17 @@
 // src/components/Sidebar.jsx
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { PlusCircle, List, ShoppingCart, Users, Menu, X, LogOut, User, LayoutDashboard } from 'lucide-react';
+import {
+  PlusCircle,
+  List,
+  ShoppingCart,
+  Users,
+  Menu,
+  X,
+  LogOut,
+  User,
+  LayoutDashboard,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -10,6 +20,7 @@ const Sidebar = () => {
   const { user, logout } = useAuth();
 
   const menuItems = [
+    { to: '/admin/dashboard', label: 'لوحة التحكم', Icon: LayoutDashboard },
     { to: '/admin/list', label: 'المنتجات', Icon: LayoutDashboard },
     { to: '/admin/add', label: 'إضافة منتج', Icon: PlusCircle },
     { to: '/admin/orders', label: 'الطلبات', Icon: ShoppingCart },
@@ -66,8 +77,12 @@ const Sidebar = () => {
                     <User className="w-5 h-5 text-white" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-white truncate">{user.name || 'Admin'}</p>
-                    <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                    <p className="text-sm font-semibold text-white truncate">
+                      {user.name || 'Admin'}
+                    </p>
+                    <p className="text-xs text-gray-400 truncate">
+                      {user.email}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -91,7 +106,9 @@ const Sidebar = () => {
               >
                 {({ isActive }) => (
                   <>
-                    <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? '' : 'group-hover:scale-110 transition-transform'}`} />
+                    <Icon
+                      className={`w-5 h-5 flex-shrink-0 ${isActive ? '' : 'group-hover:scale-110 transition-transform'}`}
+                    />
                     <span className="font-medium">{label}</span>
                   </>
                 )}
