@@ -21,9 +21,9 @@ const Sidebar = () => {
 
   const menuItems = [
     { to: '/admin/dashboard', label: 'لوحة التحكم', Icon: LayoutDashboard },
+    { to: '/admin/orders', label: 'الطلبات', Icon: ShoppingCart },
     { to: '/admin/list', label: 'المنتجات', Icon: LayoutDashboard },
     { to: '/admin/add', label: 'إضافة منتج', Icon: PlusCircle },
-    { to: '/admin/orders', label: 'الطلبات', Icon: ShoppingCart },
     { to: '/admin/users', label: 'المستخدمين', Icon: Users },
   ];
 

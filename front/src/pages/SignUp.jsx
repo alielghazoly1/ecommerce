@@ -84,7 +84,7 @@ const SignUp = () => {
         type="success"
         message={'تم إنشاء الحساب بنجاح\nاهلا بك في عالم توتا 🎉'}
         duration={6000}
-        link={'/shop'}
+        link={'/categories'}
         linkText="الذهاب الي المتجر"
         autoNavigate={true}
       />

@@ -1,5 +1,5 @@
 // =====================
-// orderController.js - UPDATED with new Order Model features
+// orderController.js - UPDATED with Enhanced Response
 // =====================
 import orderModel from '../models/orderModel.js';
 import userModel from '../models/userModel.js';
@@ -7,11 +7,11 @@ import productModel from '../models/productModel.js';
 import logger from '../utils/logger.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 
-// في orderController.js - تعديل بسيط في placeOrder
+// Place Order (User endpoint)
 const placeOrder = asyncHandler(async (req, res) => {
   const { items, address, amount, paymentMethod = 'cash', notes } = req.body;
 
-  // ✅ Validation
+  // Validation
   if (!items || !Array.isArray(items) || items.length === 0) {
     logger.warn('Order placement failed: Items are required', {
       requestId: req.requestId,
@@ -41,7 +41,6 @@ const placeOrder = asyncHandler(async (req, res) => {
     });
   }
 
-  // ✅ باقي الكود كما هو...
   // Prepare order items with product details
   const orderItems = [];
   let calculatedTotal = 0;
@@ -88,7 +87,7 @@ const placeOrder = asyncHandler(async (req, res) => {
 
   // Create order with new schema
   const newOrder = new orderModel({
-    userId: req.user._id, // ✅ استخدم _id
+    userId: req.user._id,
     items: orderItems,
     totalAmount: calculatedTotal,
     shippingAddress: {
@@ -107,7 +106,6 @@ const placeOrder = asyncHandler(async (req, res) => {
 
   // Update user metadata
   await userModel.findByIdAndUpdate(req.user._id, {
-    // ✅ استخدم _id
     cartData: {},
     $inc: { 'metadata.totalOrders': 1, 'metadata.totalSpent': calculatedTotal },
     'metadata.lastOrderDate': new Date(),
@@ -131,6 +129,7 @@ const placeOrder = asyncHandler(async (req, res) => {
   });
 });
 
+// Get User Orders
 const userOrders = asyncHandler(async (req, res) => {
   // Use static method from model
   const orders = await orderModel.getUserOrders(req.user._id, 50);
@@ -156,12 +155,15 @@ const userOrders = asyncHandler(async (req, res) => {
   });
 });
 
+// ✅ List Orders (Admin) - ENHANCED RESPONSE
 const listOrders = asyncHandler(async (req, res) => {
   const { status, limit = 100 } = req.query;
 
   let orders;
   if (status) {
-    orders = await orderModel.getOrdersByStatus(status);
+    orders = await orderModel
+      .getOrdersByStatus(status)
+      .populate('userId', 'name email phone');
   } else {
     orders = await orderModel
       .find()
@@ -170,21 +172,72 @@ const listOrders = asyncHandler(async (req, res) => {
       .limit(Number(limit));
   }
 
-  const formattedOrders = orders.map((order) => ({
-    _id: order._id,
-    orderNumber: order.orderNumber,
-    userName: order.userId?.name || 'Unknown',
-    userEmail: order.userId?.email || 'Unknown',
-    items: order.items,
-    totalAmount: order.totalAmount,
-    itemsCount: order.itemsCount,
-    status: order.status,
-    paymentStatus: order.paymentStatus,
-    paymentMethod: order.paymentMethod,
-    isDelivered: order.isDelivered,
-    createdAt: order.createdAt,
-    trackingNumber: order.trackingNumber,
-  }));
+  // ✅ Enhanced formatting with complete user details
+  const formattedOrders = orders.map((order) => {
+    // Get user info safely
+    const user = order.userId || {};
+    
+    return {
+      _id: order._id,
+      orderNumber: order.orderNumber,
+      
+      // ✅ User Information (Enhanced)
+      userName: user.name || 'Unknown User',
+      userEmail: user.email || 'No email provided',
+      userPhone: user.phone || order.shippingAddress?.phone || 'N/A',
+      userId: user._id || null,
+      
+      // ✅ Order Items with full details
+      items: order.items.map(item => ({
+        _id: item._id,
+        productId: item.productId,
+        name: item.name,
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        image: item.image || null,
+        total: (item.price || 0) * (item.quantity || 1)
+      })),
+      
+      // ✅ Order totals
+      totalAmount: order.totalAmount || 0,
+      itemsCount: order.itemsCount || order.items?.length || 0,
+      
+      // ✅ Shipping Address (Full details)
+      shippingAddress: {
+        street: order.shippingAddress?.street || '',
+        city: order.shippingAddress?.city || '',
+        state: order.shippingAddress?.state || '',
+        zipCode: order.shippingAddress?.zipCode || '',
+        country: order.shippingAddress?.country || 'Egypt',
+        phone: order.shippingAddress?.phone || '',
+      },
+      
+      // ✅ Order Status
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      paymentMethod: order.paymentMethod,
+      
+      // ✅ Delivery Info
+      isDelivered: order.isDelivered,
+      deliveredAt: order.deliveredAt || null,
+      isPaid: order.isPaid,
+      paidAt: order.paidAt || null,
+      
+      // ✅ Tracking
+      trackingNumber: order.trackingNumber || null,
+      
+      // ✅ Notes
+      notes: order.notes || '',
+      
+      // ✅ Timestamps
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      
+      // ✅ Cancel info (if applicable)
+      cancelReason: order.cancelReason || null,
+      cancelledAt: order.cancelledAt || null,
+    };
+  });
 
   res.json({
     success: true,
@@ -193,6 +246,7 @@ const listOrders = asyncHandler(async (req, res) => {
   });
 });
 
+// Update Order Status
 const updateStatus = asyncHandler(async (req, res) => {
   const { orderId, status, trackingNumber } = req.body;
 
@@ -234,14 +288,34 @@ const updateStatus = asyncHandler(async (req, res) => {
   });
 });
 
-// New: Get today's orders
+// Get Today's Orders
 const getTodaysOrders = asyncHandler(async (req, res) => {
-  const orders = await orderModel.getTodaysOrders();
+  const orders = await orderModel
+    .getTodaysOrders()
+    .populate('userId', 'name email phone');
+
+  const formattedOrders = orders.map((order) => {
+    const user = order.userId || {};
+    
+    return {
+      _id: order._id,
+      orderNumber: order.orderNumber,
+      userName: user.name || 'Unknown User',
+      userEmail: user.email || 'No email',
+      userPhone: user.phone || order.shippingAddress?.phone || 'N/A',
+      totalAmount: order.totalAmount || 0,
+      itemsCount: order.itemsCount || 0,
+      status: order.status,
+      paymentMethod: order.paymentMethod,
+      shippingAddress: order.shippingAddress,
+      createdAt: order.createdAt,
+    };
+  });
 
   res.json({
     success: true,
-    count: orders.length,
-    data: orders,
+    count: formattedOrders.length,
+    data: formattedOrders,
   });
 });
 
