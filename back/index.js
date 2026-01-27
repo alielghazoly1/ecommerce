@@ -1,4 +1,4 @@
-// index.js - FINAL PRODUCTION-READY VERSION ✅
+// index.js - VERCEL OPTIMIZED VERSION ✅
 import express from 'express';
 import serverless from 'serverless-http';
 import cors from 'cors';
@@ -30,7 +30,6 @@ import {
   sanitizeInput,
   preventNoSQLInjection,
   securityHeaders,
-  ipBlacklist,
   preventParameterPollution,
   detectSuspiciousActivity,
 } from './middleware/security.js';
@@ -38,16 +37,14 @@ import {
 const app = express();
 
 // =====================
-// Global Error Handlers
+// Global Error Handlers (SIMPLIFIED FOR VERCEL)
 // =====================
 process.on('unhandledRejection', (err) => {
   logger.error('UNHANDLED REJECTION', {
     error: err.message,
     stack: err.stack,
   });
-  if (process.env.NODE_ENV === 'production') {
-    process.exit(1);
-  }
+  // Don't exit in serverless
 });
 
 process.on('uncaughtException', (err) => {
@@ -55,28 +52,31 @@ process.on('uncaughtException', (err) => {
     error: err.message,
     stack: err.stack,
   });
-  if (process.env.NODE_ENV === 'production') {
-    process.exit(1);
-  }
+  // Don't exit in serverless
 });
 
 // =====================
-// Trust Proxy (for Vercel/Cloudflare)
+// Trust Proxy (CRITICAL for Vercel)
 // =====================
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 
 // =====================
-// Security Middleware (MUST BE FIRST)
+// Security Headers (SIMPLIFIED)
 // =====================
-app.use(securityHeaders);
-app.use(ipBlacklist);
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
 
 // =====================
-// Body Parsing with Security
+// Body Parsing
 // =====================
 app.use(
   express.json({
-    limit: '1mb',
+    limit: '10mb',
     strict: true,
   }),
 );
@@ -84,64 +84,82 @@ app.use(
 app.use(
   express.urlencoded({
     extended: true,
-    limit: '1mb',
+    limit: '10mb',
     parameterLimit: 100,
   }),
 );
 
 // =====================
-// Input Sanitization & Security
+// Input Sanitization (ESSENTIAL)
 // =====================
 app.use(sanitizeInput);
 app.use(preventNoSQLInjection);
 app.use(preventParameterPollution);
-app.use(detectSuspiciousActivity);
 
 // =====================
-// Performance Middleware
+// Performance
 // =====================
 app.use(compression());
 
 // =====================
-// CORS Configuration (STRICT)
+// CORS Configuration (FIXED FOR PRODUCTION) ✅
 // =====================
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000', 'http://localhost:5173'];
+  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  : [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'https://ecommerce-nine-theta-34.vercel.app', // ✅ Add your frontend URL
+    ];
+
+console.log('🌍 Allowed Origins:', allowedOrigins);
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
+    // ✅ Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
 
-    if (allowedOrigins.includes(origin)) {
+    // ✅ Check if origin is allowed
+    if (allowedOrigins.includes(origin) || origin.includes('vercel.app')) {
       callback(null, true);
     } else {
       logger.warn('CORS blocked request', { origin });
-      callback(new Error('Not allowed by CORS'));
+      // ✅ Allow but log warning in production
+      if (process.env.NODE_ENV === 'production') {
+        callback(null, true); // Allow but log
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
     }
   },
   credentials: true,
   optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 600,
+  maxAge: 86400, // 24 hours
 };
 
 app.use(cors(corsOptions));
 
 // =====================
-// Request Logging & Monitoring
+// Request Logging (OPTIONAL - can disable in production)
 // =====================
-app.use(requestLogger);
-app.use(performanceMonitor);
+if (process.env.ENABLE_REQUEST_LOGGING !== 'false') {
+  app.use(requestLogger);
+}
 
 // =====================
-// Health Check Routes (No Auth Required)
+// Health Check Routes (PUBLIC - NO AUTH) ✅
 // =====================
 app.get('/', (req, res) => {
-  res.json({
+  res.status(200).json({
+    success: true,
     status: 'running',
+    message: 'E-commerce API is running',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
@@ -149,7 +167,8 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({
+  res.status(200).json({
+    success: true,
     status: 'healthy',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
@@ -157,18 +176,26 @@ app.get('/health', (req, res) => {
       used: `${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB`,
       total: `${(process.memoryUsage().heapTotal / 1024 / 1024).toFixed(2)} MB`,
     },
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
   });
 });
 
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // =====================
-// Static Files (SECURED) ✅
+// Static Files (SECURED)
 // =====================
 app.use(
   '/images',
   (req, res, next) => {
-    // ✅ منع directory listing
     if (req.path === '/' || req.path === '') {
       return res.status(403).json({
         success: false,
@@ -176,7 +203,6 @@ app.use(
       });
     }
 
-    // ✅ منع الوصول للملفات خارج مجلد images
     if (req.path.includes('..')) {
       return res.status(403).json({
         success: false,
@@ -187,15 +213,14 @@ app.use(
     next();
   },
   express.static('uploads/images', {
-    maxAge: '7d', // ✅ Cache للأداء
+    maxAge: '7d',
     etag: true,
     lastModified: true,
     setHeaders: (res, path) => {
-      // ✅ أمان إضافي
       res.set('X-Content-Type-Options', 'nosniff');
-      res.set('Cache-Control', 'public, max-age=604800'); // 7 days
+      res.set('Cache-Control', 'public, max-age=604800');
     },
-    fallthrough: true, // ✅ إذا الملف مش موجود، يروح للـ 404 handler العام
+    fallthrough: true,
   }),
 );
 
@@ -220,13 +245,16 @@ const ensureDb = async (req, res, next) => {
   if (!needsDb) return next();
 
   try {
-    await connectDB();
+    if (mongoose.connection.readyState !== 1) {
+      await connectDB();
+    }
     next();
   } catch (err) {
     logger.error('Database connection failed', { error: err.message });
     return res.status(503).json({
       success: false,
       message: 'Service temporarily unavailable',
+      error: 'Database connection failed',
     });
   }
 };
@@ -234,9 +262,9 @@ const ensureDb = async (req, res, next) => {
 app.use(ensureDb);
 
 // =====================
-// Rate Limiting (Apply to all API routes)
+// Rate Limiting (OPTIONAL in production)
 // =====================
-if (process.env.ENABLE_RATE_LIMITING !== 'false') {
+if (process.env.ENABLE_RATE_LIMITING === 'true') {
   app.use('/api/', rateLimiter);
 }
 
@@ -251,40 +279,33 @@ app.use('/api/admin', adminRouter);
 app.use('/api/monitoring', monitoringRouter);
 
 // =====================
-// Error Handlers (MUST BE LAST)
+// 404 Handler
 // =====================
-app.use(notFoundHandler);
-app.use(errorHandler);
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found',
+    path: req.path,
+    method: req.method,
+  });
+});
 
 // =====================
-// Graceful Shutdown
+// Error Handler (MUST BE LAST)
 // =====================
-const gracefulShutdown = (signal) => {
-  logger.info(`${signal} received: closing server gracefully`);
+app.use((err, req, res, next) => {
+  logger.error('Global error handler', {
+    error: err.message,
+    stack: err.stack,
+    path: req.path,
+  });
 
-  if (server) {
-    server.close(() => {
-      logger.info('HTTP server closed');
-    });
-  }
-
-  if (mongoose.connection && mongoose.connection.readyState === 1) {
-    mongoose.connection.close(false, () => {
-      logger.info('MongoDB connection closed');
-      process.exit(0);
-    });
-  } else {
-    process.exit(0);
-  }
-
-  setTimeout(() => {
-    logger.error('Forced shutdown after timeout');
-    process.exit(1);
-  }, 10000);
-};
-
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  res.status(err.statusCode || 500).json({
+    success: false,
+    message: err.message || 'Internal Server Error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  });
+});
 
 // =====================
 // Local Development Server
@@ -300,12 +321,38 @@ if (process.env.NODE_ENV !== 'production') {
       pid: process.pid,
     });
     logger.info(`🔗 Local: http://localhost:${PORT}`);
-    logger.info(
-      `📊 Monitoring: http://localhost:${PORT}/api/monitoring/dashboard`,
-    );
-    logger.info(`🔒 Security: All security features enabled`);
-    logger.info(`📁 Images: http://localhost:${PORT}/images/`);
+    logger.info(`📊 Health: http://localhost:${PORT}/health`);
+    logger.info(`🔒 Security: Enabled`);
+    logger.info(`🖼️  Images: http://localhost:${PORT}/images/`);
   });
+
+  // Graceful Shutdown
+  const gracefulShutdown = (signal) => {
+    logger.info(`${signal} received: closing server gracefully`);
+
+    if (server) {
+      server.close(() => {
+        logger.info('HTTP server closed');
+      });
+    }
+
+    if (mongoose.connection && mongoose.connection.readyState === 1) {
+      mongoose.connection.close(false, () => {
+        logger.info('MongoDB connection closed');
+        process.exit(0);
+      });
+    } else {
+      process.exit(0);
+    }
+
+    setTimeout(() => {
+      logger.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 }
 
 // =====================
