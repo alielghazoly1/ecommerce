@@ -9,7 +9,7 @@ const ShopContextProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [token, setToken] = useState(null);
   const [authLoading, setAuthLoading] = useState(true); // ✅ new
-  const url = 'http://localhost:4000';
+  const url = 'https://back-uyzw.vercel.app';
 
   // تحميل السلة من LocalStorage
   useEffect(() => {
