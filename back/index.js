@@ -1,4 +1,4 @@
-// index.js - VERCEL OPTIMIZED VERSION ✅
+// index.js - VERCEL OPTIMIZED VERSION ✅ - FIXED
 import express from 'express';
 import serverless from 'serverless-http';
 import cors from 'cors';
@@ -34,6 +34,9 @@ import {
   detectSuspiciousActivity,
 } from './middleware/security.js';
 
+// =====================
+// 🔥 IMPORTANT: Create Express App FIRST!
+// =====================
 const app = express();
 
 // =====================
@@ -105,7 +108,7 @@ app.use(compression());
 // CORS Configuration (FIXED FOR PRODUCTION) ✅
 // =====================
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+  ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim())
   : [
       'http://localhost:3000',
       'http://localhost:5173',
@@ -168,9 +171,13 @@ app.get('/', (req, res) => {
 
 app.get('/health', (req, res) => {
   // Simple health check without DB
-  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 
-                   mongoose.connection.readyState === 2 ? 'connecting' : 'disconnected';
-  
+  const dbStatus =
+    mongoose.connection.readyState === 1
+      ? 'connected'
+      : mongoose.connection.readyState === 2
+        ? 'connecting'
+        : 'disconnected';
+
   res.status(200).json({
     success: true,
     status: 'healthy',
@@ -233,7 +240,11 @@ app.use(
 // =====================
 const ensureDb = async (req, res, next) => {
   // Skip DB for health checks
-  if (req.path === '/' || req.path === '/health' || req.path === '/favicon.ico') {
+  if (
+    req.path === '/' ||
+    req.path === '/health' ||
+    req.path === '/favicon.ico'
+  ) {
     return next();
   }
 
@@ -261,8 +272,8 @@ const ensureDb = async (req, res, next) => {
 
     // Try to connect with timeout
     const connectPromise = connectDB();
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Database connection timeout')), 5000)
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Database connection timeout')), 5000),
     );
 
     await Promise.race([connectPromise, timeoutPromise]);
