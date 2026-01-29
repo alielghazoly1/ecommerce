@@ -10,11 +10,11 @@ export const setAuthToken = (token) => {
 };
 
 const axiosInstance = axios.create({
-  baseURL: (import.meta.env.VITE_API_URL || 'http://localhost:4000') + '/api',
+  baseURL: 'https://low-hayley-totasheco-426426a6.koyeb.app/api',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
-  }
+  },
 });
 
 axiosInstance.interceptors.request.use(
@@ -39,7 +39,7 @@ axiosInstance.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 axiosInstance.interceptors.response.use(
@@ -52,7 +52,7 @@ axiosInstance.interceptors.response.use(
         statusText: error.response.statusText,
         url: error.config?.url,
         method: error.config?.method,
-        data: error.response.data
+        data: error.response.data,
       });
     }
 
@@ -64,7 +64,7 @@ axiosInstance.interceptors.response.use(
       window.location.href = '/admin/login';
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosInstance;
