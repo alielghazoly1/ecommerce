@@ -60,7 +60,7 @@ const formatDate = (date) => {
 // ============================================
 const Users = () => {
   const { token, isAuthenticated, user: currentUser } = useAuth();
-  const url = 'https://low-hayley-totasheco-426426a6.koyeb.app/api';
+  const url = 'https://low-hayley-totasheco-426426a6.koyeb.app';
 
   // State Management
   const [users, setUsers] = useState([]);

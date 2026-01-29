@@ -29,7 +29,7 @@ import toast from 'react-hot-toast';
 
 const Monitoring = () => {
   const { token } = useAuth();
-  const url = 'https://low-hayley-totasheco-426426a6.koyeb.app/api';
+  const url = 'https://low-hayley-totasheco-426426a6.koyeb.app';
 
   const [data, setData] = useState(null);
   const [logs, setLogs] = useState([]);

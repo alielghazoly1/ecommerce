@@ -71,7 +71,7 @@ const formatDate = (date) => {
 // ============================================
 const Orders = () => {
   const { token, isAuthenticated } = useAuth();
-  const url = 'https://low-hayley-totasheco-426426a6.koyeb.app/api';
+  const url = 'https://low-hayley-totasheco-426426a6.koyeb.app';
 
   // State Management
   const [orders, setOrders] = useState([]);
