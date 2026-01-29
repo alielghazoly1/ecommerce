@@ -2,13 +2,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { 
-  Loader2, 
-  ShoppingCart, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Calendar, 
+import {
+  Loader2,
+  ShoppingCart,
+  MapPin,
+  Phone,
+  Mail,
+  Calendar,
   Filter,
   Eye,
   X,
@@ -18,7 +18,7 @@ import {
   Package,
   Search,
   XCircle,
-  User
+  User,
 } from 'lucide-react';
 
 // ============================================
@@ -52,7 +52,7 @@ const formatPrice = (price) => {
 const getStatusBg = (status) => STATUS_COLORS[status] || STATUS_COLORS.pending;
 
 const getStatusLabel = (status) => {
-  const option = STATUS_OPTIONS.find(opt => opt.value === status);
+  const option = STATUS_OPTIONS.find((opt) => opt.value === status);
   return option ? option.label : status;
 };
 
@@ -71,8 +71,8 @@ const formatDate = (date) => {
 // ============================================
 const Orders = () => {
   const { token, isAuthenticated } = useAuth();
-  const url = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-  
+  const url = 'https://low-hayley-totasheco-426426a6.koyeb.app/api';
+
   // State Management
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,7 +104,7 @@ const Orders = () => {
     try {
       setLoading(true);
       const res = await axios.get(`${url}/api/order/list`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.data.success) {
@@ -130,15 +130,15 @@ const Orders = () => {
 
     try {
       setUpdating(true);
-      
+
       const res = await axios.post(
         `${url}/api/order/status`,
-        { 
-          orderId, 
+        {
+          orderId,
           status: newStatus,
-          trackingNumber: trackingNumber || undefined
+          trackingNumber: trackingNumber || undefined,
         },
-        { headers: { 'Authorization': `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (res.data.success) {
@@ -164,18 +164,19 @@ const Orders = () => {
 
     // Filter by status
     if (statusFilter !== 'all') {
-      result = result.filter(order => order.status === statusFilter);
+      result = result.filter((order) => order.status === statusFilter);
     }
 
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(order => 
-        order.orderNumber?.toLowerCase().includes(query) ||
-        order.userName?.toLowerCase().includes(query) ||
-        order.userEmail?.toLowerCase().includes(query) ||
-        order.userPhone?.includes(query) ||
-        order._id?.toLowerCase().includes(query)
+      result = result.filter(
+        (order) =>
+          order.orderNumber?.toLowerCase().includes(query) ||
+          order.userName?.toLowerCase().includes(query) ||
+          order.userEmail?.toLowerCase().includes(query) ||
+          order.userPhone?.includes(query) ||
+          order._id?.toLowerCase().includes(query),
       );
     }
 
@@ -187,9 +188,10 @@ const Orders = () => {
   // ============================================
   const stats = useMemo(() => {
     return STATUS_OPTIONS.reduce((acc, option) => {
-      acc[option.value] = option.value === 'all' 
-        ? orders.length 
-        : orders.filter(o => o.status === option.value).length;
+      acc[option.value] =
+        option.value === 'all'
+          ? orders.length
+          : orders.filter((o) => o.status === option.value).length;
       return acc;
     }, {});
   }, [orders]);
@@ -223,7 +225,8 @@ const Orders = () => {
               إدارة الطلبات
             </h1>
             <p className="text-gray-300 text-lg font-semibold">
-              إجمالي الطلبات: <span className="text-purple-400">{orders.length}</span>
+              إجمالي الطلبات:{' '}
+              <span className="text-purple-400">{orders.length}</span>
             </p>
           </div>
 
@@ -253,7 +256,6 @@ const Orders = () => {
 
       {/* MAIN CONTENT */}
       <div className="max-w-7xl mx-auto p-6">
-        
         {/* STATUS FILTERS */}
         {orders.length > 0 && (
           <div className="mb-8 bg-slate-800 rounded-2xl border-2 border-purple-500/20 p-6 shadow-xl">
@@ -262,7 +264,7 @@ const Orders = () => {
               <h3 className="text-xl font-bold text-white">تصفية حسب الحالة</h3>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
-              {STATUS_OPTIONS.map(option => (
+              {STATUS_OPTIONS.map((option) => (
                 <button
                   key={option.value}
                   onClick={() => setStatusFilter(option.value)}
@@ -272,13 +274,16 @@ const Orders = () => {
                       : 'bg-slate-700 text-gray-300 border-slate-600 hover:bg-slate-600 hover:border-purple-500/50'
                   }`}
                 >
-                  {option.label} <span className="ml-2 font-black text-lg">({stats[option.value]})</span>
+                  {option.label}{' '}
+                  <span className="ml-2 font-black text-lg">
+                    ({stats[option.value]})
+                  </span>
                 </button>
               ))}
             </div>
           </div>
         )}
-        
+
         {/* ORDERS LIST */}
         <OrdersList
           orders={orders}
@@ -286,7 +291,7 @@ const Orders = () => {
           setSelectedOrder={setSelectedOrder}
           setShowModal={setShowModal}
         />
-        
+
         {/* MODAL */}
         {showModal && (
           <OrderDetailsModal
@@ -306,7 +311,12 @@ const Orders = () => {
 // ============================================
 
 // Orders List Component
-const OrdersList = ({ orders, filteredOrders, setSelectedOrder, setShowModal }) => {
+const OrdersList = ({
+  orders,
+  filteredOrders,
+  setSelectedOrder,
+  setShowModal,
+}) => {
   // Empty state
   if (orders.length === 0) {
     return (
@@ -324,7 +334,9 @@ const OrdersList = ({ orders, filteredOrders, setSelectedOrder, setShowModal }) 
       <div className="bg-slate-800 rounded-3xl border-2 border-purple-500/20 p-20 text-center shadow-2xl">
         <Filter className="w-24 h-24 text-gray-500 mx-auto mb-6" />
         <h3 className="text-3xl font-bold text-white mb-3">لا توجد نتائج</h3>
-        <p className="text-gray-300 text-xl">جرب تغيير معايير البحث أو التصفية</p>
+        <p className="text-gray-300 text-xl">
+          جرب تغيير معايير البحث أو التصفية
+        </p>
       </div>
     );
   }
@@ -368,7 +380,9 @@ const OrderCard = ({ order, onViewDetails }) => (
         </div>
 
         <div className="flex items-center gap-4">
-          <span className={`px-5 py-2.5 rounded-xl font-black text-base border-2 ${getStatusBg(order.status)} shadow-lg`}>
+          <span
+            className={`px-5 py-2.5 rounded-xl font-black text-base border-2 ${getStatusBg(order.status)} shadow-lg`}
+          >
             {getStatusLabel(order.status)}
           </span>
           <div className="text-right">
@@ -419,7 +433,6 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, updating }) => {
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-slate-900 rounded-3xl shadow-2xl max-w-5xl w-full border-2 border-purple-500/30 my-8">
-        
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-pink-600 p-6 flex items-center justify-between rounded-t-3xl">
           <div>
@@ -428,7 +441,10 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, updating }) => {
               تفاصيل الطلب
             </h2>
             <p className="text-white text-lg font-bold mt-1">
-              رقم الطلب: <span className="font-mono">{order.orderNumber || order._id?.slice(-8)}</span>
+              رقم الطلب:{' '}
+              <span className="font-mono">
+                {order.orderNumber || order._id?.slice(-8)}
+              </span>
             </p>
           </div>
           <button
@@ -438,10 +454,9 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, updating }) => {
             <X className="w-7 h-7 text-white" />
           </button>
         </div>
-        
+
         {/* Content */}
         <div className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-          
           {/* Status & Order Info */}
           <div className="grid md:grid-cols-3 gap-4">
             <div className="bg-slate-800 rounded-2xl border-2 border-blue-500/30 p-5">
@@ -450,8 +465,12 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, updating }) => {
                   <ShoppingCart className="w-6 h-6 text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 font-semibold mb-1">حالة الطلب</p>
-                  <p className={`text-lg font-black px-3 py-1.5 rounded-lg inline-block border-2 ${getStatusBg(order.status)}`}>
+                  <p className="text-sm text-gray-400 font-semibold mb-1">
+                    حالة الطلب
+                  </p>
+                  <p
+                    className={`text-lg font-black px-3 py-1.5 rounded-lg inline-block border-2 ${getStatusBg(order.status)}`}
+                  >
                     {getStatusLabel(order.status)}
                   </p>
                 </div>
@@ -464,12 +483,14 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, updating }) => {
                   <Calendar className="w-6 h-6 text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 font-semibold mb-1">تاريخ الطلب</p>
+                  <p className="text-sm text-gray-400 font-semibold mb-1">
+                    تاريخ الطلب
+                  </p>
                   <p className="text-white font-black text-lg">
                     {new Date(order.createdAt).toLocaleDateString('ar-EG', {
                       year: 'numeric',
                       month: 'short',
-                      day: 'numeric'
+                      day: 'numeric',
                     })}
                   </p>
                 </div>
@@ -482,7 +503,9 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, updating }) => {
                   <CreditCard className="w-6 h-6 text-green-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 font-semibold mb-1">طريقة الدفع</p>
+                  <p className="text-sm text-gray-400 font-semibold mb-1">
+                    طريقة الدفع
+                  </p>
                   <p className="text-white font-black text-lg">
                     {order.paymentMethod === 'cash' ? 'عند الاستلام' : 'بطاقة'}
                   </p>
@@ -501,16 +524,28 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, updating }) => {
               </h3>
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm text-gray-400 font-semibold mb-1">الاسم</p>
-                  <p className="text-white font-bold text-lg">{order.userName || 'غير متوفر'}</p>
+                  <p className="text-sm text-gray-400 font-semibold mb-1">
+                    الاسم
+                  </p>
+                  <p className="text-white font-bold text-lg">
+                    {order.userName || 'غير متوفر'}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 font-semibold mb-1">البريد الإلكتروني</p>
-                  <p className="text-white font-bold text-lg break-all">{order.userEmail || 'غير متوفر'}</p>
+                  <p className="text-sm text-gray-400 font-semibold mb-1">
+                    البريد الإلكتروني
+                  </p>
+                  <p className="text-white font-bold text-lg break-all">
+                    {order.userEmail || 'غير متوفر'}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400 font-semibold mb-1">رقم الهاتف</p>
-                  <p className="text-white font-bold text-lg">{order.userPhone || 'غير متوفر'}</p>
+                  <p className="text-sm text-gray-400 font-semibold mb-1">
+                    رقم الهاتف
+                  </p>
+                  <p className="text-white font-bold text-lg">
+                    {order.userPhone || 'غير متوفر'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -525,15 +560,22 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, updating }) => {
                 {order.shippingAddress ? (
                   <>
                     <div>
-                      <p className="text-sm text-gray-400 font-semibold mb-1">العنوان</p>
+                      <p className="text-sm text-gray-400 font-semibold mb-1">
+                        العنوان
+                      </p>
                       <p className="text-white font-bold text-lg">
-                        {order.shippingAddress.street}, {order.shippingAddress.city}
+                        {order.shippingAddress.street},{' '}
+                        {order.shippingAddress.city}
                       </p>
                     </div>
                     {order.shippingAddress.state && (
                       <div>
-                        <p className="text-sm text-gray-400 font-semibold mb-1">المحافظة</p>
-                        <p className="text-white font-bold text-lg">{order.shippingAddress.state}</p>
+                        <p className="text-sm text-gray-400 font-semibold mb-1">
+                          المحافظة
+                        </p>
+                        <p className="text-white font-bold text-lg">
+                          {order.shippingAddress.state}
+                        </p>
                       </div>
                     )}
                     <div>
@@ -541,7 +583,9 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, updating }) => {
                         <Phone className="w-4 h-4" />
                         رقم الهاتف
                       </p>
-                      <p className="text-white font-bold text-lg">{order.shippingAddress.phone}</p>
+                      <p className="text-white font-bold text-lg">
+                        {order.shippingAddress.phone}
+                      </p>
                     </div>
                   </>
                 ) : (
@@ -568,15 +612,24 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, updating }) => {
                       src={item.image}
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded-lg bg-slate-600"
-                      onError={(e) => { e.target.style.display = 'none'; }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
                     />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-bold text-lg truncate">{item.name || 'منتج'}</p>
+                    <p className="text-white font-bold text-lg truncate">
+                      {item.name || 'منتج'}
+                    </p>
                     <p className="text-base text-gray-300 font-semibold">
-                      الكمية: <span className="text-purple-400 font-black">{item.quantity || 1}</span>
+                      الكمية:{' '}
+                      <span className="text-purple-400 font-black">
+                        {item.quantity || 1}
+                      </span>
                       {' × '}
-                      <span className="text-cyan-400 font-black">{formatPrice(item.price)} ج.م</span>
+                      <span className="text-cyan-400 font-black">
+                        {formatPrice(item.price)} ج.م
+                      </span>
                     </p>
                   </div>
                   <p className="text-xl font-black text-green-400">
@@ -614,11 +667,17 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, updating }) => {
                   onChange={(e) => setNewStatus(e.target.value)}
                   className="w-full px-4 py-3.5 bg-slate-800 border-2 border-purple-500/30 rounded-xl text-white text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
                 >
-                  {STATUS_OPTIONS.filter(opt => opt.value !== 'all').map(option => (
-                    <option key={option.value} value={option.value} className="bg-slate-800">
-                      {option.label}
-                    </option>
-                  ))}
+                  {STATUS_OPTIONS.filter((opt) => opt.value !== 'all').map(
+                    (option) => (
+                      <option
+                        key={option.value}
+                        value={option.value}
+                        className="bg-slate-800"
+                      >
+                        {option.label}
+                      </option>
+                    ),
+                  )}
                 </select>
               </div>
 
@@ -638,7 +697,9 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, updating }) => {
               )}
 
               <button
-                onClick={() => onUpdateStatus(order._id, newStatus, trackingNum)}
+                onClick={() =>
+                  onUpdateStatus(order._id, newStatus, trackingNum)
+                }
                 disabled={updating || newStatus === order.status}
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-black text-lg py-4 rounded-xl transition-all flex items-center justify-center gap-3 shadow-2xl shadow-purple-500/50"
               >

@@ -60,7 +60,7 @@ const formatDate = (date) => {
 // ============================================
 const Users = () => {
   const { token, isAuthenticated, user: currentUser } = useAuth();
-  const url = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  const url = 'https://low-hayley-totasheco-426426a6.koyeb.app/api';
 
   // State Management
   const [users, setUsers] = useState([]);

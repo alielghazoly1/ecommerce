@@ -29,7 +29,7 @@ import toast from 'react-hot-toast';
 
 const Monitoring = () => {
   const { token } = useAuth();
-  const url = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  const url = 'https://low-hayley-totasheco-426426a6.koyeb.app/api';
 
   const [data, setData] = useState(null);
   const [logs, setLogs] = useState([]);
@@ -42,47 +42,50 @@ const Monitoring = () => {
   // =====================
   // Data Fetching
   // =====================
-  const fetchMonitoringData = useCallback(async (isRefresh = false) => {
-    try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+  const fetchMonitoringData = useCallback(
+    async (isRefresh = false) => {
+      try {
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
 
-      const [dashboardRes, logsRes] = await Promise.all([
-        axios.get(`${url}/api/monitoring/dashboard`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get(`${url}/api/monitoring/logs?limit=50`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-      ]);
+        const [dashboardRes, logsRes] = await Promise.all([
+          axios.get(`${url}/api/monitoring/dashboard`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`${url}/api/monitoring/logs?limit=50`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
 
-      if (dashboardRes.data.success) {
-        setData(dashboardRes.data.data);
-        console.log(dashboardRes)
-      }
+        if (dashboardRes.data.success) {
+          setData(dashboardRes.data.data);
+          console.log(dashboardRes);
+        }
 
-      if (logsRes.data.success) {
-        setLogs(logsRes.data.data);
-      }
+        if (logsRes.data.success) {
+          setLogs(logsRes.data.data);
+        }
 
-      setLoading(false);
-      setRefreshing(false);
+        setLoading(false);
+        setRefreshing(false);
 
-      if (isRefresh) {
-        toast.success('تم تحديث البيانات');
+        if (isRefresh) {
+          toast.success('تم تحديث البيانات');
+        }
+      } catch (error) {
+        console.error('Error fetching monitoring data:', error);
+        setLoading(false);
+        setRefreshing(false);
+        if (isRefresh) {
+          toast.error('فشل تحديث البيانات');
+        }
       }
-    } catch (error) {
-      console.error('Error fetching monitoring data:', error);
-      setLoading(false);
-      setRefreshing(false);
-      if (isRefresh) {
-        toast.error('فشل تحديث البيانات');
-      }
-    }
-  }, [token, url]);
+    },
+    [token, url],
+  );
 
   useEffect(() => {
     if (token) {
@@ -115,7 +118,7 @@ const Monitoring = () => {
       const res = await axios.post(
         `${url}/api/monitoring/logs/clear`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (res.data.success) {
@@ -157,7 +160,9 @@ const Monitoring = () => {
   const MetricCard = ({ icon: Icon, title, value, subtitle, color, trend }) => (
     <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 hover:border-purple-500/30 transition-all group">
       <div className="flex items-start justify-between mb-4">
-        <div className={`w-12 h-12 ${color} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+        <div
+          className={`w-12 h-12 ${color} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}
+        >
           <Icon className="w-6 h-6 text-white" />
         </div>
         {trend && (
@@ -202,7 +207,9 @@ const Monitoring = () => {
     };
 
     return (
-      <span className={`px-2 py-1 rounded-lg text-xs font-bold border ${colors[level] || colors.INFO}`}>
+      <span
+        className={`px-2 py-1 rounded-lg text-xs font-bold border ${colors[level] || colors.INFO}`}
+      >
         {level}
       </span>
     );
@@ -253,7 +260,9 @@ const Monitoring = () => {
               <Activity className="w-10 h-10 text-purple-400" />
               مراقبة النظام
             </h1>
-            <p className="text-gray-400">آخر تحديث: {new Date(data.timestamp).toLocaleString('ar-EG')}</p>
+            <p className="text-gray-400">
+              آخر تحديث: {new Date(data.timestamp).toLocaleString('ar-EG')}
+            </p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -274,7 +283,9 @@ const Monitoring = () => {
               disabled={refreshing}
               className="flex items-center gap-2 px-6 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-semibold transition-all disabled:opacity-50"
             >
-              <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`}
+              />
               تحديث
             </button>
           </div>
@@ -283,7 +294,9 @@ const Monitoring = () => {
         {/* Status Badge */}
         <div className="flex items-center gap-2">
           <CheckCircle className="w-5 h-5 text-green-400" />
-          <span className="text-green-400 font-semibold">النظام يعمل بشكل طبيعي</span>
+          <span className="text-green-400 font-semibold">
+            النظام يعمل بشكل طبيعي
+          </span>
         </div>
       </div>
 
@@ -348,20 +361,31 @@ const Monitoring = () => {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-gray-400 text-sm">Heap Used</span>
-                <span className="text-white font-bold">{data.memory.process.heapUsed}</span>
+                <span className="text-white font-bold">
+                  {data.memory.process.heapUsed}
+                </span>
               </div>
-              <ProgressBar percentage={parseFloat(data.memory.process.heapUsedPercentage)} color="purple" />
-              <p className="text-xs text-gray-500 mt-1">{data.memory.process.heapUsedPercentage}%</p>
+              <ProgressBar
+                percentage={parseFloat(data.memory.process.heapUsedPercentage)}
+                color="purple"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {data.memory.process.heapUsedPercentage}%
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
               <div>
                 <p className="text-xs text-gray-400 mb-1">Heap Total</p>
-                <p className="text-white font-semibold">{data.memory.process.heapTotal}</p>
+                <p className="text-white font-semibold">
+                  {data.memory.process.heapTotal}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-gray-400 mb-1">RSS</p>
-                <p className="text-white font-semibold">{data.memory.process.rss}</p>
+                <p className="text-white font-semibold">
+                  {data.memory.process.rss}
+                </p>
               </div>
             </div>
           </div>
@@ -383,20 +407,31 @@ const Monitoring = () => {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-gray-400 text-sm">Memory Used</span>
-                <span className="text-white font-bold">{data.memory.system.used}</span>
+                <span className="text-white font-bold">
+                  {data.memory.system.used}
+                </span>
               </div>
-              <ProgressBar percentage={parseFloat(data.memory.system.usedPercentage)} color="blue" />
-              <p className="text-xs text-gray-500 mt-1">{data.memory.system.usedPercentage}%</p>
+              <ProgressBar
+                percentage={parseFloat(data.memory.system.usedPercentage)}
+                color="blue"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {data.memory.system.usedPercentage}%
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
               <div>
                 <p className="text-xs text-gray-400 mb-1">Total Memory</p>
-                <p className="text-white font-semibold">{data.memory.system.total}</p>
+                <p className="text-white font-semibold">
+                  {data.memory.system.total}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-gray-400 mb-1">Free Memory</p>
-                <p className="text-white font-semibold">{data.memory.system.free}</p>
+                <p className="text-white font-semibold">
+                  {data.memory.system.free}
+                </p>
               </div>
             </div>
           </div>
@@ -428,11 +463,15 @@ const Monitoring = () => {
           </div>
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <p className="text-xs text-gray-400 mb-2">إصدار Node</p>
-            <p className="text-white font-semibold">{data.system.nodeVersion}</p>
+            <p className="text-white font-semibold">
+              {data.system.nodeVersion}
+            </p>
           </div>
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <p className="text-xs text-gray-400 mb-2">اسم المضيف</p>
-            <p className="text-white font-semibold truncate">{data.system.hostname}</p>
+            <p className="text-white font-semibold truncate">
+              {data.system.hostname}
+            </p>
           </div>
         </div>
       </div>
@@ -451,13 +490,22 @@ const Monitoring = () => {
 
           <div className="space-y-2">
             {data.errors.recent.map((error, index) => (
-              <div key={index} className="bg-white/5 rounded-xl p-3 border border-white/10">
+              <div
+                key={index}
+                className="bg-white/5 rounded-xl p-3 border border-white/10"
+              >
                 <div className="flex items-start justify-between mb-2">
-                  <p className="text-red-400 font-semibold text-sm">{error.message}</p>
-                  <span className="text-xs text-gray-500">{new Date(error.timestamp).toLocaleTimeString('ar-EG')}</span>
+                  <p className="text-red-400 font-semibold text-sm">
+                    {error.message}
+                  </p>
+                  <span className="text-xs text-gray-500">
+                    {new Date(error.timestamp).toLocaleTimeString('ar-EG')}
+                  </span>
                 </div>
                 {error.stack && (
-                  <pre className="text-xs text-gray-400 overflow-x-auto">{error.stack.substring(0, 200)}...</pre>
+                  <pre className="text-xs text-gray-400 overflow-x-auto">
+                    {error.stack.substring(0, 200)}...
+                  </pre>
                 )}
               </div>
             ))}
@@ -485,7 +533,11 @@ const Monitoring = () => {
               onClick={() => setShowLogs(!showLogs)}
               className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white transition-all"
             >
-              {showLogs ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showLogs ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
               {showLogs ? 'إخفاء' : 'عرض'}
             </button>
 
@@ -535,13 +587,20 @@ const Monitoring = () => {
                 </div>
               ) : (
                 filteredLogs.map((log, index) => (
-                  <div key={index} className="bg-white/5 rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all">
+                  <div
+                    key={index}
+                    className="bg-white/5 rounded-xl p-3 border border-white/10 hover:bg-white/10 transition-all"
+                  >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <LogLevelBadge level={log.level} />
-                        <span className="text-white text-sm">{log.message}</span>
+                        <span className="text-white text-sm">
+                          {log.message}
+                        </span>
                       </div>
-                      <span className="text-xs text-gray-500">{new Date(log.timestamp).toLocaleString('ar-EG')}</span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(log.timestamp).toLocaleString('ar-EG')}
+                      </span>
                     </div>
                     {log.meta && Object.keys(log.meta).length > 0 && (
                       <pre className="text-xs text-gray-400 mt-2 overflow-x-auto">
