@@ -10,6 +10,7 @@ import List from './components/List';
 import Orders from './components/Orders';
 import Users from './components/Users';
 import Dashboard from './components/Dashboard';
+import Monitoring from './components/Monitoring';
 
 const DashboardLayout = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -96,6 +97,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <Users />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/monitoring"
+            element={
+              <ProtectedRoute>
+                <Monitoring />
               </ProtectedRoute>
             }
           />

@@ -1,5 +1,7 @@
+// src/components/Dashboard.jsx - ENHANCED VERSION ✨
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
   TrendingUp, 
@@ -13,11 +15,22 @@ import {
   XCircle,
   AlertCircle,
   Loader2,
-  BarChart3
+  BarChart3,
+  RefreshCw,
+  Activity,
+  Calendar,
+  ArrowRight,
+  Eye,
+  Percent,
+  ShoppingBag,
+  Star,
+  TrendingUpIcon
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const Dashboard = () => {
   const { token } = useAuth();
+  const navigate = useNavigate();
   const url = import.meta.env.VITE_API_URL || 'http://localhost:4000';
   
   const [stats, setStats] = useState({
@@ -26,14 +39,22 @@ const Dashboard = () => {
     totalProducts: 0,
     totalUsers: 0,
     pendingOrders: 0,
+    processingOrders: 0,
     completedOrders: 0,
     cancelledOrders: 0,
     todayOrders: 0,
     todayRevenue: 0,
+    weekOrders: 0,
+    weekRevenue: 0,
+    monthOrders: 0,
+    monthRevenue: 0,
+    averageOrderValue: 0,
   });
   
   const [recentOrders, setRecentOrders] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -41,41 +62,69 @@ const Dashboard = () => {
     }
   }, [token]);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
 
       const [ordersRes, productsRes, usersRes] = await Promise.all([
         axios.get(`${url}/api/order/list`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        axios.get(`${url}/api/product/list`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        axios.get(`${url}/api/product/list`),
         axios.get(`${url}/api/users/list`, { headers: { 'Authorization': `Bearer ${token}` } }),
       ]);
 
       if (ordersRes.data.success) {
         const orders = ordersRes.data.data;
+        const products = productsRes.data.data || [];
 
-        // حساب الإحصائيات
+        // حساب الإحصائيات المتقدمة
         const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+        const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
+        
         const pendingOrders = orders.filter(o => o.status === 'pending').length;
         const processingOrders = orders.filter(o => o.status === 'processing').length;
         const completedOrders = orders.filter(o => o.status === 'delivered').length;
         const cancelledOrders = orders.filter(o => o.status === 'cancelled').length;
 
+        // حساب إحصائيات اليوم
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const todayOrdersArr = orders.filter(o => new Date(o.createdAt) >= today);
         const todayRevenue = todayOrdersArr.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
 
+        // حساب إحصائيات الأسبوع
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        weekAgo.setHours(0, 0, 0, 0);
+        const weekOrdersArr = orders.filter(o => new Date(o.createdAt) >= weekAgo);
+        const weekRevenue = weekOrdersArr.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
+        // حساب إحصائيات الشهر
+        const monthAgo = new Date();
+        monthAgo.setDate(monthAgo.getDate() - 30);
+        monthAgo.setHours(0, 0, 0, 0);
+        const monthOrdersArr = orders.filter(o => new Date(o.createdAt) >= monthAgo);
+        const monthRevenue = monthOrdersArr.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
         setStats({
           totalOrders: orders.length,
           totalRevenue,
-          totalProducts: productsRes.data.data?.length || 0,
+          totalProducts: products.length,
           totalUsers: usersRes.data.data?.length || 0,
-          pendingOrders: pendingOrders + processingOrders,
+          pendingOrders,
+          processingOrders,
           completedOrders,
           cancelledOrders,
           todayOrders: todayOrdersArr.length,
           todayRevenue,
+          weekOrders: weekOrdersArr.length,
+          weekRevenue,
+          monthOrders: monthOrdersArr.length,
+          monthRevenue,
+          averageOrderValue,
         });
 
         // أحدث 5 طلبات
@@ -83,17 +132,60 @@ const Dashboard = () => {
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
           .slice(0, 5);
         setRecentOrders(recentOrdersArr);
+
+        // أشهر 5 منتجات (حسب عدد المبيعات)
+        const productSales = {};
+        orders.forEach(order => {
+          order.items?.forEach(item => {
+            if (productSales[item.productId]) {
+              productSales[item.productId].quantity += item.quantity;
+              productSales[item.productId].revenue += item.price * item.quantity;
+            } else {
+              productSales[item.productId] = {
+                name: item.name,
+                quantity: item.quantity,
+                revenue: item.price * item.quantity,
+                image: item.image,
+              };
+            }
+          });
+        });
+
+        const topProductsArr = Object.values(productSales)
+          .sort((a, b) => b.quantity - a.quantity)
+          .slice(0, 5);
+        setTopProducts(topProductsArr);
       }
 
       setLoading(false);
+      setRefreshing(false);
+      
+      if (isRefresh) {
+        toast.success('تم تحديث البيانات بنجاح');
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       setLoading(false);
+      setRefreshing(false);
+      if (isRefresh) {
+        toast.error('فشل تحديث البيانات');
+      }
     }
   };
 
-  const StatCard = ({ icon: Icon, title, value, subtitle, trend, trendValue, bgColor, iconColor }) => (
-    <div className="group bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 hover:border-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-300">
+  const handleRefresh = () => {
+    fetchDashboardData(true);
+  };
+
+  // =====================
+  // Components
+  // =====================
+
+  const StatCard = ({ icon: Icon, title, value, subtitle, trend, trendValue, bgColor, iconColor, onClick }) => (
+    <div 
+      className={`group bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 hover:border-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 ${onClick ? 'cursor-pointer' : ''}`}
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between mb-4">
         <div className={`w-14 h-14 ${bgColor} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
           <Icon className={`w-7 h-7 ${iconColor}`} />
@@ -112,6 +204,24 @@ const Dashboard = () => {
       {subtitle && (
         <p className="text-sm text-gray-500">{subtitle}</p>
       )}
+    </div>
+  );
+
+  const TimeRangeCard = ({ title, orders, revenue, icon: Icon, color }) => (
+    <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/10 p-4 hover:border-purple-500/20 transition-all">
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`w-10 h-10 ${color} rounded-lg flex items-center justify-center`}>
+          <Icon className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <p className="text-gray-400 text-xs">{title}</p>
+          <p className="text-white font-bold text-lg">{orders} طلب</p>
+        </div>
+      </div>
+      <div className="flex items-center justify-between">
+        <p className="text-green-400 font-bold">{revenue.toFixed(2)} ج.م</p>
+        <ArrowRight className="w-4 h-4 text-gray-500" />
+      </div>
     </div>
   );
 
@@ -137,6 +247,9 @@ const Dashboard = () => {
     return labels[status] || status;
   };
 
+  // =====================
+  // Loading State
+  // =====================
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -149,23 +262,65 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto">
+    <div className="p-6 md:p-10 max-w-[1600px] mx-auto">
+      {/* ===================== */}
       {/* Header */}
+      {/* ===================== */}
       <div className="mb-10">
-        <h1 className="text-4xl font-black text-white mb-3 flex items-center gap-3">
-          <BarChart3 className="w-10 h-10 text-purple-400" />
-          لوحة التحكم
-        </h1>
-        <p className="text-gray-400 text-lg">مرحباً بك في لوحة إدارة المتجر</p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-4xl font-black text-white mb-3 flex items-center gap-3">
+              <BarChart3 className="w-10 h-10 text-purple-400" />
+              لوحة التحكم
+            </h1>
+            <p className="text-gray-400 text-lg">مرحباً بك في لوحة إدارة المتجر</p>
+          </div>
+          
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-semibold transition-all disabled:opacity-50"
+          >
+            <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+            تحديث
+          </button>
+        </div>
+
+        {/* Quick Time Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <TimeRangeCard 
+            title="اليوم"
+            orders={stats.todayOrders}
+            revenue={stats.todayRevenue}
+            icon={Activity}
+            color="bg-gradient-to-br from-cyan-500 to-blue-600"
+          />
+          <TimeRangeCard 
+            title="آخر 7 أيام"
+            orders={stats.weekOrders}
+            revenue={stats.weekRevenue}
+            icon={Calendar}
+            color="bg-gradient-to-br from-purple-500 to-pink-600"
+          />
+          <TimeRangeCard 
+            title="آخر 30 يوم"
+            orders={stats.monthOrders}
+            revenue={stats.monthRevenue}
+            icon={TrendingUpIcon}
+            color="bg-gradient-to-br from-orange-500 to-red-600"
+          />
+        </div>
       </div>
 
+      {/* ===================== */}
       {/* Main Stats Grid */}
+      {/* ===================== */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           icon={DollarSign}
           title="إجمالي الإيرادات"
           value={`${(stats.totalRevenue || 0).toFixed(2)} ج.م`}
-          subtitle={`اليوم: ${(stats.todayRevenue || 0).toFixed(2)} ج.م`}
+          subtitle={`متوسط الطلب: ${(stats.averageOrderValue || 0).toFixed(2)} ج.م`}
           bgColor="bg-gradient-to-br from-green-500 to-emerald-600"
           iconColor="text-white"
           trend="up"
@@ -181,6 +336,7 @@ const Dashboard = () => {
           iconColor="text-white"
           trend="up"
           trendValue="8.3"
+          onClick={() => navigate('/admin/orders')}
         />
         
         <StatCard
@@ -189,6 +345,7 @@ const Dashboard = () => {
           value={stats.totalProducts || 0}
           bgColor="bg-gradient-to-br from-purple-500 to-pink-600"
           iconColor="text-white"
+          onClick={() => navigate('/admin/list')}
         />
         
         <StatCard
@@ -197,11 +354,14 @@ const Dashboard = () => {
           value={stats.totalUsers || 0}
           bgColor="bg-gradient-to-br from-orange-500 to-red-600"
           iconColor="text-white"
+          onClick={() => navigate('/admin/users')}
         />
       </div>
 
+      {/* ===================== */}
       {/* Order Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      {/* ===================== */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 hover:border-green-500/30 transition-all">
           <div className="flex items-center gap-4 mb-3">
             <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
@@ -218,6 +378,9 @@ const Dashboard = () => {
               style={{ width: `${stats.totalOrders ? (stats.completedOrders / stats.totalOrders) * 100 : 0}%` }}
             />
           </div>
+          <p className="text-xs text-gray-500 mt-2">
+            {stats.totalOrders ? ((stats.completedOrders / stats.totalOrders) * 100).toFixed(1) : 0}% من الإجمالي
+          </p>
         </div>
 
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 hover:border-yellow-500/30 transition-all">
@@ -226,7 +389,7 @@ const Dashboard = () => {
               <Clock className="w-6 h-6 text-yellow-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-400">طلبات معلقة</p>
+              <p className="text-sm text-gray-400">قيد الانتظار</p>
               <p className="text-3xl font-black text-white">{stats.pendingOrders || 0}</p>
             </div>
           </div>
@@ -236,6 +399,30 @@ const Dashboard = () => {
               style={{ width: `${stats.totalOrders ? (stats.pendingOrders / stats.totalOrders) * 100 : 0}%` }}
             />
           </div>
+          <p className="text-xs text-gray-500 mt-2">
+            {stats.totalOrders ? ((stats.pendingOrders / stats.totalOrders) * 100).toFixed(1) : 0}% من الإجمالي
+          </p>
+        </div>
+
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 hover:border-blue-500/30 transition-all">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+              <Activity className="w-6 h-6 text-blue-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-400">قيد المعالجة</p>
+              <p className="text-3xl font-black text-white">{stats.processingOrders || 0}</p>
+            </div>
+          </div>
+          <div className="w-full bg-white/10 rounded-full h-2">
+            <div 
+              className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all duration-500"
+              style={{ width: `${stats.totalOrders ? (stats.processingOrders / stats.totalOrders) * 100 : 0}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            {stats.totalOrders ? ((stats.processingOrders / stats.totalOrders) * 100).toFixed(1) : 0}% من الإجمالي
+          </p>
         </div>
 
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 hover:border-red-500/30 transition-all">
@@ -254,72 +441,129 @@ const Dashboard = () => {
               style={{ width: `${stats.totalOrders ? (stats.cancelledOrders / stats.totalOrders) * 100 : 0}%` }}
             />
           </div>
+          <p className="text-xs text-gray-500 mt-2">
+            {stats.totalOrders ? ((stats.cancelledOrders / stats.totalOrders) * 100).toFixed(1) : 0}% من الإجمالي
+          </p>
         </div>
       </div>
 
-      {/* Recent Orders */}
-      <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-            <ShoppingCart className="w-7 h-7 text-purple-400" />
-            أحدث الطلبات
-          </h2>
-          <button 
-            onClick={() => window.location.href = '/admin/orders'}
-            className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30"
-          >
-            عرض الكل
-          </button>
+      {/* ===================== */}
+      {/* Two Column Layout */}
+      {/* ===================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent Orders */}
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+              <ShoppingCart className="w-7 h-7 text-purple-400" />
+              أحدث الطلبات
+            </h2>
+            <button 
+              onClick={() => navigate('/admin/orders')}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30"
+            >
+              <Eye className="w-4 h-4" />
+              عرض الكل
+            </button>
+          </div>
+
+          {recentOrders.length === 0 ? (
+            <div className="text-center py-12">
+              <AlertCircle className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-400 text-lg">لا توجد طلبات حتى الآن</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentOrders.map((order) => (
+                <div 
+                  key={order._id}
+                  className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-purple-500/30 hover:bg-white/10 transition-all cursor-pointer"
+                  onClick={() => navigate('/admin/orders')}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                        <ShoppingBag className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">{order.userName}</p>
+                        <p className="text-xs text-gray-400">{order.userEmail}</p>
+                      </div>
+                    </div>
+                    <span className={`px-3 py-1 rounded-lg text-xs font-bold border ${getStatusBg(order.status)}`}>
+                      {getStatusLabel(order.status)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-400">
+                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString('ar-EG') : '-'}
+                    </p>
+                    <p className="font-bold text-green-400">{(order.totalAmount || 0).toFixed(2)} ج.م</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {recentOrders.length === 0 ? (
-          <div className="text-center py-12">
-            <AlertCircle className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400 text-lg">لا توجد طلبات حتى الآن</p>
+        {/* Top Products */}
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+              <Star className="w-7 h-7 text-yellow-400" />
+              أكثر المنتجات مبيعاً
+            </h2>
+            <button 
+              onClick={() => navigate('/admin/list')}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg shadow-yellow-500/30"
+            >
+              <Eye className="w-4 h-4" />
+              عرض الكل
+            </button>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-right py-4 px-4 text-sm font-semibold text-gray-400">رقم الطلب</th>
-                  <th className="text-right py-4 px-4 text-sm font-semibold text-gray-400">العميل</th>
-                  <th className="text-right py-4 px-4 text-sm font-semibold text-gray-400">المبلغ</th>
-                  <th className="text-right py-4 px-4 text-sm font-semibold text-gray-400">الحالة</th>
-                  <th className="text-right py-4 px-4 text-sm font-semibold text-gray-400">التاريخ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentOrders.map((order) => (
-                  <tr 
-                    key={order._id} 
-                    className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
-                    onClick={() => window.location.href = '/admin/orders'}
-                  >
-                    <td className="py-4 px-4">
-                      <p className="font-mono font-semibold text-white">{order.orderNumber || order._id.slice(-8)}</p>
-                    </td>
-                    <td className="py-4 px-4">
-                      <p className="text-white font-medium">{order.userName}</p>
-                      <p className="text-sm text-gray-400">{order.userEmail}</p>
-                    </td>
-                    <td className="py-4 px-4">
-                      <p className="font-bold text-green-400">{(order.totalAmount || 0).toFixed(2)} ج.م</p>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className={`inline-block px-3 py-1 rounded-lg text-xs font-bold border ${getStatusBg(order.status)}`}>
-                        {getStatusLabel(order.status)}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-gray-400 text-sm">
-                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString('ar-EG') : '-'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+
+          {topProducts.length === 0 ? (
+            <div className="text-center py-12">
+              <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-400 text-lg">لا توجد مبيعات بعد</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {topProducts.map((product, index) => (
+                <div 
+                  key={index}
+                  className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-yellow-500/30 hover:bg-white/10 transition-all"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        {product.image ? (
+                          <img 
+                            src={product.image} 
+                            alt={product.name}
+                            className="w-12 h-12 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                            <Package className="w-6 h-6 text-white" />
+                          </div>
+                        )}
+                        <div className="absolute -top-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-xs font-bold text-white border-2 border-slate-900">
+                          {index + 1}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">{product.name}</p>
+                        <p className="text-xs text-gray-400">{product.quantity} مبيعة</p>
+                      </div>
+                    </div>
+                    <p className="font-bold text-green-400">{(product.revenue || 0).toFixed(2)} ج.م</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

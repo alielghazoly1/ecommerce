@@ -11,6 +11,7 @@ import {
   LogOut,
   User,
   LayoutDashboard,
+  Activity
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -25,6 +26,7 @@ const Sidebar = () => {
     { to: '/admin/list', label: 'المنتجات', Icon: LayoutDashboard },
     { to: '/admin/add', label: 'إضافة منتج', Icon: PlusCircle },
     { to: '/admin/users', label: 'المستخدمين', Icon: Users },
+    { to: '/admin/monitoring', label: 'المراقبة', Icon: Activity }
   ];
 
   const handleLogout = () => {

@@ -1,6 +1,7 @@
-// routes/monitoringRoutes.js - System Monitoring Routes
+// routes/monitoringRoutes.js - ENHANCED & CLEAN CODE ✨
 import express from 'express';
 import os from 'os';
+import mongoose from 'mongoose';
 import logger from '../utils/logger.js';
 import { getQueryStats, resetQueryStats } from '../utils/dbLogger.js';
 import { getActiveRequests } from '../middleware/requestLogger.js';
@@ -9,183 +10,15 @@ import { adminOnly } from '../middleware/adminOnly.js';
 
 const monitoringRouter = express.Router();
 
-// All monitoring routes require admin access
+// =====================
+// Middleware: All routes require admin access
+// =====================
 monitoringRouter.use(authMiddleware, adminOnly);
 
 // =====================
-// System Health Check
+// Helper Functions
 // =====================
-monitoringRouter.get('/health', (req, res) => {
-  const memoryUsage = process.memoryUsage();
-  const uptime = process.uptime();
-
-  const health = {
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: {
-      seconds: uptime,
-      formatted: formatUptime(uptime),
-    },
-    memory: {
-      rss: `${(memoryUsage.rss / 1024 / 1024).toFixed(2)} MB`,
-      heapTotal: `${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB`,
-      heapUsed: `${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB`,
-      external: `${(memoryUsage.external / 1024 / 1024).toFixed(2)} MB`,
-    },
-    cpu: {
-      usage: process.cpuUsage(),
-      loadAverage: os.loadavg(),
-      cores: os.cpus().length,
-    },
-    system: {
-      platform: process.platform,
-      arch: process.arch,
-      nodeVersion: process.version,
-      totalMemory: `${(os.totalmem() / 1024 / 1024 / 1024).toFixed(2)} GB`,
-      freeMemory: `${(os.freemem() / 1024 / 1024 / 1024).toFixed(2)} GB`,
-    },
-  };
-
-  logger.info('Health check performed');
-  res.json({ success: true, data: health });
-});
-
-// =====================
-// Get Recent Logs
-// =====================
-monitoringRouter.get('/logs', (req, res) => {
-  const { limit = 100, level } = req.query;
-
-  let logs;
-  if (level) {
-    logs = logger.getLogsByLevel(level.toUpperCase(), Number(limit));
-  } else {
-    logs = logger.getRecentLogs(Number(limit));
-  }
-
-  res.json({
-    success: true,
-    count: logs.length,
-    data: logs,
-  });
-});
-
-// =====================
-// Get Error Logs
-// =====================
-monitoringRouter.get('/logs/errors', (req, res) => {
-  const { limit = 50 } = req.query;
-  const errors = logger.getErrors(Number(limit));
-
-  res.json({
-    success: true,
-    count: errors.length,
-    data: errors,
-  });
-});
-
-// =====================
-// Clear Logs
-// =====================
-monitoringRouter.post('/logs/clear', (req, res) => {
-  logger.clearLogs();
-  res.json({
-    success: true,
-    message: 'Logs cleared successfully',
-  });
-});
-
-// =====================
-// Export Logs
-// =====================
-monitoringRouter.get('/logs/export', (req, res) => {
-  const logsJson = logger.exportLogs();
-  const timestamp = new Date().toISOString().replace(/:/g, '-');
-  
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Content-Disposition', `attachment; filename="logs-${timestamp}.json"`);
-  res.send(logsJson);
-});
-
-// =====================
-// Database Statistics
-// =====================
-monitoringRouter.get('/db/stats', (req, res) => {
-  const stats = getQueryStats();
-
-  res.json({
-    success: true,
-    data: stats,
-  });
-});
-
-// =====================
-// Reset Database Statistics
-// =====================
-monitoringRouter.post('/db/stats/reset', (req, res) => {
-  resetQueryStats();
-  res.json({
-    success: true,
-    message: 'Database statistics reset',
-  });
-});
-
-// =====================
-// Active Requests
-// =====================
-monitoringRouter.get('/requests/active', (req, res) => {
-  const activeRequests = getActiveRequests();
-
-  res.json({
-    success: true,
-    count: activeRequests.length,
-    data: activeRequests,
-  });
-});
-
-// =====================
-// System Metrics Dashboard
-// =====================
-monitoringRouter.get('/dashboard', (req, res) => {
-  const memoryUsage = process.memoryUsage();
-  const uptime = process.uptime();
-  const queryStats = getQueryStats();
-  const activeRequests = getActiveRequests();
-  const recentErrors = logger.getErrors(10);
-
-  const dashboard = {
-    timestamp: new Date().toISOString(),
-    system: {
-      uptime: formatUptime(uptime),
-      platform: process.platform,
-      nodeVersion: process.version,
-    },
-    memory: {
-      used: `${(memoryUsage.heapUsed / 1024 / 1024).toFixed(2)} MB`,
-      total: `${(memoryUsage.heapTotal / 1024 / 1024).toFixed(2)} MB`,
-      percentage: `${((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100).toFixed(2)}%`,
-    },
-    database: queryStats,
-    activeRequests: {
-      count: activeRequests.length,
-      requests: activeRequests,
-    },
-    recentErrors: {
-      count: recentErrors.length,
-      errors: recentErrors.slice(0, 5), // Last 5 errors
-    },
-  };
-
-  res.json({
-    success: true,
-    data: dashboard,
-  });
-});
-
-// =====================
-// Helper: Format Uptime
-// =====================
-function formatUptime(seconds) {
+const formatUptime = (seconds) => {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -198,6 +31,311 @@ function formatUptime(seconds) {
   if (secs > 0 || parts.length === 0) parts.push(`${secs}s`);
 
   return parts.join(' ');
-}
+};
+
+const formatBytes = (bytes, decimals = 2) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+};
+
+const getSystemInfo = () => {
+  const memoryUsage = process.memoryUsage();
+  const uptime = process.uptime();
+  const totalMem = os.totalmem();
+  const freeMem = os.freemem();
+  const usedMem = totalMem - freeMem;
+
+  return {
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: {
+      seconds: uptime,
+      formatted: formatUptime(uptime),
+    },
+    memory: {
+      process: {
+        rss: formatBytes(memoryUsage.rss),
+        heapTotal: formatBytes(memoryUsage.heapTotal),
+        heapUsed: formatBytes(memoryUsage.heapUsed),
+        external: formatBytes(memoryUsage.external),
+        heapUsedPercentage: ((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100).toFixed(2),
+      },
+      system: {
+        total: formatBytes(totalMem),
+        free: formatBytes(freeMem),
+        used: formatBytes(usedMem),
+        usedPercentage: ((usedMem / totalMem) * 100).toFixed(2),
+      },
+    },
+    cpu: {
+      usage: process.cpuUsage(),
+      loadAverage: os.loadavg().map(load => load.toFixed(2)),
+      cores: os.cpus().length,
+    },
+    system: {
+      platform: process.platform,
+      arch: process.arch,
+      nodeVersion: process.version,
+      hostname: os.hostname(),
+    },
+    database: {
+      status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+      readyState: mongoose.connection.readyState,
+      host: mongoose.connection.host || 'N/A',
+      name: mongoose.connection.name || 'N/A',
+    },
+  };
+};
+
+// =====================
+// MAIN DASHBOARD - All metrics in one call
+// =====================
+monitoringRouter.get('/dashboard', async (req, res) => {
+  try {
+    const systemInfo = getSystemInfo();
+    const queryStats = getQueryStats();
+    const activeRequests = getActiveRequests();
+    const recentErrors = logger.getErrors(10);
+
+    const dashboard = {
+      ...systemInfo,
+      database: {
+        ...systemInfo.database,
+        stats: queryStats,
+      },
+      requests: {
+        active: activeRequests.length,
+        list: activeRequests,
+      },
+      errors: {
+        count: recentErrors.length,
+        recent: recentErrors.slice(0, 5),
+      },
+    };
+
+    logger.info('Dashboard metrics retrieved');
+    res.json({ success: true, data: dashboard });
+  } catch (error) {
+    logger.error('Dashboard metrics error', { error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to retrieve dashboard metrics',
+      error: error.message 
+    });
+  }
+});
+
+// =====================
+// SYSTEM HEALTH - Lightweight health check
+// =====================
+monitoringRouter.get('/health', (req, res) => {
+  try {
+    const health = getSystemInfo();
+    logger.info('Health check performed');
+    res.json({ success: true, data: health });
+  } catch (error) {
+    logger.error('Health check error', { error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Health check failed',
+      error: error.message 
+    });
+  }
+});
+
+// =====================
+// LOGS MANAGEMENT
+// =====================
+
+// Get all logs with filters
+monitoringRouter.get('/logs', (req, res) => {
+  try {
+    const { limit = 100, level } = req.query;
+    
+    let logs;
+    if (level) {
+      logs = logger.getLogsByLevel(level.toUpperCase(), Number(limit));
+    } else {
+      logs = logger.getRecentLogs(Number(limit));
+    }
+
+    res.json({
+      success: true,
+      count: logs.length,
+      data: logs,
+    });
+  } catch (error) {
+    logger.error('Get logs error', { error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to retrieve logs',
+      error: error.message 
+    });
+  }
+});
+
+// Get error logs only
+monitoringRouter.get('/logs/errors', (req, res) => {
+  try {
+    const { limit = 50 } = req.query;
+    const errors = logger.getErrors(Number(limit));
+
+    res.json({
+      success: true,
+      count: errors.length,
+      data: errors,
+    });
+  } catch (error) {
+    logger.error('Get error logs error', { error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to retrieve error logs',
+      error: error.message 
+    });
+  }
+});
+
+// Clear all logs
+monitoringRouter.post('/logs/clear', (req, res) => {
+  try {
+    logger.clearLogs();
+    logger.info('Logs cleared by admin');
+    res.json({
+      success: true,
+      message: 'Logs cleared successfully',
+    });
+  } catch (error) {
+    logger.error('Clear logs error', { error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to clear logs',
+      error: error.message 
+    });
+  }
+});
+
+// Export logs as JSON
+monitoringRouter.get('/logs/export', (req, res) => {
+  try {
+    const logsJson = logger.exportLogs();
+    const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
+    
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="logs-${timestamp}.json"`);
+    res.send(logsJson);
+    
+    logger.info('Logs exported by admin');
+  } catch (error) {
+    logger.error('Export logs error', { error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to export logs',
+      error: error.message 
+    });
+  }
+});
+
+// =====================
+// DATABASE STATISTICS
+// =====================
+
+// Get database query stats
+monitoringRouter.get('/db/stats', (req, res) => {
+  try {
+    const stats = getQueryStats();
+    res.json({
+      success: true,
+      data: stats,
+    });
+  } catch (error) {
+    logger.error('Get DB stats error', { error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to retrieve database statistics',
+      error: error.message 
+    });
+  }
+});
+
+// Reset database statistics
+monitoringRouter.post('/db/stats/reset', (req, res) => {
+  try {
+    resetQueryStats();
+    logger.info('Database statistics reset by admin');
+    res.json({
+      success: true,
+      message: 'Database statistics reset successfully',
+    });
+  } catch (error) {
+    logger.error('Reset DB stats error', { error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to reset database statistics',
+      error: error.message 
+    });
+  }
+});
+
+// =====================
+// ACTIVE REQUESTS
+// =====================
+monitoringRouter.get('/requests/active', (req, res) => {
+  try {
+    const activeRequests = getActiveRequests();
+    res.json({
+      success: true,
+      count: activeRequests.length,
+      data: activeRequests,
+    });
+  } catch (error) {
+    logger.error('Get active requests error', { error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to retrieve active requests',
+      error: error.message 
+    });
+  }
+});
+
+// =====================
+// SYSTEM METRICS (Real-time)
+// =====================
+monitoringRouter.get('/metrics', (req, res) => {
+  try {
+    const memoryUsage = process.memoryUsage();
+    const cpuUsage = process.cpuUsage();
+    const uptime = process.uptime();
+
+    const metrics = {
+      timestamp: new Date().toISOString(),
+      memory: {
+        heapUsed: memoryUsage.heapUsed,
+        heapTotal: memoryUsage.heapTotal,
+        percentage: ((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100).toFixed(2),
+      },
+      cpu: {
+        user: cpuUsage.user,
+        system: cpuUsage.system,
+      },
+      uptime: uptime,
+      requests: {
+        active: getActiveRequests().length,
+      },
+    };
+
+    res.json({ success: true, data: metrics });
+  } catch (error) {
+    logger.error('Get metrics error', { error: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to retrieve metrics',
+      error: error.message 
+    });
+  }
+});
 
 export default monitoringRouter;

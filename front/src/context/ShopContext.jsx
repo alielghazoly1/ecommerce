@@ -9,7 +9,7 @@ const ShopContextProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [token, setToken] = useState(null);
   const [authLoading, setAuthLoading] = useState(true); // ✅ new
-  const url = 'https://back-uyzw.vercel.app';
+  const url = 'https://low-hayley-totasheco-426426a6.koyeb.app';
 
   // تحميل السلة من LocalStorage
   useEffect(() => {

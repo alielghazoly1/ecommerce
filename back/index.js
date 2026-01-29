@@ -1,6 +1,5 @@
-// index.js - VERCEL OPTIMIZED VERSION ✅ - FIXED
+// index.js - PRODUCTION OPTIMIZED VERSION ✅
 import express from 'express';
-import serverless from 'serverless-http';
 import cors from 'cors';
 import compression from 'compression';
 import mongoose from 'mongoose';
@@ -19,35 +18,30 @@ import adminRouter from './routes/adminRoutes.js';
 import monitoringRouter from './routes/monitoringRoutes.js';
 
 // Middleware
-import errorHandler, { notFoundHandler } from './middleware/errorHandler.js';
+import errorHandler from './middleware/errorHandler.js';
 import rateLimiter from './middleware/rateLimiter.js';
-import requestLogger, {
-  performanceMonitor,
-} from './middleware/requestLogger.js';
+import requestLogger from './middleware/requestLogger.js';
 
 // Security Middleware
 import {
   sanitizeInput,
   preventNoSQLInjection,
-  securityHeaders,
   preventParameterPollution,
-  detectSuspiciousActivity,
 } from './middleware/security.js';
 
 // =====================
-// 🔥 IMPORTANT: Create Express App FIRST!
+// Create Express App
 // =====================
 const app = express();
 
 // =====================
-// Global Error Handlers (SIMPLIFIED FOR VERCEL)
+// Global Error Handlers
 // =====================
 process.on('unhandledRejection', (err) => {
   logger.error('UNHANDLED REJECTION', {
     error: err.message,
     stack: err.stack,
   });
-  // Don't exit in serverless
 });
 
 process.on('uncaughtException', (err) => {
@@ -55,16 +49,15 @@ process.on('uncaughtException', (err) => {
     error: err.message,
     stack: err.stack,
   });
-  // Don't exit in serverless
 });
 
 // =====================
-// Trust Proxy (CRITICAL for Vercel)
+// Trust Proxy
 // =====================
 app.set('trust proxy', true);
 
 // =====================
-// Security Headers (SIMPLIFIED)
+// Security Headers
 // =====================
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -77,23 +70,11 @@ app.use((req, res, next) => {
 // =====================
 // Body Parsing
 // =====================
-app.use(
-  express.json({
-    limit: '10mb',
-    strict: true,
-  }),
-);
-
-app.use(
-  express.urlencoded({
-    extended: true,
-    limit: '10mb',
-    parameterLimit: 100,
-  }),
-);
+app.use(express.json({ limit: '10mb', strict: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb', parameterLimit: 100 }));
 
 // =====================
-// Input Sanitization (ESSENTIAL)
+// Input Sanitization
 // =====================
 app.use(sanitizeInput);
 app.use(preventNoSQLInjection);
@@ -105,7 +86,7 @@ app.use(preventParameterPollution);
 app.use(compression());
 
 // =====================
-// CORS Configuration (FIXED FOR PRODUCTION) ✅
+// CORS Configuration
 // =====================
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim())
@@ -113,29 +94,25 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
       'http://localhost:3000',
       'http://localhost:5173',
       'http://localhost:5174',
-      'https://ecommerce-nine-theta-34.vercel.app', // ✅ Add your frontend URL
+      'https://ecommerce-nine-theta-34.vercel.app',
     ];
 
-console.log('🌍 Allowed Origins:', allowedOrigins);
+logger.info('🌍 Allowed Origins:', allowedOrigins);
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // ✅ Allow requests with no origin (mobile apps, Postman, etc.)
+    // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) {
       return callback(null, true);
     }
 
-    // ✅ Check if origin is allowed
-    if (allowedOrigins.includes(origin) || origin.includes('vercel.app')) {
+    // Check if origin is allowed
+    if (allowedOrigins.includes(origin) || origin.includes('vercel.app') || origin.includes('railway.app')) {
       callback(null, true);
     } else {
       logger.warn('CORS blocked request', { origin });
-      // ✅ Allow but log warning in production
-      if (process.env.NODE_ENV === 'production') {
-        callback(null, true); // Allow but log
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
+      // Allow but log warning in production
+      callback(null, true); // Allow all in production for now
     }
   },
   credentials: true,
@@ -143,13 +120,13 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 86400, // 24 hours
+  maxAge: 86400,
 };
 
 app.use(cors(corsOptions));
 
 // =====================
-// Request Logging (OPTIONAL - can disable in production)
+// Request Logging (Optional)
 // =====================
 if (process.env.ENABLE_REQUEST_LOGGING !== 'false') {
   app.use(requestLogger);
@@ -165,12 +142,11 @@ app.get('/', (req, res) => {
     message: 'E-commerce API is running',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
+    environment: process.env.NODE_ENV || 'production',
   });
 });
 
 app.get('/health', (req, res) => {
-  // Simple health check without DB
   const dbStatus =
     mongoose.connection.readyState === 1
       ? 'connected'
@@ -236,13 +212,14 @@ app.use(
 );
 
 // =====================
-// Database Connection Middleware
+// Database Connection Middleware (OPTIMIZED) ✅
 // =====================
 const ensureDb = async (req, res, next) => {
   // Skip DB for health checks
   if (
     req.path === '/' ||
     req.path === '/health' ||
+    req.path === '/api/health' ||
     req.path === '/favicon.ico'
   ) {
     return next();
@@ -250,7 +227,10 @@ const ensureDb = async (req, res, next) => {
 
   if (!process.env.MONGODB_URI) {
     logger.warn('MONGODB_URI not set');
-    return next();
+    return res.status(503).json({
+      success: false,
+      message: 'Database configuration error',
+    });
   }
 
   const dbRoutes = [
@@ -260,6 +240,7 @@ const ensureDb = async (req, res, next) => {
     '/api/cart',
     '/api/admin',
   ];
+  
   const needsDb = dbRoutes.some((route) => req.path.startsWith(route));
 
   if (!needsDb) return next();
@@ -270,10 +251,10 @@ const ensureDb = async (req, res, next) => {
       return next();
     }
 
-    // Try to connect with timeout
+    // Try to connect with longer timeout
     const connectPromise = connectDB();
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Database connection timeout')), 5000),
+      setTimeout(() => reject(new Error('Database connection timeout')), 10000), // 10 seconds
     );
 
     await Promise.race([connectPromise, timeoutPromise]);
@@ -291,7 +272,7 @@ const ensureDb = async (req, res, next) => {
 app.use(ensureDb);
 
 // =====================
-// Rate Limiting (OPTIONAL in production)
+// Rate Limiting (Optional)
 // =====================
 if (process.env.ENABLE_RATE_LIMITING === 'true') {
   app.use('/api/', rateLimiter);
@@ -337,54 +318,49 @@ app.use((err, req, res, next) => {
 });
 
 // =====================
-// Local Development Server
+// Start Server (CRITICAL FIX) ✅
 // =====================
-let server;
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 4000;
-  server = app.listen(PORT, () => {
-    logger.success('🚀 Server started successfully', {
-      port: PORT,
-      environment: process.env.NODE_ENV || 'development',
-      nodeVersion: process.version,
-      pid: process.pid,
-    });
-    logger.info(`🔗 Local: http://localhost:${PORT}`);
-    logger.info(`📊 Health: http://localhost:${PORT}/health`);
-    logger.info(`🔒 Security: Enabled`);
-    logger.info(`🖼️  Images: http://localhost:${PORT}/images/`);
+const PORT = process.env.PORT || 8000; // Use 8000 as default
+
+const server = app.listen(PORT, '0.0.0.0', () => {
+  logger.success('🚀 Server started successfully', {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'production',
+    nodeVersion: process.version,
+    pid: process.pid,
   });
+  logger.info(`🔗 Server: http://localhost:${PORT}`);
+  logger.info(`📊 Health: http://localhost:${PORT}/health`);
+});
 
-  // Graceful Shutdown
-  const gracefulShutdown = (signal) => {
-    logger.info(`${signal} received: closing server gracefully`);
+// =====================
+// Graceful Shutdown
+// =====================
+const gracefulShutdown = (signal) => {
+  logger.info(`${signal} received: closing server gracefully`);
 
-    if (server) {
-      server.close(() => {
-        logger.info('HTTP server closed');
-      });
-    }
+  if (server) {
+    server.close(() => {
+      logger.info('HTTP server closed');
+    });
+  }
 
-    if (mongoose.connection && mongoose.connection.readyState === 1) {
-      mongoose.connection.close(false, () => {
-        logger.info('MongoDB connection closed');
-        process.exit(0);
-      });
-    } else {
+  if (mongoose.connection && mongoose.connection.readyState === 1) {
+    mongoose.connection.close(false, () => {
+      logger.info('MongoDB connection closed');
       process.exit(0);
-    }
+    });
+  } else {
+    process.exit(0);
+  }
 
-    setTimeout(() => {
-      logger.error('Forced shutdown after timeout');
-      process.exit(1);
-    }, 10000);
-  };
+  setTimeout(() => {
+    logger.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+};
 
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-}
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-// =====================
-// Export for Serverless (Vercel)
-// =====================
-export default serverless(app);
+export default app;
