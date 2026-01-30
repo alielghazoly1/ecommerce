@@ -66,7 +66,7 @@ const SignUp = () => {
       if (status === 409) {
         setErrorMessage('البريد الإلكتروني مستخدم بالفعل');
       } else if (status === 400) {
-        setErrorMessage('بيانات غير صالحة');
+        setErrorMessage('يجب ان تكون كلمة السر حروف وارقام ');
       } else {
         setErrorMessage('حدث خطأ ما');
       }

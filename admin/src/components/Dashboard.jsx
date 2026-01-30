@@ -31,7 +31,7 @@ import toast from 'react-hot-toast';
 const Dashboard = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
-  const url = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+  const url = "https://low-hayley-totasheco-426426a6.koyeb.app";
   
   const [stats, setStats] = useState({
     totalOrders: 0,

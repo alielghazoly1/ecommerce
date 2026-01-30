@@ -44,7 +44,6 @@ const List = () => {
   const [viewMode, setViewMode] = useState('grid'); // grid or list
   const [showFilters, setShowFilters] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const url = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
   const fetchProducts = async () => {
     if (!token) {
