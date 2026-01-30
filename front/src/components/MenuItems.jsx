@@ -5,7 +5,7 @@ import {
   ShoppingBag,
   Mail,
   ShoppingCart,
-  User,
+  CircleUserRound,
 } from 'lucide-react';
 import { Link as ScrollLink, scroller } from 'react-scroll';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -126,21 +126,28 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
           }}
           className="flex items-center gap-2 px-4 py-3 rounded-lg bg-cyan-400 text-white font-semibold hover:bg-cyan-500 transition-all"
         >
-          Login
+          تسجيل دخول
         </button>
       ) : (
         <div className="flex items-center gap-4">
-          <User
-            className="w-6 h-6 text-gray-700 hover:cursor-pointer hover:text-cyan-600"
+          <div
             onClick={() => {
               navigate('/profile');
+              setSidebarOpen && setSidebarOpen(false);
             }}
-          />
+            className="flex flex-col items-center cursor-pointer group"
+          >
+            <CircleUserRound className="w-6 h-6 text-gray-700 group-hover:text-cyan-600" />
+            <span className="text-xs text-gray-600 mt-1 group-hover:text-cyan-600">
+              الحساب
+            </span>
+          </div>
+
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 px-4 py-3 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition-all"
           >
-            Logout
+            تسجيل خروج
           </button>
         </div>
       )}
