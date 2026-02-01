@@ -1,10 +1,15 @@
-// routes/productRoutes.js - FIXED & PROTECTED
+// routes/productRoutes.js - COMPLETE WITH UPDATE ROUTES
 import express from 'express';
 import multer from 'multer';
 import {
   addProduct,
-  listProducts,
+  updateProduct,
   removeProduct,
+  listProducts,
+  listAllProducts,
+  getProduct,
+  toggleProductStatus,
+  bulkUpdateStock,
 } from '../controllers/productController.js';
 import authMiddleware from '../middleware/auth.js';
 import { adminOnly } from '../middleware/adminOnly.js';
@@ -23,7 +28,6 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB max
   },
   fileFilter: (req, file, cb) => {
-    // Accept only images
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
@@ -31,72 +35,103 @@ const upload = multer({
     }
   },
 });
-// ✅ تحسين معالجة أخطاء multer
-(upload.single('image'),
-  (err, req, res, next) => {
-    if (err instanceof multer.MulterError) {
+
+// ✅ Multer error handler
+const multerErrorHandler = (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
         success: false,
-        message:
-          err.code === 'LIMIT_FILE_SIZE'
-            ? 'حجم الملف كبير جداً. الحد الأقصى 5MB'
-            : err.message,
+        message: 'حجم الملف كبير جداً. الحد الأقصى 5MB',
       });
     }
-    if (err) {
-      return res.status(400).json({
-        success: false,
-        message: err.message || 'خطأ في رفع الملف',
-      });
-    }
-    next();
-  });
+    return res.status(400).json({
+      success: false,
+      message: err.message || 'خطأ في رفع الملف',
+    });
+  }
+  if (err) {
+    return res.status(400).json({
+      success: false,
+      message: err.message || 'خطأ في رفع الملف',
+    });
+  }
+  next();
+};
 
 // =====================
-// PUBLIC ROUTES (أي حد يقدر يشوف المنتجات)
+// PUBLIC ROUTES
 // =====================
 productRouter.get('/list', listProducts);
+productRouter.get('/:id', getProduct);
 
 // =====================
-// ADMIN ONLY ROUTES (إضافة وحذف المنتجات للأدمن فقط)
+// ADMIN ONLY ROUTES
 // =====================
+
+// ✅ Add Product
 productRouter.post(
   '/add',
   authMiddleware,
   adminOnly,
   upload.single('image'),
-  (err, req, res, next) => {
-    // Handle multer errors
-    if (err instanceof multer.MulterError) {
-      if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({
-          success: false,
-          message: 'File size is too large. Maximum size is 5MB',
-        });
-      }
-      return res.status(400).json({
-        success: false,
-        message: err.message || 'File upload error',
-      });
-    }
-    if (err) {
-      return res.status(400).json({
-        success: false,
-        message: err.message || 'File upload error',
-      });
-    }
-    next();
-  },
+  multerErrorHandler,
   validateProduct,
-  addProduct,
+  addProduct
 );
 
+// ✅ Update Product (with optional image)
+productRouter.put(
+  '/update/:id',
+  authMiddleware,
+  adminOnly,
+  upload.single('image'),
+  multerErrorHandler,
+  validateMongoId('id'),
+  updateProduct
+);
+
+// ✅ Delete Product
+productRouter.delete(
+  '/remove/:id',
+  authMiddleware,
+  adminOnly,
+  validateMongoId('id'),
+  removeProduct
+);
+
+// Alternative POST method for delete (for compatibility)
 productRouter.post(
   '/remove',
   authMiddleware,
   adminOnly,
   validateMongoId('id'),
-  removeProduct,
+  removeProduct
+);
+
+// ✅ Toggle Product Status (Active/Inactive)
+productRouter.patch(
+  '/toggle-status/:id',
+  authMiddleware,
+  adminOnly,
+  validateMongoId('id'),
+  toggleProductStatus
+);
+
+// ✅ List All Products (including inactive) - للـ Dashboard
+productRouter.get(
+  '/admin/all',
+  authMiddleware,
+  adminOnly,
+  listAllProducts
+);
+
+// ✅ Bulk Update Stock
+productRouter.post(
+  '/admin/bulk-update-stock',
+  authMiddleware,
+  adminOnly,
+  bulkUpdateStock
 );
 
 export default productRouter;

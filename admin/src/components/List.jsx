@@ -1,5 +1,6 @@
-// src/components/List.jsx - LUXURY PROFESSIONAL VERSION
+// src/components/List.jsx - ENHANCED WITH EDIT BUTTON
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from '../config/axiosConfig';
 import toast from 'react-hot-toast';
@@ -9,16 +10,14 @@ import {
   Loader2,
   Search,
   Eye,
-  Edit,
+  Pencil,
   Star,
-  TrendingUp,
   Box,
   Filter,
   X,
   ChevronDown,
   Grid,
   List as ListIcon,
-  ArrowUpDown,
   Calendar,
   DollarSign,
   Tag,
@@ -34,6 +33,7 @@ const SORT_OPTIONS = [
 ];
 
 const List = () => {
+  const navigate = useNavigate();
   const { token, isAuthenticated } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +41,7 @@ const List = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
-  const [viewMode, setViewMode] = useState('grid'); // grid or list
+  const [viewMode, setViewMode] = useState('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
@@ -53,11 +53,7 @@ const List = () => {
     }
 
     try {
-      const res = await axios.get('/product/list', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await axios.get('/product/list');
 
       if (res.data.success) {
         setProducts(res.data.data || []);
@@ -91,15 +87,7 @@ const List = () => {
     setDeleteLoading((prev) => ({ ...prev, [id]: true }));
 
     try {
-      const res = await axios.post(
-        '/product/remove',
-        { id },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      const res = await axios.delete(`/product/remove/${id}`);
 
       if (res.data.success) {
         setProducts((prev) => prev.filter((p) => p._id !== id));
@@ -115,6 +103,10 @@ const List = () => {
     }
   };
 
+  const handleEdit = (id) => {
+    navigate(`/admin/edit/${id}`);
+  };
+
   // Get unique categories
   const categories = ['all', ...new Set(products.map((p) => p.category))];
 
@@ -127,11 +119,9 @@ const List = () => {
       filtered = filtered.filter(
         (product) =>
           product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.description
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
+          product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           product.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.brand?.toLowerCase().includes(searchTerm.toLowerCase()),
+          product.brand?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -199,9 +189,7 @@ const List = () => {
                 </div>
                 قائمة المنتجات
               </h1>
-              <p className="text-gray-400">
-                إدارة وعرض جميع المنتجات في المتجر
-              </p>
+              <p className="text-gray-400">إدارة وعرض جميع المنتجات في المتجر</p>
             </div>
 
             {/* View Mode Toggle */}
@@ -228,248 +216,171 @@ const List = () => {
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-            <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 backdrop-blur-xl rounded-xl border border-purple-500/20 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-500/20 rounded-lg">
-                  <Package className="w-5 h-5 text-purple-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">إجمالي المنتجات</p>
-                  <p className="text-2xl font-bold text-white">{stats.total}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 backdrop-blur-xl rounded-xl border border-green-500/20 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-500/20 rounded-lg">
-                  <Box className="w-5 h-5 text-green-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">متوفر</p>
-                  <p className="text-2xl font-bold text-white">
-                    {stats.inStock}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-red-500/20 to-red-600/10 backdrop-blur-xl rounded-xl border border-red-500/20 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-500/20 rounded-lg">
-                  <X className="w-5 h-5 text-red-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">نفذ من المخزون</p>
-                  <p className="text-2xl font-bold text-white">
-                    {stats.outOfStock}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 backdrop-blur-xl rounded-xl border border-yellow-500/20 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-500/20 rounded-lg">
-                  <Star className="w-5 h-5 text-yellow-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-400">مميز</p>
-                  <p className="text-2xl font-bold text-white">
-                    {stats.featured}
-                  </p>
-                </div>
-              </div>
-            </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/10 p-4">
+            <p className="text-gray-400 text-sm mb-1">إجمالي المنتجات</p>
+            <p className="text-2xl font-bold text-white">{stats.total}</p>
+          </div>
+          <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/10 p-4">
+            <p className="text-gray-400 text-sm mb-1">متوفر</p>
+            <p className="text-2xl font-bold text-green-400">{stats.inStock}</p>
+          </div>
+          <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/10 p-4">
+            <p className="text-gray-400 text-sm mb-1">نفذ</p>
+            <p className="text-2xl font-bold text-red-400">{stats.outOfStock}</p>
+          </div>
+          <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/10 p-4">
+            <p className="text-gray-400 text-sm mb-1">مميز</p>
+            <p className="text-2xl font-bold text-yellow-400">{stats.featured}</p>
           </div>
         </div>
 
         {/* Search and Filters */}
-        <div className="mb-6 space-y-4">
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 mb-8">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
               <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input
                 type="text"
-                placeholder="بحث عن منتج..."
+                placeholder="ابحث عن منتج..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-3 pr-12 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                className="w-full px-4 py-3 pr-12 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
             </div>
 
-            {/* Sort */}
-            <div className="relative min-w-[200px]">
-              <ArrowUpDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="w-full px-4 py-3 pr-12 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition appearance-none cursor-pointer"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option
-                    key={option.value}
-                    value={option.value}
-                    className="bg-slate-800"
-                  >
-                    {option.label}
+            {/* Category Filter */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
+            >
+              <option value="all" className="bg-slate-800">
+                جميع الفئات
+              </option>
+              {categories
+                .filter((cat) => cat !== 'all')
+                .map((cat) => (
+                  <option key={cat} value={cat} className="bg-slate-800">
+                    {cat}
                   </option>
                 ))}
-              </select>
-            </div>
+            </select>
 
-            {/* Filters Toggle */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-white hover:bg-white/10 transition flex items-center gap-2"
+            {/* Sort */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
             >
-              <Filter className="w-5 h-5" />
-              <span>فلترة</span>
-              <ChevronDown
-                className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`}
-              />
-            </button>
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value} className="bg-slate-800">
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Category Filters */}
-          {showFilters && (
-            <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/10 p-4">
-              <p className="text-sm text-gray-400 mb-3">الفئة:</p>
-              <div className="flex flex-wrap gap-2">
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-4 py-2 rounded-lg transition-all ${
-                      selectedCategory === cat
-                        ? 'bg-purple-500 text-white'
-                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    {cat === 'all' ? 'الكل' : cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Results Count */}
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <p className="text-gray-400 text-sm">
+              عرض {filteredProducts.length} من {products.length} منتج
+            </p>
+          </div>
         </div>
 
-        {/* Products Display */}
-        {products.length === 0 ? (
+        {/* No Results */}
+        {filteredProducts.length === 0 ? (
           <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-12 text-center">
             <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400 text-lg">لا توجد منتجات حالياً</p>
-            <p className="text-gray-500 text-sm mt-2">ابدأ بإضافة منتج جديد</p>
-          </div>
-        ) : filteredProducts.length === 0 ? (
-          <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-12 text-center">
-            <Search className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400 text-lg">لا توجد نتائج</p>
-            <p className="text-gray-500 text-sm mt-2">
-              جرب تغيير معايير البحث أو الفلترة
-            </p>
+            <p className="text-xl text-gray-400 mb-2">لا توجد منتجات</p>
+            <p className="text-gray-500">جرب تغيير البحث أو الفلترة</p>
           </div>
         ) : viewMode === 'grid' ? (
           // Grid View
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProducts.map((product) => (
               <div
                 key={product._id}
-                className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden hover:border-purple-500/50 transition-all group"
+                className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-xl border border-white/10 overflow-hidden hover:border-purple-500/50 transition-all group"
               >
                 {/* Image */}
-                <div className="relative h-48 bg-white/5 overflow-hidden">
+                <div className="relative h-64 bg-white/5 overflow-hidden">
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     onError={(e) => {
-                      e.target.src =
-                        'https://via.placeholder.com/400x300?text=No+Image';
+                      e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
                     }}
                   />
-
-                  {/* Badges */}
-                  <div className="absolute top-2 right-2 flex gap-2">
-                    <div className="bg-purple-500/90 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-medium text-white">
-                      {product.category}
+                  {product.isFeatured && (
+                    <div className="absolute top-3 right-3 bg-yellow-500/90 backdrop-blur-sm px-3 py-1.5 rounded-lg flex items-center gap-2">
+                      <Star className="w-4 h-4 text-white fill-white" />
+                      <span className="text-white text-sm font-semibold">مميز</span>
                     </div>
-                    {product.isFeatured && (
-                      <div className="bg-yellow-500/90 backdrop-blur-sm p-1.5 rounded-lg">
-                        <Star className="w-4 h-4 text-white fill-white" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Stock Badge */}
-                  <div className="absolute bottom-2 left-2">
-                    {product.stock > 0 ? (
-                      <div className="bg-green-500/90 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-medium text-white">
-                        متوفر ({product.stock})
-                      </div>
-                    ) : (
-                      <div className="bg-red-500/90 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-medium text-white">
-                        نفذ من المخزون
-                      </div>
-                    )}
+                  )}
+                  <div
+                    className={`absolute bottom-3 right-3 px-3 py-1.5 rounded-lg text-sm font-semibold ${
+                      product.stock > 0
+                        ? 'bg-green-500/90 text-white'
+                        : 'bg-red-500/90 text-white'
+                    }`}
+                  >
+                    {product.stock > 0 ? `متوفر (${product.stock})` : 'نفذ'}
                   </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-4">
-                  <h3 className="text-lg font-bold text-white mb-2 truncate">
-                    {product.name}
-                  </h3>
+                <div className="p-5">
+                  <div className="mb-3">
+                    <h3 className="text-xl font-bold text-white mb-1 line-clamp-1">
+                      {product.name}
+                    </h3>
+                    {product.brand && (
+                      <p className="text-sm text-gray-500">{product.brand}</p>
+                    )}
+                  </div>
 
-                  {product.brand && (
-                    <p className="text-xs text-gray-500 mb-2">
-                      {product.brand}
-                    </p>
-                  )}
-
-                  <p className="text-sm text-gray-400 mb-3 line-clamp-2 h-10">
+                  <p className="text-sm text-gray-400 line-clamp-2 mb-4">
                     {product.description}
                   </p>
 
                   <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <span className="text-2xl font-bold text-purple-400">
-                        {product.price}
-                      </span>
-                      <span className="text-sm text-gray-400 mr-1">ج.م</span>
+                    <span className="px-3 py-1 bg-purple-500/20 text-purple-400 text-xs rounded-lg">
+                      {product.category}
+                    </span>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-purple-400">
+                        {product.price} ج.م
+                      </div>
                     </div>
-                    {product.sku && (
-                      <span className="text-xs text-gray-500">
-                        #{product.sku}
-                      </span>
-                    )}
                   </div>
 
                   {/* Actions */}
                   <div className="flex gap-2">
                     <button
                       onClick={() => setSelectedProduct(product)}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-white rounded-lg transition-all group"
+                      className="flex-1 px-3 py-2 bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-white rounded-lg transition-all flex items-center justify-center gap-2"
                     >
                       <Eye className="w-4 h-4" />
                       <span className="text-sm font-medium">عرض</span>
                     </button>
                     <button
+                      onClick={() => handleEdit(product._id)}
+                      className="flex-1 px-3 py-2 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-all flex items-center justify-center gap-2"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      <span className="text-sm font-medium">تعديل</span>
+                    </button>
+                    <button
                       onClick={() => handleDelete(product._id)}
                       disabled={deleteLoading[product._id]}
-                      className="flex items-center justify-center gap-2 px-3 py-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {deleteLoading[product._id] ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -498,8 +409,7 @@ const List = () => {
                       alt={product.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.target.src =
-                          'https://via.placeholder.com/200x150?text=No+Image';
+                        e.target.src = 'https://via.placeholder.com/200x150?text=No+Image';
                       }}
                     />
                     {product.isFeatured && (
@@ -512,13 +422,9 @@ const List = () => {
                   {/* Content */}
                   <div className="flex-1 p-4 flex flex-col md:flex-row md:items-center gap-4">
                     <div className="flex-1">
-                      <h3 className="text-xl font-bold text-white mb-1">
-                        {product.name}
-                      </h3>
+                      <h3 className="text-xl font-bold text-white mb-1">{product.name}</h3>
                       {product.brand && (
-                        <p className="text-sm text-gray-500 mb-2">
-                          {product.brand}
-                        </p>
+                        <p className="text-sm text-gray-500 mb-2">{product.brand}</p>
                       )}
                       <p className="text-sm text-gray-400 line-clamp-1">
                         {product.description}
@@ -544,11 +450,6 @@ const List = () => {
                         <div className="text-2xl font-bold text-purple-400">
                           {product.price} ج.م
                         </div>
-                        {product.sku && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            #{product.sku}
-                          </div>
-                        )}
                       </div>
 
                       <div className="flex gap-2">
@@ -557,6 +458,12 @@ const List = () => {
                           className="px-4 py-2 bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-white rounded-lg transition-all"
                         >
                           <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEdit(product._id)}
+                          className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white rounded-lg transition-all"
+                        >
+                          <Pencil className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(product._id)}
@@ -604,8 +511,7 @@ const List = () => {
                   alt={selectedProduct.name}
                   className="w-full h-64 object-cover rounded-xl mb-6"
                   onError={(e) => {
-                    e.target.src =
-                      'https://via.placeholder.com/600x400?text=No+Image';
+                    e.target.src = 'https://via.placeholder.com/600x400?text=No+Image';
                   }}
                 />
 
@@ -653,9 +559,7 @@ const List = () => {
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-500 text-sm mb-1">
-                        رقم المنتج (SKU)
-                      </p>
+                      <p className="text-gray-500 text-sm mb-1">رقم المنتج (SKU)</p>
                       <p className="text-lg text-white">
                         {selectedProduct.sku || 'غير متوفر'}
                       </p>
@@ -664,9 +568,7 @@ const List = () => {
 
                   {selectedProduct.tags && selectedProduct.tags.length > 0 && (
                     <div>
-                      <p className="text-gray-500 text-sm mb-2">
-                        الكلمات المفتاحية
-                      </p>
+                      <p className="text-gray-500 text-sm mb-2">الكلمات المفتاحية</p>
                       <div className="flex flex-wrap gap-2">
                         {selectedProduct.tags.map((tag, idx) => (
                           <span
@@ -679,6 +581,20 @@ const List = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* Action Buttons in Modal */}
+                  <div className="flex gap-3 pt-4 border-t border-white/10">
+                    <button
+                      onClick={() => {
+                        setSelectedProduct(null);
+                        handleEdit(selectedProduct._id);
+                      }}
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                    >
+                      <Pencil className="w-5 h-5" />
+                      <span>تعديل المنتج</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

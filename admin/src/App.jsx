@@ -1,4 +1,4 @@
-// src/App.jsx
+// src/App.jsx - FIXED & ENHANCED
 import { Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -11,6 +11,7 @@ import Orders from './components/Orders';
 import Users from './components/Users';
 import Dashboard from './components/Dashboard';
 import Monitoring from './components/Monitoring';
+import Edit from './components/Edit';
 
 const DashboardLayout = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -55,7 +56,18 @@ const App = () => {
 
       <DashboardLayout>
         <Routes>
+          {/* Public Route - Login */}
           <Route path="/admin/login" element={<AdminLogin />} />
+
+          {/* Protected Routes */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/admin/add"
@@ -67,18 +79,19 @@ const App = () => {
           />
 
           <Route
+            path="/admin/edit/:id"
+            element={
+              <ProtectedRoute>
+                <Edit />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/admin/list"
             element={
               <ProtectedRoute>
                 <List />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
               </ProtectedRoute>
             }
           />
@@ -100,6 +113,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/admin/monitoring"
             element={
@@ -109,12 +123,11 @@ const App = () => {
             }
           />
 
-          <Route path="/" element={<Navigate to="/admin/list" replace />} />
-          <Route
-            path="/admin"
-            element={<Navigate to="/admin/list" replace />}
-          />
+          {/* Redirects */}
+          <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
+          {/* 404 Not Found */}
           <Route
             path="*"
             element={
@@ -125,7 +138,7 @@ const App = () => {
                     الصفحة غير موجودة
                   </p>
                   <a
-                    href="/admin/list"
+                    href="/admin/dashboard"
                     className="inline-block bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all"
                   >
                     العودة للرئيسية
