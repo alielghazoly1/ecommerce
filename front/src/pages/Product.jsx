@@ -163,7 +163,6 @@ const Product = () => {
     url,
     authLoading,
   } = useContext(ShopContext);
-
   // Loading State
   const [isPageLoading, setIsPageLoading] = useState(true);
 
@@ -183,11 +182,8 @@ const Product = () => {
   // Gallery state
   const images = useMemo(() => {
     if (!product) return [];
-    const allImages = [product.image];
-    if (product.images && Array.isArray(product.images)) {
-      allImages.push(...product.images.filter((img) => img !== product.image));
-    }
-    return allImages.filter(Boolean);
+    // استخدام الصورة الرئيسية فقط
+    return [product.image].filter(Boolean);
   }, [product]);
 
   const [activeIndex, setActiveIndex] = useState(0);
