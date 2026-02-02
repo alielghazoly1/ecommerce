@@ -30,6 +30,7 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('adminToken');
     localStorage.removeItem('cartItems');
     setToken(false);
     navigate('/');

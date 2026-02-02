@@ -38,18 +38,20 @@ const formatEGP = (v) => {
 // Toast Component
 const Toast = ({ message, type = 'info', onClose }) => {
   if (!message) return null;
-  
+
   const configs = {
     success: { bg: 'bg-green-500', icon: Check },
     error: { bg: 'bg-red-500', icon: X },
     info: { bg: 'bg-cyan-500', icon: Check },
   };
-  
+
   const config = configs[type] || configs.info;
   const Icon = config.icon;
-  
+
   return (
-    <div className={`fixed left-1/2 -translate-x-1/2 top-8 z-50 ${config.bg} text-white px-6 py-3 rounded-xl shadow-2xl animate-slide-down`}>
+    <div
+      className={`fixed left-1/2 -translate-x-1/2 top-8 z-50 ${config.bg} text-white px-6 py-3 rounded-xl shadow-2xl animate-slide-down`}
+    >
       <div className="flex items-center gap-3">
         <Icon className="w-5 h-5" />
         <div className="text-sm font-medium">{message}</div>
@@ -83,11 +85,14 @@ const ProductDetailsSkeleton = () => {
           <div className="p-6 lg:p-8">
             {/* Main Image Skeleton */}
             <div className="w-full aspect-square bg-gray-200 rounded-2xl animate-pulse mb-4"></div>
-            
+
             {/* Thumbnails Skeleton */}
             <div className="flex gap-2 overflow-x-auto custom-scrollbar">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="w-20 h-20 bg-gray-200 rounded-lg animate-pulse flex-none"></div>
+                <div
+                  key={i}
+                  className="w-20 h-20 bg-gray-200 rounded-lg animate-pulse flex-none"
+                ></div>
               ))}
             </div>
           </div>
@@ -96,7 +101,7 @@ const ProductDetailsSkeleton = () => {
           <div className="p-6 lg:p-8">
             {/* Title */}
             <div className="h-8 w-3/4 bg-gray-200 rounded-lg animate-pulse mb-4"></div>
-            
+
             {/* Rating */}
             <div className="flex items-center gap-2 mb-6">
               <div className="h-5 w-32 bg-gray-200 rounded animate-pulse"></div>
@@ -134,7 +139,13 @@ const ProductDetailsSkeleton = () => {
           <div className="h-8 w-48 bg-gray-200 rounded-lg animate-pulse mb-6"></div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {[...Array(6)].map((_, i) => (
-              <CardSkeleton key={i} width={200} height={280} imageHeight={140} radius={12} />
+              <CardSkeleton
+                key={i}
+                width={200}
+                height={280}
+                imageHeight={140}
+                radius={12}
+              />
             ))}
           </div>
         </div>
@@ -146,7 +157,12 @@ const ProductDetailsSkeleton = () => {
 const Product = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { addToCart, all_products = [], url, authLoading } = useContext(ShopContext);
+  const {
+    addToCart,
+    all_products = [],
+    url,
+    authLoading,
+  } = useContext(ShopContext);
 
   // Loading State
   const [isPageLoading, setIsPageLoading] = useState(true);
@@ -154,7 +170,7 @@ const Product = () => {
   // Find product
   const product = useMemo(
     () => all_products.find((p) => String(p._id) === String(productId)),
-    [all_products, productId]
+    [all_products, productId],
   );
 
   // State
@@ -163,14 +179,13 @@ const Product = () => {
   const [isAdded, setIsAdded] = useState(false);
   const [showLoginBanner, setShowLoginBanner] = useState(false);
   const [toast, setToast] = useState({ msg: '', type: 'info' });
-  const [isWishlisted, setIsWishlisted] = useState(false);
 
   // Gallery state
   const images = useMemo(() => {
     if (!product) return [];
     const allImages = [product.image];
     if (product.images && Array.isArray(product.images)) {
-      allImages.push(...product.images.filter(img => img !== product.image));
+      allImages.push(...product.images.filter((img) => img !== product.image));
     }
     return allImages.filter(Boolean);
   }, [product]);
@@ -216,8 +231,12 @@ const Product = () => {
           <div className="w-32 h-32 mx-auto mb-6 bg-linear-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
             <Package className="w-16 h-16 text-gray-400" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-800 mb-3">المنتج غير موجود</h2>
-          <p className="text-gray-600 mb-6">عذراً، لم نتمكن من العثور على هذا المنتج</p>
+          <h2 className="text-3xl font-bold text-gray-800 mb-3">
+            المنتج غير موجود
+          </h2>
+          <p className="text-gray-600 mb-6">
+            عذراً، لم نتمكن من العثور على هذا المنتج
+          </p>
           <button
             onClick={() => navigate('/')}
             className="px-8 py-3 bg-linear-to-r from-cyan-600 to-cyan-700 text-white rounded-xl font-semibold hover:from-cyan-700 hover:to-cyan-800 transition-all shadow-lg"
@@ -233,17 +252,20 @@ const Product = () => {
   const handleAddToCart = async () => {
     if (isAdding) return;
     setIsAdding(true);
-    
+
     try {
       const res = await addToCart(product._id, qty);
-      
+
       if (res === null || res?.success === false) {
         setShowLoginBanner(true);
         setToast({ msg: 'يرجى تسجيل الدخول لإتمام الطلب', type: 'error' });
         setTimeout(() => setShowLoginBanner(false), 4000);
       } else {
         setIsAdded(true);
-        setToast({ msg: `تمت إضافة ${qty} من ${product.name} إلى السلة ✓`, type: 'success' });
+        setToast({
+          msg: `تمت إضافة ${qty} من ${product.name} إلى السلة ✓`,
+          type: 'success',
+        });
         setTimeout(() => setIsAdded(false), 2000);
       }
     } catch (err) {
@@ -266,25 +288,19 @@ const Product = () => {
     }
   };
 
-  // Wishlist toggle
-  const toggleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
-    setToast({ 
-      msg: isWishlisted ? 'تمت الإزالة من المفضلة' : 'تمت الإضافة للمفضلة ✓', 
-      type: 'success' 
-    });
-    setTimeout(() => setToast({ msg: '', type: 'info' }), 2000);
-  };
-
   // Calculate discount
-  const hasDiscount = product.originalPrice && product.originalPrice > product.price;
-  const discountPercent = hasDiscount 
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+  const hasDiscount =
+    product.originalPrice && product.originalPrice > product.price;
+  const discountPercent = hasDiscount
+    ? Math.round(
+        ((product.originalPrice - product.price) / product.originalPrice) * 100,
+      )
     : 0;
 
   // Navigation arrows for gallery
   const nextImage = () => setActiveIndex((prev) => (prev + 1) % images.length);
-  const prevImage = () => setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
+  const prevImage = () =>
+    setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
 
   return (
     <section className="min-h-screen py-8 md:py-12 px-4 bg-linear-to-br from-gray-50 via-white to-gray-50">
@@ -297,9 +313,16 @@ const Product = () => {
       <div className="max-w-7xl mx-auto">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6">
-          <Link to="/" className="hover:text-cyan-600 transition-colors">الرئيسية</Link>
+          <Link to="/" className="hover:text-cyan-600 transition-colors">
+            الرئيسية
+          </Link>
           <ChevronLeft className="w-4 h-4" />
-          <Link to="/categories" className="hover:text-cyan-600 transition-colors">المنتجات</Link>
+          <Link
+            to="/categories"
+            className="hover:text-cyan-600 transition-colors"
+          >
+            المنتجات
+          </Link>
           <ChevronLeft className="w-4 h-4" />
           <span className="text-gray-900 font-medium">{product.category}</span>
         </nav>
@@ -330,7 +353,7 @@ const Product = () => {
                 alt={product.name}
                 className="w-full h-full object-contain"
               />
-              
+
               {/* Zoom Button */}
               <button
                 onClick={() => setLightboxOpen(true)}
@@ -366,8 +389,8 @@ const Product = () => {
                     key={i}
                     onClick={() => setActiveIndex(i)}
                     className={`flex-none w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                      i === activeIndex 
-                        ? 'border-cyan-500 ring-2 ring-cyan-200' 
+                      i === activeIndex
+                        ? 'border-cyan-500 ring-2 ring-cyan-200'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
@@ -388,25 +411,6 @@ const Product = () => {
               {product.name}
             </h1>
 
-            {/* Rating & Reviews */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-5 h-5 ${
-                      i < (product.rating || 4)
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="text-sm text-gray-600">
-                ({product.reviewsCount || 0} تقييم)
-              </span>
-            </div>
-
             {/* Price */}
             <div className="mb-6">
               <div className="flex items-baseline gap-3">
@@ -419,12 +423,16 @@ const Product = () => {
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-500 mt-1">شامل ضريبة القيمة المضافة</p>
+              <p className="text-sm text-gray-500 mt-1">
+                شامل ضريبة القيمة المضافة
+              </p>
             </div>
 
             {/* Description */}
             <div className="mb-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">الوصف:</h3>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                الوصف:
+              </h3>
               <p className="text-gray-600 leading-relaxed">
                 {product.description || 'لا يوجد وصف متاح لهذا المنتج'}
               </p>
@@ -432,15 +440,17 @@ const Product = () => {
 
             {/* Stock Status */}
             <div className="mb-6">
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
-                product.stock > 0 
-                  ? 'bg-green-50 text-green-700' 
-                  : 'bg-red-50 text-red-700'
-              }`}>
+              <div
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
+                  product.stock > 0
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-red-50 text-red-700'
+                }`}
+              >
                 <Package className="w-4 h-4" />
                 <span className="text-sm font-medium">
-                  {product.stock > 0 
-                    ? `متوفر في المخزن (${product.stock} قطعة)` 
+                  {product.stock > 0
+                    ? `متوفر في المخزن (${product.stock} قطعة)`
                     : 'غير متوفر حالياً'}
                 </span>
               </div>
@@ -461,7 +471,9 @@ const Product = () => {
                   {qty}
                 </div>
                 <button
-                  onClick={() => setQty(Math.min(product.stock || 999, qty + 1))}
+                  onClick={() =>
+                    setQty(Math.min(product.stock || 999, qty + 1))
+                  }
                   className="px-4 h-full hover:bg-gray-100 transition-colors"
                   disabled={qty >= (product.stock || 999)}
                 >
@@ -477,10 +489,10 @@ const Product = () => {
                   isAdded
                     ? 'bg-green-600 hover:bg-green-700'
                     : isAdding
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : product.stock === 0
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800'
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : product.stock === 0
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800'
                 }`}
               >
                 {isAdding ? (
@@ -507,18 +519,6 @@ const Product = () => {
             {/* Action Buttons */}
             <div className="flex gap-3 mb-6">
               <button
-                onClick={toggleWishlist}
-                className={`flex-1 h-12 rounded-xl font-semibold transition-all border-2 flex items-center justify-center gap-2 ${
-                  isWishlisted
-                    ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
-                    : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-red-600' : ''}`} />
-                {isWishlisted ? 'في المفضلة' : 'أضف للمفضلة'}
-              </button>
-              
-              <button
                 onClick={handleCopyLink}
                 className="h-12 px-4 rounded-xl border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-all flex items-center justify-center"
               >
@@ -535,7 +535,8 @@ const Product = () => {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-800 mb-2">
-                      <strong>تم الحفظ محلياً!</strong> سجّل الدخول لمزامنة طلباتك
+                      <strong>تم الحفظ محلياً!</strong> سجّل الدخول لمزامنة
+                      طلباتك
                     </p>
                     <Link
                       to="/login"
@@ -562,7 +563,9 @@ const Product = () => {
                   <Truck className="w-6 h-6 text-cyan-600" />
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900 text-sm">توصيل سريع</div>
+                  <div className="font-semibold text-gray-900 text-sm">
+                    توصيل سريع
+                  </div>
                   <div className="text-xs text-gray-500">2-3 أيام</div>
                 </div>
               </div>
@@ -572,7 +575,9 @@ const Product = () => {
                   <ShieldCheck className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900 text-sm">دفع آمن</div>
+                  <div className="font-semibold text-gray-900 text-sm">
+                    دفع آمن
+                  </div>
                   <div className="text-xs text-gray-500">100% محمي</div>
                 </div>
               </div>
@@ -582,7 +587,9 @@ const Product = () => {
                   <Package className="w-6 h-6 text-purple-600" />
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900 text-sm">ضمان الجودة</div>
+                  <div className="font-semibold text-gray-900 text-sm">
+                    ضمان الجودة
+                  </div>
                   <div className="text-xs text-gray-500">منتج أصلي</div>
                 </div>
               </div>
@@ -591,7 +598,9 @@ const Product = () => {
             {/* Tags */}
             {product.tags && product.tags.length > 0 && (
               <div className="mt-6">
-                <div className="text-sm font-semibold text-gray-700 mb-2">الوسوم:</div>
+                <div className="text-sm font-semibold text-gray-700 mb-2">
+                  الوسوم:
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {product.tags.map((tag, i) => (
                     <span
@@ -612,7 +621,9 @@ const Product = () => {
           <div className="mt-12">
             <div className="flex items-center gap-3 mb-6">
               <TrendingUp className="w-6 h-6 text-cyan-600" />
-              <h2 className="text-2xl font-bold text-gray-900">منتجات مشابهة</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                منتجات مشابهة
+              </h2>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -648,7 +659,10 @@ const Product = () => {
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 animate-fade-in"
           onClick={() => setLightboxOpen(false)}
         >
-          <div className="max-w-6xl w-full relative" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="max-w-6xl w-full relative"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => setLightboxOpen(false)}
               className="absolute right-4 top-4 z-20 w-12 h-12 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
@@ -685,7 +699,9 @@ const Product = () => {
                       key={i}
                       onClick={() => setActiveIndex(i)}
                       className={`flex-none w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                        i === activeIndex ? 'border-cyan-400 ring-2 ring-cyan-200' : 'border-white/20'
+                        i === activeIndex
+                          ? 'border-cyan-400 ring-2 ring-cyan-200'
+                          : 'border-white/20'
                       }`}
                     >
                       <img
@@ -714,7 +730,7 @@ const Product = () => {
             opacity: 1;
           }
         }
-        
+
         @keyframes fade-in {
           from {
             opacity: 0;
@@ -735,17 +751,17 @@ const Product = () => {
         .custom-scrollbar::-webkit-scrollbar {
           height: 4px;
         }
-        
+
         .custom-scrollbar::-webkit-scrollbar-track {
           background: #f1f5f9;
           border-radius: 4px;
         }
-        
+
         .custom-scrollbar::-webkit-scrollbar-thumb {
           background: #cbd5e1;
           border-radius: 4px;
         }
-        
+
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #94a3b8;
         }

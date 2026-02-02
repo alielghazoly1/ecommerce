@@ -2,10 +2,17 @@ import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MenuItems from './MenuItems';
+import { useContext, useMemo } from 'react';
+import { ShopContext } from '../context/ShopContext';
+import { ShoppingCart } from 'lucide-react';
 
 const Header = () => {
+  const { cartItems, token } = useContext(ShopContext);
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const totalItems = useMemo(() => {
+    return Object.values(cartItems).reduce((a, b) => a + b, 0);
+  }, [cartItems, token]);
 
   // اقفل السايدبار لو كبرت الشاشة
   useEffect(() => {
@@ -44,6 +51,7 @@ const Header = () => {
 
       {/* ================= Mobile Header ================= */}
       <header className="md:hidden fixed top-0 w-full z-50 bg-white/95 backdrop-blur-lg shadow-md px-4 py-3 flex items-center justify-between">
+        {/* Logo */}
         <h1
           onClick={() => navigate('/')}
           className="cursor-pointer text-lg font-bold text-gray-800 hover:text-cyan-600 transition-colors"
@@ -51,13 +59,32 @@ const Header = () => {
           Tota's Magic Choco 🍫
         </h1>
 
-        <button
-          onClick={() => setOpen(true)}
-          aria-label="فتح القائمة"
-          className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all"
-        >
-          <Menu size={24} className="text-gray-700" />
-        </button>
+        {/* Right Actions */}
+        <div className="flex items-center gap-2">
+          {/* 🛒 Cart */}
+          <button
+            onClick={() => navigate('/cart')}
+            aria-label="سلة المشتريات"
+            className="relative p-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition-all"
+          >
+            <ShoppingCart className="w-5 h-5 text-gray-700" />
+
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center">
+                {totalItems}
+              </span>
+            )}
+          </button>
+
+          {/* ☰ Menu */}
+          <button
+            onClick={() => setOpen(true)}
+            aria-label="فتح القائمة"
+            className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all"
+          >
+            <Menu size={22} className="text-gray-700" />
+          </button>
+        </div>
       </header>
 
       {/* ================= Overlay ================= */}
