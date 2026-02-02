@@ -48,7 +48,7 @@ const Header = () => {
           onClick={() => navigate('/')}
           className="cursor-pointer text-lg font-bold text-gray-800 hover:text-cyan-600 transition-colors"
         >
-          Tota's Magic 🍫
+          Tota's Magic Choco 🍫
         </h1>
 
         <button
@@ -77,7 +77,9 @@ const Header = () => {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-cyan-50 to-blue-50">
-          <span className="font-bold text-xl text-gray-800">القائمة الرئيسية</span>
+          <span className="font-bold text-xl text-gray-800">
+            القائمة الرئيسية
+          </span>
           <button
             onClick={() => setOpen(false)}
             aria-label="إغلاق القائمة"

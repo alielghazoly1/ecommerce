@@ -51,7 +51,7 @@ const Footer = () => {
               <Mail className="w-8 h-8 text-purple-600" />
               <div>
                 <h4 className="font-semibold text-lg">البريد الإلكتروني</h4>
-                <p className="text-gray-600">support@gmail.com</p>
+                <p className="text-gray-600">totacheco6@gmail.com</p>
               </div>
             </div>
           </div>
@@ -101,16 +101,16 @@ const Footer = () => {
         <footer className="mt-24 text-center text-gray-500">
           <p className="mb-4">جميع الحقوق محفوظة © E-Commerce 2025</p>
           <div className="flex justify-center gap-6">
-            <a href="#" className="hover:text-gray-800 transition-colors">
+            <a
+              href="https://www.facebook.com/share/g/1FdpZQ27Mx/"
+              className="hover:text-gray-800 transition-colors"
+            >
               فيسبوك
             </a>
-            <a href="#" className="hover:text-gray-800 transition-colors">
-              تويتر
-            </a>
-            <a href="#" className="hover:text-gray-800 transition-colors">
-              لينكدإن
-            </a>
-            <a href="#" className="hover:text-gray-800 transition-colors">
+            <a
+              href="https://www.instagram.com/yasmeen_store15?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+              className="hover:text-gray-800 transition-colors"
+            >
               إنستجرام
             </a>
           </div>

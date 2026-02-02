@@ -2,6 +2,7 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
 import LazyImage from '../components/LazyImage';
+import CardSkeleton from '../components/ui/CardSkeleton';
 import {
   ShoppingCart,
   Share2,
@@ -63,10 +64,92 @@ const Toast = ({ message, type = 'info', onClose }) => {
   );
 };
 
+// 🔥 Product Details Skeleton Component
+const ProductDetailsSkeleton = () => {
+  return (
+    <section className="min-h-screen py-8 md:py-12 px-4 bg-linear-to-br from-gray-50 via-white to-gray-50">
+      <div className="max-w-7xl mx-auto">
+        {/* Breadcrumb Skeleton */}
+        <div className="flex items-center gap-2 mb-6">
+          <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+          <ChevronLeft className="w-4 h-4 text-gray-300" />
+          <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+          <ChevronLeft className="w-4 h-4 text-gray-300" />
+          <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 bg-white rounded-3xl shadow-xl overflow-hidden">
+          {/* LEFT: Gallery Skeleton */}
+          <div className="p-6 lg:p-8">
+            {/* Main Image Skeleton */}
+            <div className="w-full aspect-square bg-gray-200 rounded-2xl animate-pulse mb-4"></div>
+            
+            {/* Thumbnails Skeleton */}
+            <div className="flex gap-2 overflow-x-auto custom-scrollbar">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="w-20 h-20 bg-gray-200 rounded-lg animate-pulse flex-none"></div>
+              ))}
+            </div>
+          </div>
+
+          {/* RIGHT: Details Skeleton */}
+          <div className="p-6 lg:p-8">
+            {/* Title */}
+            <div className="h-8 w-3/4 bg-gray-200 rounded-lg animate-pulse mb-4"></div>
+            
+            {/* Rating */}
+            <div className="flex items-center gap-2 mb-6">
+              <div className="h-5 w-32 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+
+            {/* Price */}
+            <div className="mb-6">
+              <div className="h-10 w-40 bg-gray-200 rounded-lg animate-pulse mb-2"></div>
+              <div className="h-4 w-28 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2 mb-6">
+              <div className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-4 w-5/6 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-4 w-4/5 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+
+            {/* Quantity & Add to Cart */}
+            <div className="flex gap-4 mb-6">
+              <div className="h-14 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
+              <div className="h-14 flex-1 bg-gray-200 rounded-xl animate-pulse"></div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <div className="h-12 w-12 bg-gray-200 rounded-xl animate-pulse"></div>
+              <div className="h-12 w-12 bg-gray-200 rounded-xl animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Related Products Skeleton */}
+        <div className="mt-12">
+          <div className="h-8 w-48 bg-gray-200 rounded-lg animate-pulse mb-6"></div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <CardSkeleton key={i} width={200} height={280} imageHeight={140} radius={12} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const Product = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { addToCart, all_products = [], url } = useContext(ShopContext);
+  const { addToCart, all_products = [], url, authLoading } = useContext(ShopContext);
+
+  // Loading State
+  const [isPageLoading, setIsPageLoading] = useState(true);
 
   // Find product
   const product = useMemo(
@@ -103,6 +186,14 @@ const Product = () => {
       .slice(0, 8);
   }, [all_products, product]);
 
+  // 🔥 Handle Loading - ننتظر تحميل المنتجات والـ auth
+  useEffect(() => {
+    if (!authLoading && all_products.length > 0) {
+      // نعطي وقت بسيط عشان الـ transition يبقى سلس
+      setTimeout(() => setIsPageLoading(false), 300);
+    }
+  }, [authLoading, all_products]);
+
   // Reset state on product change
   useEffect(() => {
     setQty(1);
@@ -112,19 +203,24 @@ const Product = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [productId]);
 
+  // 🔥 عرض Skeleton أثناء التحميل
+  if (isPageLoading || authLoading) {
+    return <ProductDetailsSkeleton />;
+  }
+
   // Product not found
   if (!product) {
     return (
-      <section className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-gray-50 to-gray-100">
+      <section className="min-h-screen flex items-center justify-center px-4 bg-linear-to-br from-gray-50 to-gray-100">
         <div className="text-center">
-          <div className="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
+          <div className="w-32 h-32 mx-auto mb-6 bg-linear-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
             <Package className="w-16 h-16 text-gray-400" />
           </div>
           <h2 className="text-3xl font-bold text-gray-800 mb-3">المنتج غير موجود</h2>
           <p className="text-gray-600 mb-6">عذراً، لم نتمكن من العثور على هذا المنتج</p>
           <button
             onClick={() => navigate('/')}
-            className="px-8 py-3 bg-gradient-to-r from-cyan-600 to-cyan-700 text-white rounded-xl font-semibold hover:from-cyan-700 hover:to-cyan-800 transition-all shadow-lg"
+            className="px-8 py-3 bg-linear-to-r from-cyan-600 to-cyan-700 text-white rounded-xl font-semibold hover:from-cyan-700 hover:to-cyan-800 transition-all shadow-lg"
           >
             العودة للتسوق
           </button>
@@ -191,7 +287,7 @@ const Product = () => {
   const prevImage = () => setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
 
   return (
-    <section className="min-h-screen py-8 md:py-12 px-4 bg-gradient-to-br from-gray-50 via-white to-gray-50">
+    <section className="min-h-screen py-8 md:py-12 px-4 bg-linear-to-br from-gray-50 via-white to-gray-50">
       <Toast
         message={toast.msg}
         type={toast.type}
@@ -220,7 +316,7 @@ const Product = () => {
                 </div>
               )}
               {product.isFeatured && (
-                <div className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-sm font-bold rounded-full shadow-lg">
+                <div className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-sm font-bold rounded-full shadow-lg">
                   <Star className="w-3 h-3 fill-white" />
                   مميز
                 </div>
@@ -228,49 +324,33 @@ const Product = () => {
             </div>
 
             {/* Main Image */}
-            <div className="relative group">
+            <div className="relative w-full aspect-square bg-gray-50 rounded-2xl overflow-hidden mb-4 group">
+              <LazyImage
+                src={images[activeIndex]}
+                alt={product.name}
+                className="w-full h-full object-contain"
+              />
+              
+              {/* Zoom Button */}
               <button
                 onClick={() => setLightboxOpen(true)}
-                className="absolute right-4 top-4 z-20 bg-white/90 hover:bg-white px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 transition-all"
+                className="absolute bottom-4 right-4 w-12 h-12 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                <ZoomIn className="w-4 h-4" />
-                <span className="text-sm font-medium">تكبير</span>
+                <ZoomIn className="w-5 h-5 text-gray-700" />
               </button>
 
-              <button
-                onClick={toggleWishlist}
-                className={`absolute left-4 top-4 z-20 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all ${
-                  isWishlisted 
-                    ? 'bg-red-500 text-white' 
-                    : 'bg-white/90 hover:bg-white text-gray-700'
-                }`}
-              >
-                <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
-              </button>
-
-              <div
-                className="relative w-full h-[400px] md:h-[500px] flex items-center justify-center bg-gray-50 rounded-2xl overflow-hidden cursor-zoom-in"
-                onClick={() => setLightboxOpen(true)}
-              >
-                <LazyImage
-                  src={images[activeIndex]}
-                  alt={product.name}
-                  className="max-h-full max-w-full object-contain transition-transform group-hover:scale-105 duration-300"
-                />
-              </div>
-
-              {/* Navigation Arrows */}
+              {/* Navigation Arrows (if multiple images) */}
               {images.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all"
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
                   <button
                     onClick={nextImage}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
@@ -280,20 +360,20 @@ const Product = () => {
 
             {/* Thumbnails */}
             {images.length > 1 && (
-              <div className="flex gap-3 mt-4 overflow-x-auto pb-2 custom-scrollbar">
+              <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-2">
                 {images.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setActiveIndex(i)}
-                    className={`flex-none w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${
-                      i === activeIndex
-                        ? 'border-cyan-500 ring-2 ring-cyan-200 scale-105'
+                    className={`flex-none w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                      i === activeIndex 
+                        ? 'border-cyan-500 ring-2 ring-cyan-200' 
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <LazyImage
+                    <img
                       src={img}
-                      alt={`${product.name} ${i + 1}`}
+                      alt={`thumb-${i}`}
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -303,160 +383,144 @@ const Product = () => {
           </div>
 
           {/* RIGHT: Details */}
-          <div className="p-6 lg:p-8 flex flex-col">
-            {/* Title & Category */}
-            <div className="mb-6">
-              <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-3 leading-tight">
-                {product.name}
-              </h1>
+          <div className="p-6 lg:p-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 leading-tight">
+              {product.name}
+            </h1>
 
-              <div className="flex items-center flex-wrap gap-3 text-sm">
-                <span className="px-3 py-1 bg-cyan-100 text-cyan-700 rounded-full font-medium">
-                  {product.category || 'عام'}
+            {/* Rating & Reviews */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-5 h-5 ${
+                      i < (product.rating || 4)
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="text-sm text-gray-600">
+                ({product.reviewsCount || 0} تقييم)
+              </span>
+            </div>
+
+            {/* Price */}
+            <div className="mb-6">
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-bold text-cyan-600">
+                  {formatEGP(product.price)}
                 </span>
-                {product.brand && (
-                  <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full font-medium">
-                    {product.brand}
+                {hasDiscount && (
+                  <span className="text-xl text-gray-400 line-through">
+                    {formatEGP(product.originalPrice)}
                   </span>
-                )}
-                {product.sku && (
-                  <span className="text-gray-500">SKU: {product.sku}</span>
                 )}
               </div>
-
-              {/* Rating */}
-              {product.ratings?.average > 0 && (
-                <div className="flex items-center gap-2 mt-3">
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-4 h-4 ${
-                          i < Math.round(product.ratings.average)
-                            ? 'fill-amber-400 text-amber-400'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">
-                    {product.ratings.average.toFixed(1)}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    ({product.ratings.count} تقييم)
-                  </span>
-                </div>
-              )}
+              <p className="text-sm text-gray-500 mt-1">شامل ضريبة القيمة المضافة</p>
             </div>
 
             {/* Description */}
-            <p className="text-gray-700 leading-relaxed mb-6 text-lg">
-              {product.description}
-            </p>
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">الوصف:</h3>
+              <p className="text-gray-600 leading-relaxed">
+                {product.description || 'لا يوجد وصف متاح لهذا المنتج'}
+              </p>
+            </div>
 
-            {/* Price */}
-            <div className="mb-6 p-6 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-2xl">
-              <div className="flex items-end justify-between">
-                <div>
-                  <div className="text-4xl font-extrabold bg-gradient-to-r from-cyan-600 to-cyan-700 bg-clip-text text-transparent">
-                    {formatEGP(product.price)}
-                  </div>
-                  {hasDiscount && (
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-lg text-gray-400 line-through">
-                        {formatEGP(product.originalPrice)}
-                      </span>
-                      <span className="px-2 py-1 bg-red-500 text-white text-xs font-bold rounded">
-                        وفّر {formatEGP(product.originalPrice - product.price)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {product.stock !== undefined && (
-                  <div className={`text-sm font-medium px-4 py-2 rounded-lg ${
-                    product.stock > 10
-                      ? 'bg-green-100 text-green-700'
-                      : product.stock > 0
-                      ? 'bg-amber-100 text-amber-700'
-                      : 'bg-red-100 text-red-700'
-                  }`}>
-                    {product.stock > 10
-                      ? 'متوفر'
-                      : product.stock > 0
-                      ? `باقي ${product.stock} فقط`
-                      : 'نفذت الكمية'}
-                  </div>
-                )}
+            {/* Stock Status */}
+            <div className="mb-6">
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
+                product.stock > 0 
+                  ? 'bg-green-50 text-green-700' 
+                  : 'bg-red-50 text-red-700'
+              }`}>
+                <Package className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {product.stock > 0 
+                    ? `متوفر في المخزن (${product.stock} قطعة)` 
+                    : 'غير متوفر حالياً'}
+                </span>
               </div>
             </div>
 
-            {/* Quantity Selector */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                الكمية
-              </label>
-              <div className="inline-flex items-center bg-gray-100 rounded-xl overflow-hidden">
+            {/* Quantity & Add to Cart */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              {/* Quantity Selector */}
+              <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden h-14">
                 <button
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  className="w-12 h-12 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                  onClick={() => setQty(Math.max(1, qty - 1))}
+                  className="px-4 h-full hover:bg-gray-100 transition-colors"
                   disabled={qty <= 1}
                 >
-                  <Minus className="w-4 h-4" />
+                  <Minus className="w-4 h-4 text-gray-600" />
                 </button>
-                <input
-                  type="number"
-                  min={1}
-                  max={product.stock || 999}
-                  value={qty}
-                  onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-20 h-12 text-center bg-transparent font-bold text-lg outline-none"
-                />
+                <div className="px-6 font-semibold text-lg min-w-[60px] text-center">
+                  {qty}
+                </div>
                 <button
-                  onClick={() => setQty((q) => (product.stock ? Math.min(product.stock, q + 1) : q + 1))}
-                  className="w-12 h-12 flex items-center justify-center hover:bg-gray-200 transition-colors"
-                  disabled={product.stock && qty >= product.stock}
+                  onClick={() => setQty(Math.min(product.stock || 999, qty + 1))}
+                  className="px-4 h-full hover:bg-gray-100 transition-colors"
+                  disabled={qty >= (product.stock || 999)}
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 text-gray-600" />
                 </button>
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 mb-6">
+              {/* Add to Cart Button */}
               <button
                 onClick={handleAddToCart}
-                disabled={isAdding || (product.stock !== undefined && product.stock === 0)}
-                className={`flex-1 h-14 inline-flex items-center justify-center gap-3 rounded-xl text-white font-bold text-lg transition-all shadow-lg ${
-                  isAdding
-                    ? 'bg-gray-400 cursor-wait'
-                    : isAdded
+                disabled={isAdding || product.stock === 0}
+                className={`flex-1 h-14 rounded-xl font-semibold text-white transition-all shadow-lg flex items-center justify-center gap-2 ${
+                  isAdded
                     ? 'bg-green-600 hover:bg-green-700'
+                    : isAdding
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : product.stock === 0
+                    ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800'
                 }`}
               >
                 {isAdding ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>جاري الإضافة...</span>
+                    <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                    جاري الإضافة...
                   </>
                 ) : isAdded ? (
                   <>
-                    <Check className="w-6 h-6" />
-                    <span>تمت الإضافة ✓</span>
+                    <Check className="w-5 h-5" />
+                    تمت الإضافة ✓
                   </>
+                ) : product.stock === 0 ? (
+                  'غير متوفر'
                 ) : (
                   <>
-                    <ShoppingCart className="w-6 h-6" />
-                    <span>أضف إلى السلة</span>
+                    <ShoppingCart className="w-5 h-5" />
+                    أضف للسلة
                   </>
                 )}
               </button>
+            </div>
 
+            {/* Action Buttons */}
+            <div className="flex gap-3 mb-6">
+              <button
+                onClick={toggleWishlist}
+                className={`flex-1 h-12 rounded-xl font-semibold transition-all border-2 flex items-center justify-center gap-2 ${
+                  isWishlisted
+                    ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
+                    : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-red-600' : ''}`} />
+                {isWishlisted ? 'في المفضلة' : 'أضف للمفضلة'}
+              </button>
+              
               <button
                 onClick={handleCopyLink}
-                className="w-14 h-14 rounded-xl border-2 border-gray-300 flex items-center justify-center hover:bg-gray-100 hover:border-cyan-600 transition-all"
-                title="مشاركة المنتج"
+                className="h-12 px-4 rounded-xl border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-all flex items-center justify-center"
               >
                 <Share2 className="w-5 h-5" />
               </button>
@@ -464,8 +528,11 @@ const Product = () => {
 
             {/* Login Banner */}
             {showLoginBanner && (
-              <div className="mb-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl">
-                <div className="flex items-start gap-3">
+              <div className="mb-6 animate-slide-down">
+                <div className="bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-200 rounded-xl p-4 flex items-start gap-3">
+                  <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center flex-none">
+                    <Package className="w-5 h-5 text-cyan-600" />
+                  </div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-800 mb-2">
                       <strong>تم الحفظ محلياً!</strong> سجّل الدخول لمزامنة طلباتك
