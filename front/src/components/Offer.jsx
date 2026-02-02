@@ -36,7 +36,7 @@ const Offer = () => {
   // Countdown timer - 5 days from now
   const target = useMemo(() => Date.now() + 5 * 24 * 3600 * 1000, []);
   const [secs, setSecs] = useState(
-    Math.max(0, Math.round((target - Date.now()) / 1000))
+    Math.max(0, Math.round((target - Date.now()) / 1000)),
   );
 
   useEffect(() => {
@@ -46,24 +46,26 @@ const Offer = () => {
     return () => clearInterval(id);
   }, [target]);
 
-  // Get top 8 products - prioritize products with discounts
+  // Get top 8 products - only featured products with discounts priority
   const products = useMemo(() => {
     if (!all_products || !Array.isArray(all_products)) return null;
-    
+
     return [...all_products]
-      .filter((p) => p.isActive && p.inStock) // فقط المنتجات النشطة والمتوفرة
+      .filter((p) => p.isActive && p.inStock && p.isFeatured) // فقط المنتجات المميزة والنشطة والمتوفرة
       .sort((a, b) => {
         // أولوية للمنتجات اللي عليها خصم
-        const aHasDiscount = a.originalPrice && a.originalPrice > a.price ? 1 : 0;
-        const bHasDiscount = b.originalPrice && b.originalPrice > b.price ? 1 : 0;
-        
+        const aHasDiscount =
+          a.originalPrice && a.originalPrice > a.price ? 1 : 0;
+        const bHasDiscount =
+          b.originalPrice && b.originalPrice > b.price ? 1 : 0;
+
         if (aHasDiscount !== bHasDiscount) return bHasDiscount - aHasDiscount;
-        
+
         // ثم المنتجات الأحدث
         if (a.createdAt && b.createdAt) {
           return new Date(b.createdAt) - new Date(a.createdAt);
         }
-        
+
         return 0;
       })
       .slice(0, 8);
@@ -109,7 +111,7 @@ const Offer = () => {
         setLoadingIds((prev) => prev.filter((x) => x !== id));
       }
     },
-    [addToCart, loadingIds, navigate]
+    [addToCart, loadingIds, navigate],
   );
 
   // Calculate time remaining
@@ -121,7 +123,7 @@ const Offer = () => {
   return (
     <>
       <Toast toast={toast} onClose={() => setToast(null)} />
-      
+
       <section className="relative w-full bg-gradient-to-br from-gray-50 via-white to-gray-50 py-16 px-4 sm:px-6 lg:px-8">
         <div className="absolute inset-0 bg-white/30 backdrop-blur-sm pointer-events-none" />
 
@@ -201,9 +203,12 @@ const Offer = () => {
               {products.map((p) => {
                 const loading = loadingIds.includes(p._id);
                 const added = addedIds.includes(p._id);
-                const hasDiscount = p.originalPrice && p.originalPrice > p.price;
+                const hasDiscount =
+                  p.originalPrice && p.originalPrice > p.price;
                 const discount = hasDiscount
-                  ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)
+                  ? Math.round(
+                      ((p.originalPrice - p.price) / p.originalPrice) * 100,
+                    )
                   : 0;
 
                 return (
@@ -244,7 +249,7 @@ const Offer = () => {
                       <h3 className="text-lg font-bold text-gray-900 truncate mb-2">
                         {p.name}
                       </h3>
-                      
+
                       {p.description && (
                         <p className="text-gray-600 text-sm line-clamp-2 mb-4 min-h-[40px]">
                           {p.description}
@@ -281,8 +286,8 @@ const Offer = () => {
                             loading
                               ? 'جاري الإضافة'
                               : added
-                              ? 'تمت الإضافة'
-                              : `أضف ${p.name} إلى السلة`
+                                ? 'تمت الإضافة'
+                                : `أضف ${p.name} إلى السلة`
                           }
                           className={`
                             inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm
@@ -291,13 +296,13 @@ const Offer = () => {
                               loading
                                 ? 'bg-gray-300 text-gray-600 cursor-wait'
                                 : added
-                                ? 'bg-green-500 hover:bg-green-600 text-white'
-                                : 'bg-linear-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white'
+                                  ? 'bg-green-500 hover:bg-green-600 text-white'
+                                  : 'bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white'
                             }
                           `}
                         >
                           <ShoppingBag className="w-4 h-4" />
-                          {loading ? 'جاري...' : added ? 'تمت الاضافة ✓ ' : 'أضف الي السلة'}
+                          {loading ? 'جاري...' : added ? 'تمت ✓' : 'أضف'}
                         </button>
                       </div>
                     </div>
