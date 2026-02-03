@@ -1,4 +1,4 @@
-// productController.js - PROFESSIONAL UPDATE SYSTEM
+// productController.js - FIXED VERSION WITH IMAGE DELETION
 import productModel from '../models/productModel.js';
 import logger from '../utils/logger.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
@@ -10,6 +10,28 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+// =====================
+// Helper: Delete Image from Cloudinary
+// =====================
+const deleteCloudinaryImage = async (cloudinaryId) => {
+  if (!cloudinaryId) return;
+
+  try {
+    const result = await cloudinary.uploader.destroy(cloudinaryId);
+    logger.info('Image deleted from Cloudinary', {
+      public_id: cloudinaryId,
+      result: result.result,
+    });
+    return result;
+  } catch (err) {
+    logger.warn('Failed to delete image from Cloudinary', {
+      error: err.message,
+      public_id: cloudinaryId,
+    });
+    throw err;
+  }
+};
 
 // =====================
 // Add Product - مع originalPrice
@@ -31,7 +53,7 @@ const addProduct = asyncHandler(async (req, res) => {
     name,
     description,
     price,
-    originalPrice, // ✅ السعر القديم
+    originalPrice,
     category,
     stock,
     brand,
@@ -55,7 +77,7 @@ const addProduct = asyncHandler(async (req, res) => {
     });
   }
 
-  // ✅ معالجة السعر القديم
+  // معالجة السعر القديم
   let parsedOriginalPrice = null;
   if (originalPrice) {
     parsedOriginalPrice = Number(originalPrice);
@@ -90,7 +112,7 @@ const addProduct = asyncHandler(async (req, res) => {
         (error, result) => {
           if (error) reject(error);
           else resolve(result);
-        }
+        },
       );
       uploadStream.end(req.file.buffer);
     });
@@ -106,13 +128,18 @@ const addProduct = asyncHandler(async (req, res) => {
       try {
         parsedTags = JSON.parse(tags);
       } catch (e) {
-        parsedTags = tags.split(',').map((tag) => tag.trim()).filter((tag) => tag);
+        parsedTags = tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter((tag) => tag);
       }
     }
 
     // Generate SKU
     const prefix = category.substring(0, 3).toUpperCase();
-    const random = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+    const random = Math.floor(Math.random() * 100000)
+      .toString()
+      .padStart(5, '0');
     const sku = `${prefix}-${random}`;
 
     // Create product
@@ -120,7 +147,7 @@ const addProduct = asyncHandler(async (req, res) => {
       name: name.trim(),
       description: description.trim(),
       price: parsedPrice,
-      originalPrice: parsedOriginalPrice, // ✅ إضافة السعر القديم
+      originalPrice: parsedOriginalPrice,
       category: category.trim().toLowerCase(),
       image: result.secure_url,
       images: [result.secure_url],
@@ -180,13 +207,16 @@ const addProduct = asyncHandler(async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'حدث خطأ أثناء إضافة المنتج',
-      details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+      details:
+        process.env.NODE_ENV === 'development'
+          ? error.message
+          : 'Internal server error',
     });
   }
 });
 
 // =====================
-// Update Product - نظام احترافي
+// Update Product - مع حذف الصورة القديمة
 // =====================
 const updateProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -210,7 +240,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     name,
     description,
     price,
-    originalPrice, // ✅ السعر القديم
+    originalPrice,
     category,
     stock,
     brand,
@@ -219,17 +249,17 @@ const updateProduct = asyncHandler(async (req, res) => {
     tags,
   } = req.body;
 
-  // ✅ Update name
+  // Update name
   if (name !== undefined && name.trim()) {
     product.name = name.trim();
   }
 
-  // ✅ Update description
+  // Update description
   if (description !== undefined && description.trim()) {
     product.description = description.trim();
   }
 
-  // ✅ Update price with validation
+  // Update price with validation
   if (price !== undefined) {
     const parsedPrice = Number(price);
     if (isNaN(parsedPrice) || parsedPrice < 0) {
@@ -241,10 +271,10 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.price = parsedPrice;
   }
 
-  // ✅ Update originalPrice
+  // Update originalPrice
   if (originalPrice !== undefined) {
     if (originalPrice === null || originalPrice === '') {
-      product.originalPrice = null; // إزالة السعر القديم
+      product.originalPrice = null;
     } else {
       const parsedOriginalPrice = Number(originalPrice);
       if (isNaN(parsedOriginalPrice) || parsedOriginalPrice < 0) {
@@ -253,7 +283,6 @@ const updateProduct = asyncHandler(async (req, res) => {
           message: 'السعر القديم يجب أن يكون رقماً موجباً',
         });
       }
-      // التحقق من أن السعر القديم أكبر من السعر الحالي
       if (parsedOriginalPrice < product.price) {
         return res.status(400).json({
           success: false,
@@ -264,12 +293,12 @@ const updateProduct = asyncHandler(async (req, res) => {
     }
   }
 
-  // ✅ Update category
+  // Update category
   if (category !== undefined && category.trim()) {
     product.category = category.trim().toLowerCase();
   }
 
-  // ✅ Update stock
+  // Update stock
   if (stock !== undefined) {
     const parsedStock = Number(stock);
     if (isNaN(parsedStock) || parsedStock < 0) {
@@ -281,75 +310,88 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.stock = parsedStock;
   }
 
-  // ✅ Update brand
+  // Update brand
   if (brand !== undefined) {
     product.brand = brand.trim() || null;
   }
 
-  // ✅ Update isFeatured
+  // Update isFeatured
   if (isFeatured !== undefined) {
     product.isFeatured = isFeatured === 'true' || isFeatured === true;
   }
 
-  // ✅ Update isActive
+  // Update isActive
   if (isActive !== undefined) {
     product.isActive = isActive === 'true' || isActive === true;
   }
 
-  // ✅ Update tags
+  // Update tags
   if (tags !== undefined) {
     try {
       product.tags = Array.isArray(tags) ? tags : JSON.parse(tags);
     } catch (e) {
-      product.tags = tags.split(',').map((tag) => tag.trim()).filter((tag) => tag);
+      product.tags = tags
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag);
     }
   }
 
-  // ✅ Update image if provided
+  // ✅ Update image if provided - مع حذف الصورة القديمة
   if (req.file) {
-    // Delete old image from Cloudinary
-    if (product.cloudinary_id) {
-      try {
-        await cloudinary.uploader.destroy(product.cloudinary_id);
-        logger.info('Old image deleted from Cloudinary', {
-          public_id: product.cloudinary_id,
-        });
-      } catch (err) {
-        logger.warn('Failed to delete old image from Cloudinary', {
-          error: err.message,
-          public_id: product.cloudinary_id,
-        });
-      }
-    }
+    // احفظ الـ cloudinary_id القديم
+    const oldCloudinaryId = product.cloudinary_id;
 
-    // Upload new image
-    const result = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          folder: 'products',
-          public_id: `${Date.now()}-${Math.random().toString(36).substring(7)}`,
-          resource_type: 'auto',
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
+    try {
+      // Upload new image
+      const result = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: 'products',
+            public_id: `${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            resource_type: 'auto',
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          },
+        );
+        uploadStream.end(req.file.buffer);
+      });
+
+      logger.info('New image uploaded to Cloudinary', {
+        public_id: result.public_id,
+        url: result.secure_url,
+      });
+
+      // Update product with new image
+      product.image = result.secure_url;
+      product.cloudinary_id = result.public_id;
+
+      // Update images array (استبدال الصورة القديمة بالجديدة)
+      product.images = [result.secure_url];
+
+      // احذف الصورة القديمة بعد رفع الجديدة بنجاح
+      if (oldCloudinaryId) {
+        try {
+          await deleteCloudinaryImage(oldCloudinaryId);
+        } catch (err) {
+          // لو فشل الحذف، سجل warning بس استمر
+          logger.warn('Failed to delete old image, but continuing', {
+            error: err.message,
+            public_id: oldCloudinaryId,
+          });
         }
-      );
-      uploadStream.end(req.file.buffer);
-    });
-
-    product.image = result.secure_url;
-    product.cloudinary_id = result.public_id;
-
-    // Update images array
-    if (!product.images.includes(result.secure_url)) {
-      product.images.push(result.secure_url);
+      }
+    } catch (error) {
+      logger.error('Failed to upload new image', {
+        error: error.message,
+      });
+      return res.status(500).json({
+        success: false,
+        message: 'فشل رفع الصورة الجديدة',
+      });
     }
-
-    logger.info('New image uploaded to Cloudinary', {
-      public_id: result.public_id,
-      url: result.secure_url,
-    });
   }
 
   await product.save();
@@ -367,10 +409,16 @@ const updateProduct = asyncHandler(async (req, res) => {
 });
 
 // =====================
-// Remove Product
+// Remove Product - ✅ FIXED
 // =====================
 const removeProduct = asyncHandler(async (req, res) => {
-  const { id } = req.body;
+  // ✅ جرب تجيب الـ id من params الأول، لو مش موجود جربه من body
+  const id = req.params.id || req.body.id;
+
+  logger.info('Remove product request', {
+    productId: id,
+    source: req.params.id ? 'params' : 'body',
+  });
 
   if (!id) {
     return res.status(400).json({
@@ -391,15 +439,16 @@ const removeProduct = asyncHandler(async (req, res) => {
   // Delete image from Cloudinary
   if (product.cloudinary_id) {
     try {
-      await cloudinary.uploader.destroy(product.cloudinary_id);
-      logger.info('Image deleted from Cloudinary', {
-        public_id: product.cloudinary_id,
-      });
+      await deleteCloudinaryImage(product.cloudinary_id);
     } catch (err) {
-      logger.warn('Failed to delete image from Cloudinary', {
-        error: err.message,
-        public_id: product.cloudinary_id,
-      });
+      // لو فشل حذف الصورة، سجل warning بس استمر في حذف المنتج
+      logger.warn(
+        'Failed to delete image, but continuing with product deletion',
+        {
+          error: err.message,
+          public_id: product.cloudinary_id,
+        },
+      );
     }
   }
 
