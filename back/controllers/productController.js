@@ -16,7 +16,7 @@ cloudinary.config({
 // =====================
 const deleteCloudinaryImage = async (cloudinaryId) => {
   if (!cloudinaryId) return;
-
+  
   try {
     const result = await cloudinary.uploader.destroy(cloudinaryId);
     logger.info('Image deleted from Cloudinary', {
@@ -112,7 +112,7 @@ const addProduct = asyncHandler(async (req, res) => {
         (error, result) => {
           if (error) reject(error);
           else resolve(result);
-        },
+        }
       );
       uploadStream.end(req.file.buffer);
     });
@@ -128,18 +128,13 @@ const addProduct = asyncHandler(async (req, res) => {
       try {
         parsedTags = JSON.parse(tags);
       } catch (e) {
-        parsedTags = tags
-          .split(',')
-          .map((tag) => tag.trim())
-          .filter((tag) => tag);
+        parsedTags = tags.split(',').map((tag) => tag.trim()).filter((tag) => tag);
       }
     }
 
     // Generate SKU
     const prefix = category.substring(0, 3).toUpperCase();
-    const random = Math.floor(Math.random() * 100000)
-      .toString()
-      .padStart(5, '0');
+    const random = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
     const sku = `${prefix}-${random}`;
 
     // Create product
@@ -207,10 +202,7 @@ const addProduct = asyncHandler(async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'حدث خطأ أثناء إضافة المنتج',
-      details:
-        process.env.NODE_ENV === 'development'
-          ? error.message
-          : 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
     });
   }
 });
@@ -330,10 +322,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     try {
       product.tags = Array.isArray(tags) ? tags : JSON.parse(tags);
     } catch (e) {
-      product.tags = tags
-        .split(',')
-        .map((tag) => tag.trim())
-        .filter((tag) => tag);
+      product.tags = tags.split(',').map((tag) => tag.trim()).filter((tag) => tag);
     }
   }
 
@@ -354,7 +343,7 @@ const updateProduct = asyncHandler(async (req, res) => {
           (error, result) => {
             if (error) reject(error);
             else resolve(result);
-          },
+          }
         );
         uploadStream.end(req.file.buffer);
       });
@@ -442,13 +431,10 @@ const removeProduct = asyncHandler(async (req, res) => {
       await deleteCloudinaryImage(product.cloudinary_id);
     } catch (err) {
       // لو فشل حذف الصورة، سجل warning بس استمر في حذف المنتج
-      logger.warn(
-        'Failed to delete image, but continuing with product deletion',
-        {
-          error: err.message,
-          public_id: product.cloudinary_id,
-        },
-      );
+      logger.warn('Failed to delete image, but continuing with product deletion', {
+        error: err.message,
+        public_id: product.cloudinary_id,
+      });
     }
   }
 

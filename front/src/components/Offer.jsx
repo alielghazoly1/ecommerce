@@ -302,7 +302,11 @@ const Offer = () => {
                           `}
                         >
                           <ShoppingBag className="w-4 h-4" />
-                          {loading ? 'جاري...' : added ? 'تمت ✓' : 'أضف'}
+                          {loading
+                            ? 'جاري...'
+                            : added
+                              ? 'تمت الاضافة✓'
+                              : 'أضف الي السلة'}
                         </button>
                       </div>
                     </div>

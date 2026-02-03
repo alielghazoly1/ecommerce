@@ -20,6 +20,7 @@ import {
   ZoomIn,
   Tag,
   TrendingUp,
+  Link2,
 } from 'lucide-react';
 
 // Format price
@@ -85,16 +86,6 @@ const ProductDetailsSkeleton = () => {
           <div className="p-6 lg:p-8">
             {/* Main Image Skeleton */}
             <div className="w-full aspect-square bg-gray-200 rounded-2xl animate-pulse mb-4"></div>
-
-            {/* Thumbnails Skeleton */}
-            <div className="flex gap-2 overflow-x-auto custom-scrollbar">
-              {[...Array(4)].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-20 h-20 bg-gray-200 rounded-lg animate-pulse flex-none"
-                ></div>
-              ))}
-            </div>
           </div>
 
           {/* RIGHT: Details Skeleton */}
@@ -122,13 +113,12 @@ const ProductDetailsSkeleton = () => {
 
             {/* Quantity & Add to Cart */}
             <div className="flex gap-4 mb-6">
-              <div className="h-14 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
-              <div className="h-14 flex-1 bg-gray-200 rounded-xl animate-pulse"></div>
+              <div className="h-16 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
+              <div className="h-16 flex-1 bg-gray-200 rounded-xl animate-pulse"></div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex gap-3">
-              <div className="h-12 w-12 bg-gray-200 rounded-xl animate-pulse"></div>
               <div className="h-12 w-12 bg-gray-200 rounded-xl animate-pulse"></div>
             </div>
           </div>
@@ -179,10 +169,9 @@ const Product = () => {
   const [showLoginBanner, setShowLoginBanner] = useState(false);
   const [toast, setToast] = useState({ msg: '', type: 'info' });
 
-  // Gallery state
+  // Gallery state - استخدام الصورة الرئيسية فقط
   const images = useMemo(() => {
     if (!product) return [];
-    // استخدام الصورة الرئيسية فقط
     return [product.image].filter(Boolean);
   }, [product]);
 
@@ -293,11 +282,6 @@ const Product = () => {
       )
     : 0;
 
-  // Navigation arrows for gallery
-  const nextImage = () => setActiveIndex((prev) => (prev + 1) % images.length);
-  const prevImage = () =>
-    setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
-
   return (
     <section className="min-h-screen py-8 md:py-12 px-4 bg-linear-to-br from-gray-50 via-white to-gray-50">
       <Toast
@@ -324,7 +308,7 @@ const Product = () => {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 bg-white rounded-3xl shadow-xl overflow-hidden">
-          {/* LEFT: Gallery */}
+          {/* LEFT: Gallery - الصورة الرئيسية فقط */}
           <div className="p-6 lg:p-8">
             {/* Badges */}
             <div className="flex gap-2 mb-4">
@@ -343,9 +327,9 @@ const Product = () => {
             </div>
 
             {/* Main Image */}
-            <div className="relative w-full aspect-square bg-gray-50 rounded-2xl overflow-hidden mb-4 group">
+            <div className="relative w-full aspect-square bg-gray-50 rounded-2xl overflow-hidden group">
               <LazyImage
-                src={images[activeIndex]}
+                src={product.image}
                 alt={product.name}
                 className="w-full h-full object-contain"
               />
@@ -357,48 +341,7 @@ const Product = () => {
               >
                 <ZoomIn className="w-5 h-5 text-gray-700" />
               </button>
-
-              {/* Navigation Arrows (if multiple images) */}
-              {images.length > 1 && (
-                <>
-                  <button
-                    onClick={prevImage}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={nextImage}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                </>
-              )}
             </div>
-
-            {/* Thumbnails */}
-            {images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-2">
-                {images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveIndex(i)}
-                    className={`flex-none w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                      i === activeIndex
-                        ? 'border-cyan-500 ring-2 ring-cyan-200'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <img
-                      src={img}
-                      alt={`thumb-${i}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* RIGHT: Details */}
@@ -452,36 +395,36 @@ const Product = () => {
               </div>
             </div>
 
-            {/* Quantity & Add to Cart */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            {/* Quantity & Add to Cart & Copy Link */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
               {/* Quantity Selector */}
-              <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden h-14">
+              <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden h-16">
                 <button
                   onClick={() => setQty(Math.max(1, qty - 1))}
-                  className="px-4 h-full hover:bg-gray-100 transition-colors"
+                  className="px-5 h-full hover:bg-gray-100 transition-colors"
                   disabled={qty <= 1}
                 >
-                  <Minus className="w-4 h-4 text-gray-600" />
+                  <Minus className="w-5 h-5 text-gray-600" />
                 </button>
-                <div className="px-6 font-semibold text-lg min-w-[60px] text-center">
+                <div className="px-6 font-bold text-xl min-w-[70px] text-center">
                   {qty}
                 </div>
                 <button
                   onClick={() =>
                     setQty(Math.min(product.stock || 999, qty + 1))
                   }
-                  className="px-4 h-full hover:bg-gray-100 transition-colors"
+                  className="px-5 h-full hover:bg-gray-100 transition-colors"
                   disabled={qty >= (product.stock || 999)}
                 >
-                  <Plus className="w-4 h-4 text-gray-600" />
+                  <Plus className="w-5 h-5 text-gray-600" />
                 </button>
               </div>
 
-              {/* Add to Cart Button */}
+              {/* Add to Cart Button - أكبر */}
               <button
                 onClick={handleAddToCart}
                 disabled={isAdding || product.stock === 0}
-                className={`flex-1 h-14 rounded-xl font-semibold text-white transition-all shadow-lg flex items-center justify-center gap-2 ${
+                className={`flex-1 h-16 rounded-xl font-bold text-lg text-white transition-all shadow-lg flex items-center justify-center gap-3 ${
                   isAdded
                     ? 'bg-green-600 hover:bg-green-700'
                     : isAdding
@@ -493,32 +436,32 @@ const Product = () => {
               >
                 {isAdding ? (
                   <>
-                    <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
                     جاري الإضافة...
                   </>
                 ) : isAdded ? (
                   <>
-                    <Check className="w-5 h-5" />
+                    <Check className="w-6 h-6" />
                     تمت الإضافة ✓
                   </>
                 ) : product.stock === 0 ? (
                   'غير متوفر'
                 ) : (
                   <>
-                    <ShoppingCart className="w-5 h-5" />
+                    <ShoppingCart className="w-6 h-6" />
                     أضف للسلة
                   </>
                 )}
               </button>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 mb-6">
+              {/* Copy Link Button - جنب زرار الإضافة */}
               <button
                 onClick={handleCopyLink}
-                className="h-12 px-4 rounded-xl border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-all flex items-center justify-center"
+                className="h-16 px-5 rounded-xl border-2 border-gray-200 text-gray-700 hover:border-cyan-500 hover:bg-cyan-50 hover:text-cyan-600 transition-all flex items-center justify-center gap-2 font-semibold"
+                title="نسخ رابط المنتج"
               >
-                <Share2 className="w-5 h-5" />
+                <Link2 className="w-5 h-5" />
+                <span className="hidden sm:inline">نسخ</span>
               </button>
             </div>
 
@@ -668,48 +611,11 @@ const Product = () => {
 
             <div className="flex items-center justify-center min-h-[70vh]">
               <img
-                src={images[activeIndex]}
+                src={product.image}
                 alt={product.name}
                 className="max-h-[85vh] max-w-full object-contain"
               />
             </div>
-
-            {images.length > 1 && (
-              <>
-                <button
-                  onClick={prevImage}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-all"
-                >
-                  <ChevronRight className="w-6 h-6" />
-                </button>
-                <button
-                  onClick={nextImage}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-all"
-                >
-                  <ChevronLeft className="w-6 h-6" />
-                </button>
-
-                <div className="mt-6 flex gap-3 overflow-x-auto justify-center pb-4">
-                  {images.map((img, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActiveIndex(i)}
-                      className={`flex-none w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                        i === activeIndex
-                          ? 'border-cyan-400 ring-2 ring-cyan-200'
-                          : 'border-white/20'
-                      }`}
-                    >
-                      <img
-                        src={img}
-                        alt={`thumb-${i}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
           </div>
         </div>
       )}
