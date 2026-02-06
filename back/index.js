@@ -5,6 +5,7 @@ import compression from 'compression';
 import mongoose from 'mongoose';
 import connectDB from './config/db.js';
 import 'dotenv/config';
+import serverless from 'serverless-http';
 
 // Logger
 import logger from './utils/logger.js';
@@ -318,49 +319,55 @@ app.use((err, req, res, next) => {
 });
 
 // =====================
-// Start Server (CRITICAL FIX) ✅
+// VERCEL SERVERLESS EXPORT ✅
 // =====================
-const PORT = process.env.PORT || 8000; // Use 8000 as default
+// For Vercel serverless deployment
+export const handler = serverless(app);
 
-const server = app.listen(PORT, '0.0.0.0', () => {
-  logger.success('🚀 Server started successfully', {
-    port: PORT,
-    environment: process.env.NODE_ENV || 'production',
-    nodeVersion: process.version,
-    pid: process.pid,
+// =====================
+// Local Development Server
+// =====================
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  const PORT = process.env.PORT || 8000;
+
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    logger.success('🚀 Server started successfully', {
+      port: PORT,
+      environment: process.env.NODE_ENV || 'development',
+      nodeVersion: process.version,
+      pid: process.pid,
+    });
+    logger.info(`🔗 Server: http://localhost:${PORT}`);
+    logger.info(`📊 Health: http://localhost:${PORT}/health`);
   });
-  logger.info(`🔗 Server: http://localhost:${PORT}`);
-  logger.info(`📊 Health: http://localhost:${PORT}/health`);
-});
 
-// =====================
-// Graceful Shutdown
-// =====================
-const gracefulShutdown = (signal) => {
-  logger.info(`${signal} received: closing server gracefully`);
+  // Graceful Shutdown
+  const gracefulShutdown = (signal) => {
+    logger.info(`${signal} received: closing server gracefully`);
 
-  if (server) {
-    server.close(() => {
-      logger.info('HTTP server closed');
-    });
-  }
+    if (server) {
+      server.close(() => {
+        logger.info('HTTP server closed');
+      });
+    }
 
-  if (mongoose.connection && mongoose.connection.readyState === 1) {
-    mongoose.connection.close(false, () => {
-      logger.info('MongoDB connection closed');
+    if (mongoose.connection && mongoose.connection.readyState === 1) {
+      mongoose.connection.close(false, () => {
+        logger.info('MongoDB connection closed');
+        process.exit(0);
+      });
+    } else {
       process.exit(0);
-    });
-  } else {
-    process.exit(0);
-  }
+    }
 
-  setTimeout(() => {
-    logger.error('Forced shutdown after timeout');
-    process.exit(1);
-  }, 10000);
-};
+    setTimeout(() => {
+      logger.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10000);
+  };
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+}
 
 export default app;
