@@ -31,7 +31,7 @@ import toast from 'react-hot-toast';
 const Dashboard = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
-  const url = "https://low-hayley-totasheco-426426a6.koyeb.app";
+  const url = "https://tropical-kiah-totacheco-1c5e3dcb.koyeb.app";
   
   const [stats, setStats] = useState({
     totalOrders: 0,

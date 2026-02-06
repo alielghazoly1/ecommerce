@@ -10,7 +10,7 @@ export const setAuthToken = (token) => {
 };
 
 const axiosInstance = axios.create({
-  baseURL: 'https://low-hayley-totasheco-426426a6.koyeb.app/api',
+  baseURL: 'https://tropical-kiah-totacheco-1c5e3dcb.koyeb.app/api',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
