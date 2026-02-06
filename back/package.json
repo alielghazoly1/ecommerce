@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "cloudinary": "^1.41.0",
+    "cloudinary": "1.34.0",
     "compression": "^1.8.1",
     "cors": "2.8.6",
     "debug": "4.4.3",
