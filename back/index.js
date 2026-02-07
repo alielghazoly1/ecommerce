@@ -1,4 +1,4 @@
-// index.js - VERCEL SERVERLESS OPTIMIZED ✅
+// index.js - WORKS ON VERCEL & RAILWAY ✅
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
@@ -7,7 +7,12 @@ import 'dotenv/config';
 
 // Import config and utilities with error handling
 let connectDB, logger;
-let userRouter, orderRouter, productRouter, cartRouter, adminRouter, monitoringRouter;
+let userRouter,
+  orderRouter,
+  productRouter,
+  cartRouter,
+  adminRouter,
+  monitoringRouter;
 let sanitizeInput, preventNoSQLInjection, preventParameterPollution;
 let rateLimiter, requestLogger;
 
@@ -15,7 +20,9 @@ try {
   const dbModule = await import('./config/db.js');
   connectDB = dbModule.default;
 } catch (err) {
-  console.warn('⚠️ Warning: config/db.js not found, using inline DB connection');
+  console.warn(
+    '⚠️ Warning: config/db.js not found, using inline DB connection',
+  );
 }
 
 try {
@@ -81,7 +88,9 @@ try {
   preventNoSQLInjection = securityModule.preventNoSQLInjection;
   preventParameterPollution = securityModule.preventParameterPollution;
 } catch (err) {
-  console.warn('⚠️ Warning: middleware/security.js not found, using passthrough');
+  console.warn(
+    '⚠️ Warning: middleware/security.js not found, using passthrough',
+  );
   sanitizeInput = (req, res, next) => next();
   preventNoSQLInjection = (req, res, next) => next();
   preventParameterPollution = (req, res, next) => next();
@@ -173,7 +182,9 @@ app.use((req, res, next) => {
 // Body Parsing
 // =====================
 app.use(express.json({ limit: '10mb', strict: true }));
-app.use(express.urlencoded({ extended: true, limit: '10mb', parameterLimit: 100 }));
+app.use(
+  express.urlencoded({ extended: true, limit: '10mb', parameterLimit: 100 }),
+);
 
 // =====================
 // Input Sanitization
@@ -209,7 +220,11 @@ const corsOptions = {
     }
 
     // Check if origin is allowed
-    if (allowedOrigins.includes(origin) || origin.includes('vercel.app') || origin.includes('railway.app')) {
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.includes('vercel.app') ||
+      origin.includes('railway.app')
+    ) {
       callback(null, true);
     } else {
       logger.warn('CORS blocked request', { origin });
@@ -343,7 +358,7 @@ const ensureDb = async (req, res, next) => {
     '/api/admin',
     '/api/monitoring',
   ];
-  
+
   const needsDb = dbRoutes.some((route) => req.path.startsWith(route));
 
   if (!needsDb) return next();
@@ -378,7 +393,9 @@ if (userRouter) {
   app.use('/api/users', userRouter);
 } else {
   app.all('/api/users/*', (req, res) => {
-    res.status(503).json({ success: false, message: 'Users routes not available' });
+    res
+      .status(503)
+      .json({ success: false, message: 'Users routes not available' });
   });
 }
 
@@ -386,7 +403,9 @@ if (orderRouter) {
   app.use('/api/order', orderRouter);
 } else {
   app.all('/api/order/*', (req, res) => {
-    res.status(503).json({ success: false, message: 'Order routes not available' });
+    res
+      .status(503)
+      .json({ success: false, message: 'Order routes not available' });
   });
 }
 
@@ -394,7 +413,9 @@ if (productRouter) {
   app.use('/api/product', productRouter);
 } else {
   app.all('/api/product/*', (req, res) => {
-    res.status(503).json({ success: false, message: 'Product routes not available' });
+    res
+      .status(503)
+      .json({ success: false, message: 'Product routes not available' });
   });
 }
 
@@ -402,7 +423,9 @@ if (cartRouter) {
   app.use('/api/cart', cartRouter);
 } else {
   app.all('/api/cart/*', (req, res) => {
-    res.status(503).json({ success: false, message: 'Cart routes not available' });
+    res
+      .status(503)
+      .json({ success: false, message: 'Cart routes not available' });
   });
 }
 
@@ -410,7 +433,9 @@ if (adminRouter) {
   app.use('/api/admin', adminRouter);
 } else {
   app.all('/api/admin/*', (req, res) => {
-    res.status(503).json({ success: false, message: 'Admin routes not available' });
+    res
+      .status(503)
+      .json({ success: false, message: 'Admin routes not available' });
   });
 }
 
@@ -418,7 +443,9 @@ if (monitoringRouter) {
   app.use('/api/monitoring', monitoringRouter);
 } else {
   app.all('/api/monitoring/*', (req, res) => {
-    res.status(503).json({ success: false, message: 'Monitoring routes not available' });
+    res
+      .status(503)
+      .json({ success: false, message: 'Monitoring routes not available' });
   });
 }
 
@@ -452,20 +479,16 @@ app.use((err, req, res, next) => {
 });
 
 // =====================
-// VERCEL SERVERLESS EXPORT ✅
+// START SERVER (WORKS ON BOTH VERCEL & RAILWAY) ✅
 // =====================
-export default app;
+const PORT = process.env.PORT || 8000;
 
-// =====================
-// Local Development Server
-// =====================
-if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 4000;
-
+// Only start listening if NOT on Vercel (Vercel handles this automatically)
+if (!process.env.VERCEL) {
   const server = app.listen(PORT, '0.0.0.0', () => {
     logger.success('🚀 Server started successfully', {
       port: PORT,
-      environment: process.env.NODE_ENV || 'development',
+      environment: process.env.NODE_ENV || 'production',
       nodeVersion: process.version,
       pid: process.pid,
     });
@@ -501,3 +524,8 @@ if (process.env.NODE_ENV !== 'production') {
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 }
+
+// =====================
+// EXPORT FOR VERCEL SERVERLESS ✅
+// =====================
+export default app;
