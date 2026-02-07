@@ -71,7 +71,9 @@ app.use((req, res, next) => {
 // Body Parsing
 // =====================
 app.use(express.json({ limit: '10mb', strict: true }));
-app.use(express.urlencoded({ extended: true, limit: '10mb', parameterLimit: 100 }));
+app.use(
+  express.urlencoded({ extended: true, limit: '10mb', parameterLimit: 100 }),
+);
 
 // =====================
 // Input Sanitization
@@ -107,7 +109,11 @@ const corsOptions = {
     }
 
     // Check if origin is allowed
-    if (allowedOrigins.includes(origin) || origin.includes('vercel.app') || origin.includes('railway.app')) {
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.includes('vercel.app') ||
+      origin.includes('railway.app')
+    ) {
       callback(null, true);
     } else {
       logger.warn('CORS blocked request', { origin });
@@ -241,7 +247,7 @@ const ensureDb = async (req, res, next) => {
     '/api/admin',
     '/api/monitoring',
   ];
-  
+
   const needsDb = dbRoutes.some((route) => req.path.startsWith(route));
 
   if (!needsDb) return next();
@@ -317,7 +323,7 @@ export default app;
 // Local Development Server
 // =====================
 if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 4000;
+  const PORT = process.env.PORT || 8000;
 
   const server = app.listen(PORT, '0.0.0.0', () => {
     logger.success('🚀 Server started successfully', {
