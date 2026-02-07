@@ -1,4 +1,4 @@
-// index.js - PRODUCTION OPTIMIZED VERSION ✅
+// index.js - VERCEL SERVERLESS OPTIMIZED ✅
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
@@ -213,7 +213,7 @@ app.use(
 );
 
 // =====================
-// Database Connection Middleware (OPTIMIZED) ✅
+// Database Connection Middleware (SERVERLESS OPTIMIZED) ✅
 // =====================
 const ensureDb = async (req, res, next) => {
   // Skip DB for health checks
@@ -247,18 +247,8 @@ const ensureDb = async (req, res, next) => {
   if (!needsDb) return next();
 
   try {
-    // Check if already connected
-    if (mongoose.connection.readyState === 1) {
-      return next();
-    }
-
-    // Try to connect with longer timeout
-    const connectPromise = connectDB();
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Database connection timeout')), 10000), // 10 seconds
-    );
-
-    await Promise.race([connectPromise, timeoutPromise]);
+    // For serverless, always try to ensure connection
+    await connectDB();
     next();
   } catch (err) {
     logger.error('Database connection failed', { error: err.message });
@@ -321,12 +311,35 @@ app.use((err, req, res, next) => {
 // =====================
 // VERCEL SERVERLESS EXPORT ✅
 // =====================
-// For Vercel serverless deployment
-export default serverless(app);
+let handler;
 
+// Create handler only once (singleton pattern)
+const getHandler = () => {
+  if (!handler) {
+    handler = serverless(app);
+  }
+  return handler;
+};
+
+// Export for Vercel serverless
+export default async (req, res) => {
+  try {
+    const serverlessHandler = getHandler();
+    return await serverlessHandler(req, res);
+  } catch (error) {
+    console.error('Serverless handler error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message,
+    });
+  }
+};
+
+// =====================
 // Local Development Server
 // =====================
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 8000;
 
   const server = app.listen(PORT, '0.0.0.0', () => {
@@ -368,4 +381,3 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 }
-
