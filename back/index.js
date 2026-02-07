@@ -324,7 +324,6 @@ app.use((err, req, res, next) => {
 // For Vercel serverless deployment
 export default serverless(app);
 
-// =====================
 // Local Development Server
 // =====================
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
@@ -370,4 +369,3 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 }
 
-export default app;
