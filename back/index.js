@@ -5,7 +5,6 @@ import compression from 'compression';
 import mongoose from 'mongoose';
 import connectDB from './config/db.js';
 import 'dotenv/config';
-import serverless from 'serverless-http';
 
 // Logger
 import logger from './utils/logger.js';
@@ -240,6 +239,7 @@ const ensureDb = async (req, res, next) => {
     '/api/product',
     '/api/cart',
     '/api/admin',
+    '/api/monitoring',
   ];
   
   const needsDb = dbRoutes.some((route) => req.path.startsWith(route));
@@ -311,36 +311,13 @@ app.use((err, req, res, next) => {
 // =====================
 // VERCEL SERVERLESS EXPORT ✅
 // =====================
-let handler;
-
-// Create handler only once (singleton pattern)
-const getHandler = () => {
-  if (!handler) {
-    handler = serverless(app);
-  }
-  return handler;
-};
-
-// Export for Vercel serverless
-export default async (req, res) => {
-  try {
-    const serverlessHandler = getHandler();
-    return await serverlessHandler(req, res);
-  } catch (error) {
-    console.error('Serverless handler error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-      error: error.message,
-    });
-  }
-};
+export default app;
 
 // =====================
 // Local Development Server
 // =====================
 if (process.env.NODE_ENV !== 'production') {
-  const PORT = process.env.PORT || 8000;
+  const PORT = process.env.PORT || 4000;
 
   const server = app.listen(PORT, '0.0.0.0', () => {
     logger.success('🚀 Server started successfully', {
