@@ -322,7 +322,7 @@ app.use((err, req, res, next) => {
 // VERCEL SERVERLESS EXPORT ✅
 // =====================
 // For Vercel serverless deployment
-export const handler = serverless(app);
+export default serverless(app);
 
 // =====================
 // Local Development Server
