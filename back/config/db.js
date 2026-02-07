@@ -1,79 +1,75 @@
 import mongoose from 'mongoose';
 
-let cachedConnection = null;
+let isConnected = false;
+let connectionPromise = null;
 
 const connectDB = async () => {
-  // Return cached connection if available
-  if (cachedConnection && mongoose.connection.readyState === 1) {
-    console.log('📦 Using cached database connection');
-    return cachedConnection;
-  }
-
-  // If connection exists but is not ready, wait for it
-  if (mongoose.connection.readyState === 2) {
-    console.log('⏳ Waiting for existing connection...');
-    await new Promise((resolve) => {
-      mongoose.connection.once('connected', resolve);
-    });
+  // If already connected, return immediately
+  if (isConnected && mongoose.connection.readyState === 1) {
+    console.log('✅ Using existing database connection');
     return mongoose.connection;
   }
 
+  // If connection is in progress, wait for it
+  if (connectionPromise) {
+    console.log('⏳ Waiting for ongoing connection...');
+    return connectionPromise;
+  }
+
+  // Validate MongoDB URI
+  if (!process.env.MONGODB_URI) {
+    throw new Error('❌ MONGODB_URI is not defined in environment variables');
+  }
+
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      // Connection pool settings
+    console.log('🔄 Connecting to MongoDB...');
+
+    // Create new connection promise
+    connectionPromise = mongoose.connect(process.env.MONGODB_URI, {
       maxPoolSize: 10,
       minPoolSize: 2,
-      
-      // Timeout settings (increased for stability)
-      serverSelectionTimeoutMS: 10000, // 10 seconds
+      serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
-      connectTimeoutMS: 10000,
-      
-      // Retry settings
+      family: 4,
       retryWrites: true,
       retryReads: true,
-      
-      // Use IPv4
-      family: 4,
-      
-      // App name for monitoring
-      appName: 'ECommerceAPI',
     });
 
-    cachedConnection = conn;
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    console.log(`📚 Database: ${conn.connection.name}`);
+    const conn = await connectionPromise;
     
+    isConnected = conn.connections[0].readyState === 1;
+    
+    if (isConnected) {
+      console.log('✅ MongoDB Connected Successfully');
+      console.log(`📊 Database: ${conn.connections[0].name}`);
+      console.log(`🌍 Host: ${conn.connections[0].host}`);
+    }
+
+    // Handle connection events
+    mongoose.connection.on('disconnected', () => {
+      console.log('⚠️ MongoDB disconnected');
+      isConnected = false;
+      connectionPromise = null;
+    });
+
+    mongoose.connection.on('error', (err) => {
+      console.error('❌ MongoDB connection error:', err.message);
+      isConnected = false;
+      connectionPromise = null;
+    });
+
+    mongoose.connection.on('reconnected', () => {
+      console.log('✅ MongoDB reconnected');
+      isConnected = true;
+    });
+
     return conn;
   } catch (error) {
-    console.error('❌ MongoDB Connection Error:', error.message);
-    
-    // Don't throw in production - let the app handle it gracefully
-    if (process.env.NODE_ENV === 'production') {
-      console.error('⚠️ App will continue without database');
-      return null;
-    }
-    
+    console.error('❌ MongoDB connection failed:', error.message);
+    isConnected = false;
+    connectionPromise = null;
     throw error;
   }
 };
-
-// Connection event handlers
-mongoose.connection.on('connected', () => {
-  console.log('✅ Mongoose connected to MongoDB');
-});
-
-mongoose.connection.on('error', (err) => {
-  console.error('❌ Mongoose connection error:', err.message);
-});
-
-mongoose.connection.on('disconnected', () => {
-  console.log('⚠️ Mongoose disconnected from MongoDB');
-});
-
-// Handle reconnection
-mongoose.connection.on('reconnected', () => {
-  console.log('🔄 Mongoose reconnected to MongoDB');
-});
 
 export default connectDB;
