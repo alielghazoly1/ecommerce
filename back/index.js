@@ -5,124 +5,25 @@ import compression from 'compression';
 import mongoose from 'mongoose';
 import 'dotenv/config';
 
-// Import config and utilities with error handling
+// =====================
+// Import utilities (with fallbacks)
+// =====================
 let connectDB, logger;
-let userRouter,
-  orderRouter,
-  productRouter,
-  cartRouter,
-  adminRouter,
-  monitoringRouter;
-let sanitizeInput, preventNoSQLInjection, preventParameterPollution;
-let rateLimiter, requestLogger;
 
 try {
   const dbModule = await import('./config/db.js');
   connectDB = dbModule.default;
 } catch (err) {
-  console.warn(
-    '⚠️ Warning: config/db.js not found, using inline DB connection',
-  );
-}
-
-try {
-  const loggerModule = await import('./utils/logger.js');
-  logger = loggerModule.default;
-} catch (err) {
-  console.warn('⚠️ Warning: utils/logger.js not found, using console');
-  logger = {
-    info: console.log,
-    warn: console.warn,
-    error: console.error,
-    success: console.log,
-  };
-}
-
-// Try to import routes
-try {
-  const userModule = await import('./routes/userRoutes.js');
-  userRouter = userModule.default;
-} catch (err) {
-  console.warn('⚠️ Warning: routes/userRoutes.js not found');
-}
-
-try {
-  const orderModule = await import('./routes/orderRoutes.js');
-  orderRouter = orderModule.default;
-} catch (err) {
-  console.warn('⚠️ Warning: routes/orderRoutes.js not found');
-}
-
-try {
-  const productModule = await import('./routes/productRoutes.js');
-  productRouter = productModule.default;
-} catch (err) {
-  console.warn('⚠️ Warning: routes/productRoutes.js not found');
-}
-
-try {
-  const cartModule = await import('./routes/cartRoutes.js');
-  cartRouter = cartModule.default;
-} catch (err) {
-  console.warn('⚠️ Warning: routes/cartRoutes.js not found');
-}
-
-try {
-  const adminModule = await import('./routes/adminRoutes.js');
-  adminRouter = adminModule.default;
-} catch (err) {
-  console.warn('⚠️ Warning: routes/adminRoutes.js not found');
-}
-
-try {
-  const monitoringModule = await import('./routes/monitoringRoutes.js');
-  monitoringRouter = monitoringModule.default;
-} catch (err) {
-  console.warn('⚠️ Warning: routes/monitoringRoutes.js not found');
-}
-
-// Try to import middleware
-try {
-  const securityModule = await import('./middleware/security.js');
-  sanitizeInput = securityModule.sanitizeInput;
-  preventNoSQLInjection = securityModule.preventNoSQLInjection;
-  preventParameterPollution = securityModule.preventParameterPollution;
-} catch (err) {
-  console.warn(
-    '⚠️ Warning: middleware/security.js not found, using passthrough',
-  );
-  sanitizeInput = (req, res, next) => next();
-  preventNoSQLInjection = (req, res, next) => next();
-  preventParameterPollution = (req, res, next) => next();
-}
-
-try {
-  const rateLimiterModule = await import('./middleware/rateLimiter.js');
-  rateLimiter = rateLimiterModule.default;
-} catch (err) {
-  console.warn('⚠️ Warning: middleware/rateLimiter.js not found');
-}
-
-try {
-  const requestLoggerModule = await import('./middleware/requestLogger.js');
-  requestLogger = requestLoggerModule.default;
-} catch (err) {
-  console.warn('⚠️ Warning: middleware/requestLogger.js not found');
-}
-
-// Inline DB connection if config/db.js is missing
-if (!connectDB) {
+  console.warn('⚠️ Warning: config/db.js not found, using inline DB connection');
   let isConnected = false;
   connectDB = async () => {
     if (isConnected && mongoose.connection.readyState === 1) {
       console.log('✅ Using existing database connection');
       return;
     }
-
     if (!process.env.MONGODB_URI) {
       throw new Error('❌ MONGODB_URI is not defined');
     }
-
     try {
       console.log('🔄 Connecting to MongoDB...');
       await mongoose.connect(process.env.MONGODB_URI, {
@@ -137,6 +38,20 @@ if (!connectDB) {
       console.error('❌ MongoDB connection failed:', error.message);
       throw error;
     }
+  };
+}
+
+try {
+  const loggerModule = await import('./utils/logger.js');
+  logger = loggerModule.default;
+} catch (err) {
+  console.warn('⚠️ Warning: utils/logger.js not found, using console');
+  logger = {
+    info: console.log,
+    warn: console.warn,
+    error: console.error,
+    success: console.log,
+    debug: console.log,
   };
 }
 
@@ -187,13 +102,6 @@ app.use(
 );
 
 // =====================
-// Input Sanitization
-// =====================
-app.use(sanitizeInput);
-app.use(preventNoSQLInjection);
-app.use(preventParameterPollution);
-
-// =====================
 // Performance
 // =====================
 app.use(compression());
@@ -210,16 +118,11 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
       'https://ecommerce-nine-theta-34.vercel.app',
     ];
 
-logger.info('🌍 Allowed Origins:', allowedOrigins);
+logger.info('🌐 Allowed Origins:', allowedOrigins);
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    // Check if origin is allowed
+    if (!origin) return callback(null, true);
     if (
       allowedOrigins.includes(origin) ||
       origin.includes('vercel.app') ||
@@ -228,8 +131,7 @@ const corsOptions = {
       callback(null, true);
     } else {
       logger.warn('CORS blocked request', { origin });
-      // Allow but log warning in production
-      callback(null, true); // Allow all in production for now
+      callback(null, true);
     }
   },
   credentials: true,
@@ -241,13 +143,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
-// =====================
-// Request Logging (Optional)
-// =====================
-if (process.env.ENABLE_REQUEST_LOGGING !== 'false' && requestLogger) {
-  app.use(requestLogger);
-}
 
 // =====================
 // Health Check Routes (PUBLIC - NO AUTH - NO DB) ✅
@@ -295,44 +190,9 @@ app.get('/api/health', (req, res) => {
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // =====================
-// Static Files (SECURED)
-// =====================
-app.use(
-  '/images',
-  (req, res, next) => {
-    if (req.path === '/' || req.path === '') {
-      return res.status(403).json({
-        success: false,
-        error: 'Directory listing forbidden',
-      });
-    }
-
-    if (req.path.includes('..')) {
-      return res.status(403).json({
-        success: false,
-        error: 'Invalid path',
-      });
-    }
-
-    next();
-  },
-  express.static('uploads/images', {
-    maxAge: '7d',
-    etag: true,
-    lastModified: true,
-    setHeaders: (res, path) => {
-      res.set('X-Content-Type-Options', 'nosniff');
-      res.set('Cache-Control', 'public, max-age=604800');
-    },
-    fallthrough: true,
-  }),
-);
-
-// =====================
 // Database Connection Middleware (SERVERLESS OPTIMIZED) ✅
 // =====================
 const ensureDb = async (req, res, next) => {
-  // Skip DB for health checks
   if (
     req.path === '/' ||
     req.path === '/health' ||
@@ -364,7 +224,6 @@ const ensureDb = async (req, res, next) => {
   if (!needsDb) return next();
 
   try {
-    // For serverless, always try to ensure connection
     await connectDB();
     next();
   } catch (err) {
@@ -380,72 +239,73 @@ const ensureDb = async (req, res, next) => {
 app.use(ensureDb);
 
 // =====================
-// Rate Limiting (Optional)
+// Import Routes (with error handling)
 // =====================
-if (process.env.ENABLE_RATE_LIMITING === 'true' && rateLimiter) {
-  app.use('/api/', rateLimiter);
-}
+let userRouter, orderRouter, productRouter, cartRouter, adminRouter, monitoringRouter;
 
-// =====================
-// API Routes
-// =====================
-if (userRouter) {
+try {
+  const userModule = await import('./routes/userRoutes.js');
+  userRouter = userModule.default;
   app.use('/api/users', userRouter);
-} else {
+} catch (err) {
+  console.warn('⚠️ Warning: userRoutes not loaded');
   app.all('/api/users/*', (req, res) => {
-    res
-      .status(503)
-      .json({ success: false, message: 'Users routes not available' });
+    res.status(503).json({ success: false, message: 'Users routes not available' });
   });
 }
 
-if (orderRouter) {
+try {
+  const orderModule = await import('./routes/orderRoutes.js');
+  orderRouter = orderModule.default;
   app.use('/api/order', orderRouter);
-} else {
+} catch (err) {
+  console.warn('⚠️ Warning: orderRoutes not loaded');
   app.all('/api/order/*', (req, res) => {
-    res
-      .status(503)
-      .json({ success: false, message: 'Order routes not available' });
+    res.status(503).json({ success: false, message: 'Order routes not available' });
   });
 }
 
-if (productRouter) {
+try {
+  const productModule = await import('./routes/productRoutes.js');
+  productRouter = productModule.default;
   app.use('/api/product', productRouter);
-} else {
+} catch (err) {
+  console.warn('⚠️ Warning: productRoutes not loaded');
   app.all('/api/product/*', (req, res) => {
-    res
-      .status(503)
-      .json({ success: false, message: 'Product routes not available' });
+    res.status(503).json({ success: false, message: 'Product routes not available' });
   });
 }
 
-if (cartRouter) {
+try {
+  const cartModule = await import('./routes/cartRoutes.js');
+  cartRouter = cartModule.default;
   app.use('/api/cart', cartRouter);
-} else {
+} catch (err) {
+  console.warn('⚠️ Warning: cartRoutes not loaded');
   app.all('/api/cart/*', (req, res) => {
-    res
-      .status(503)
-      .json({ success: false, message: 'Cart routes not available' });
+    res.status(503).json({ success: false, message: 'Cart routes not available' });
   });
 }
 
-if (adminRouter) {
+try {
+  const adminModule = await import('./routes/adminRoutes.js');
+  adminRouter = adminModule.default;
   app.use('/api/admin', adminRouter);
-} else {
+} catch (err) {
+  console.warn('⚠️ Warning: adminRoutes not loaded');
   app.all('/api/admin/*', (req, res) => {
-    res
-      .status(503)
-      .json({ success: false, message: 'Admin routes not available' });
+    res.status(503).json({ success: false, message: 'Admin routes not available' });
   });
 }
 
-if (monitoringRouter) {
+try {
+  const monitoringModule = await import('./routes/monitoringRoutes.js');
+  monitoringRouter = monitoringModule.default;
   app.use('/api/monitoring', monitoringRouter);
-} else {
+} catch (err) {
+  console.warn('⚠️ Warning: monitoringRoutes not loaded');
   app.all('/api/monitoring/*', (req, res) => {
-    res
-      .status(503)
-      .json({ success: false, message: 'Monitoring routes not available' });
+    res.status(503).json({ success: false, message: 'Monitoring routes not available' });
   });
 }
 
@@ -483,7 +343,6 @@ app.use((err, req, res, next) => {
 // =====================
 const PORT = process.env.PORT || 8000;
 
-// Only start listening if NOT on Vercel (Vercel handles this automatically)
 if (!process.env.VERCEL) {
   const server = app.listen(PORT, '0.0.0.0', () => {
     logger.success('🚀 Server started successfully', {
@@ -492,11 +351,10 @@ if (!process.env.VERCEL) {
       nodeVersion: process.version,
       pid: process.pid,
     });
-    logger.info(`🔗 Server: http://localhost:${PORT}`);
+    logger.info(`📍 Server: http://localhost:${PORT}`);
     logger.info(`📊 Health: http://localhost:${PORT}/health`);
   });
 
-  // Graceful Shutdown
   const gracefulShutdown = (signal) => {
     logger.info(`${signal} received: closing server gracefully`);
 
@@ -525,7 +383,4 @@ if (!process.env.VERCEL) {
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 }
 
-// =====================
-// EXPORT FOR VERCEL SERVERLESS ✅
-// =====================
 export default app;
