@@ -1,59 +1,20 @@
-// index.js - WORKS ON VERCEL & RAILWAY ✅
+// index.js - FINAL WORKING VERSION ✅
+// Using CommonJS syntax for better Vercel compatibility
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
 import mongoose from 'mongoose';
 import 'dotenv/config';
+import logger from './utils/logger.js';
+import connectDB from './config/db.js';
 
-// =====================
-// Import utilities (with fallbacks)
-// =====================
-let connectDB, logger;
-
-try {
-  const dbModule = await import('./config/db.js');
-  connectDB = dbModule.default;
-} catch (err) {
-  console.warn('⚠️ Warning: config/db.js not found, using inline DB connection');
-  let isConnected = false;
-  connectDB = async () => {
-    if (isConnected && mongoose.connection.readyState === 1) {
-      console.log('✅ Using existing database connection');
-      return;
-    }
-    if (!process.env.MONGODB_URI) {
-      throw new Error('❌ MONGODB_URI is not defined');
-    }
-    try {
-      console.log('🔄 Connecting to MongoDB...');
-      await mongoose.connect(process.env.MONGODB_URI, {
-        maxPoolSize: 10,
-        minPoolSize: 2,
-        serverSelectionTimeoutMS: 10000,
-        socketTimeoutMS: 45000,
-      });
-      isConnected = true;
-      console.log('✅ MongoDB Connected');
-    } catch (error) {
-      console.error('❌ MongoDB connection failed:', error.message);
-      throw error;
-    }
-  };
-}
-
-try {
-  const loggerModule = await import('./utils/logger.js');
-  logger = loggerModule.default;
-} catch (err) {
-  console.warn('⚠️ Warning: utils/logger.js not found, using console');
-  logger = {
-    info: console.log,
-    warn: console.warn,
-    error: console.error,
-    success: console.log,
-    debug: console.log,
-  };
-}
+// Import routes
+import userRouter from './routes/userRoutes.js';
+import orderRouter from './routes/orderRoutes.js';
+import productRouter from './routes/productRoutes.js';
+import cartRouter from './routes/cartRoutes.js';
+import adminRouter from './routes/adminRoutes.js';
+import monitoringRouter from './routes/monitoringRoutes.js';
 
 // =====================
 // Create Express App
@@ -118,8 +79,6 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
       'https://ecommerce-nine-theta-34.vercel.app',
     ];
 
-logger.info('🌐 Allowed Origins:', allowedOrigins);
-
 const corsOptions = {
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
@@ -145,7 +104,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // =====================
-// Health Check Routes (PUBLIC - NO AUTH - NO DB) ✅
+// Health Check Routes (PUBLIC - NO AUTH - NO DB)
 // =====================
 app.get('/', (req, res) => {
   res.status(200).json({
@@ -190,7 +149,7 @@ app.get('/api/health', (req, res) => {
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // =====================
-// Database Connection Middleware (SERVERLESS OPTIMIZED) ✅
+// Database Connection Middleware
 // =====================
 const ensureDb = async (req, res, next) => {
   if (
@@ -220,7 +179,6 @@ const ensureDb = async (req, res, next) => {
   ];
 
   const needsDb = dbRoutes.some((route) => req.path.startsWith(route));
-
   if (!needsDb) return next();
 
   try {
@@ -239,75 +197,14 @@ const ensureDb = async (req, res, next) => {
 app.use(ensureDb);
 
 // =====================
-// Import Routes (with error handling)
+// API Routes
 // =====================
-let userRouter, orderRouter, productRouter, cartRouter, adminRouter, monitoringRouter;
-
-try {
-  const userModule = await import('./routes/userRoutes.js');
-  userRouter = userModule.default;
-  app.use('/api/users', userRouter);
-} catch (err) {
-  console.warn('⚠️ Warning: userRoutes not loaded');
-  app.all('/api/users/*', (req, res) => {
-    res.status(503).json({ success: false, message: 'Users routes not available' });
-  });
-}
-
-try {
-  const orderModule = await import('./routes/orderRoutes.js');
-  orderRouter = orderModule.default;
-  app.use('/api/order', orderRouter);
-} catch (err) {
-  console.warn('⚠️ Warning: orderRoutes not loaded');
-  app.all('/api/order/*', (req, res) => {
-    res.status(503).json({ success: false, message: 'Order routes not available' });
-  });
-}
-
-try {
-  const productModule = await import('./routes/productRoutes.js');
-  productRouter = productModule.default;
-  app.use('/api/product', productRouter);
-} catch (err) {
-  console.warn('⚠️ Warning: productRoutes not loaded');
-  app.all('/api/product/*', (req, res) => {
-    res.status(503).json({ success: false, message: 'Product routes not available' });
-  });
-}
-
-try {
-  const cartModule = await import('./routes/cartRoutes.js');
-  cartRouter = cartModule.default;
-  app.use('/api/cart', cartRouter);
-} catch (err) {
-  console.warn('⚠️ Warning: cartRoutes not loaded');
-  app.all('/api/cart/*', (req, res) => {
-    res.status(503).json({ success: false, message: 'Cart routes not available' });
-  });
-}
-
-try {
-  const adminModule = await import('./routes/adminRoutes.js');
-  adminRouter = adminModule.default;
-  app.use('/api/admin', adminRouter);
-} catch (err) {
-  console.warn('⚠️ Warning: adminRoutes not loaded');
-  app.all('/api/admin/*', (req, res) => {
-    res.status(503).json({ success: false, message: 'Admin routes not available' });
-  });
-}
-
-try {
-  const monitoringModule = await import('./routes/monitoringRoutes.js');
-  monitoringRouter = monitoringModule.default;
-  app.use('/api/monitoring', monitoringRouter);
-} catch (err) {
-  console.warn('⚠️ Warning: monitoringRoutes not loaded');
-  app.all('/api/monitoring/*', (req, res) => {
-    res.status(503).json({ success: false, message: 'Monitoring routes not available' });
-  });
-}
+app.use('/api/users', userRouter);
+app.use('/api/order', orderRouter);
+app.use('/api/product', productRouter);
+app.use('/api/cart', cartRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/monitoring', monitoringRouter);
 
 // =====================
 // 404 Handler
@@ -339,7 +236,7 @@ app.use((err, req, res, next) => {
 });
 
 // =====================
-// START SERVER (WORKS ON BOTH VERCEL & RAILWAY) ✅
+// START SERVER
 // =====================
 const PORT = process.env.PORT || 8000;
 
@@ -349,38 +246,27 @@ if (!process.env.VERCEL) {
       port: PORT,
       environment: process.env.NODE_ENV || 'production',
       nodeVersion: process.version,
-      pid: process.pid,
     });
-    logger.info(`📍 Server: http://localhost:${PORT}`);
-    logger.info(`📊 Health: http://localhost:${PORT}/health`);
   });
 
   const gracefulShutdown = (signal) => {
-    logger.info(`${signal} received: closing server gracefully`);
-
-    if (server) {
-      server.close(() => {
-        logger.info('HTTP server closed');
-      });
-    }
-
-    if (mongoose.connection && mongoose.connection.readyState === 1) {
+    logger.info(`${signal} received: closing gracefully`);
+    if (server) server.close(() => logger.info('Server closed'));
+    if (mongoose.connection?.readyState === 1) {
       mongoose.connection.close(false, () => {
-        logger.info('MongoDB connection closed');
+        logger.info('MongoDB closed');
         process.exit(0);
       });
     } else {
       process.exit(0);
     }
-
-    setTimeout(() => {
-      logger.error('Forced shutdown after timeout');
-      process.exit(1);
-    }, 10000);
   };
 
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 }
 
+// =====================
+// EXPORT FOR VERCEL
+// =====================
 export default app;
