@@ -9,7 +9,7 @@ const ShopContextProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [token, setToken] = useState(null);
   const [authLoading, setAuthLoading] = useState(true); // ✅ new
-  const url = 'ecommerce-production-df0d.up.railway.app';
+  const url = 'https://ecommerce-production-df0d.up.railway.app';
 
   // تحميل السلة من LocalStorage
   useEffect(() => {
