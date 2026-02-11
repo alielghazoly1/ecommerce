@@ -1,13 +1,11 @@
-// index.js - FIXED VERSION for Vercel ✅
+// api/index.js - Vercel Serverless Ready ✅
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
 import mongoose from 'mongoose';
 import 'dotenv/config';
 
-// =====================
-// Database Connection (MUST BE IMPORTED FROM config/db.js)
-// =====================
+// Import database connection
 import connectDB from '../config/db.js';
 
 // Import routes
@@ -18,40 +16,30 @@ import cartRouter from '../routes/cartRoutes.js';
 import adminRouter from '../routes/adminRoutes.js';
 import monitoringRouter from '../routes/monitoringRoutes.js';
 
-// =====================
 // Create Express App
-// =====================
 const app = express();
 
-// =====================
-// Logger Utility
-// =====================
+// Logger
 const logger = {
-  info: (...args) => console.log('[INFO]', ...args),
-  error: (...args) => console.error('[ERROR]', ...args),
-  warn: (...args) => console.warn('[WARN]', ...args),
-  success: (...args) => console.log('[SUCCESS]', ...args),
+  info: (...args) => console.log('[INFO]', new Date().toISOString(), ...args),
+  error: (...args) => console.error('[ERROR]', new Date().toISOString(), ...args),
+  warn: (...args) => console.warn('[WARN]', new Date().toISOString(), ...args),
+  success: (...args) => console.log('[SUCCESS]', new Date().toISOString(), ...args),
 };
 
-// =====================
 // Global Error Handlers
-// =====================
 process.on('unhandledRejection', (err) => {
-  logger.error('UNHANDLED REJECTION', err.message);
+  logger.error('UNHANDLED REJECTION:', err.message);
 });
 
 process.on('uncaughtException', (err) => {
-  logger.error('UNCAUGHT EXCEPTION', err.message);
+  logger.error('UNCAUGHT EXCEPTION:', err.message);
 });
 
-// =====================
-// Trust Proxy
-// =====================
+// Trust Proxy (important for Vercel)
 app.set('trust proxy', true);
 
-// =====================
 // Security Headers
-// =====================
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
@@ -60,20 +48,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// =====================
 // Body Parsing
-// =====================
 app.use(express.json({ limit: '10mb', strict: true }));
 app.use(express.urlencoded({ extended: true, limit: '10mb', parameterLimit: 100 }));
 
-// =====================
-// Performance
-// =====================
+// Compression
 app.use(compression());
 
-// =====================
 // CORS Configuration
-// =====================
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim())
   : [
@@ -85,7 +67,10 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 
 const corsOptions = {
   origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
+    
+    // Check if origin is allowed
     if (
       allowedOrigins.includes(origin) ||
       origin.includes('vercel.app') ||
@@ -94,8 +79,8 @@ const corsOptions = {
     ) {
       callback(null, true);
     } else {
-      logger.warn('CORS blocked request', { origin });
-      callback(null, true);
+      logger.warn('CORS blocked request from:', origin);
+      callback(null, true); // Allow for now (change to false in production)
     }
   },
   credentials: true,
@@ -109,16 +94,25 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // =====================
-// Health Check Routes (PUBLIC - NO AUTH - NO DB)
+// PUBLIC ROUTES (No DB/Auth Required)
 // =====================
 app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
     status: 'running',
-    message: 'E-commerce API is running',
+    message: '🛒 E-Commerce API is running',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'production',
+    endpoints: {
+      health: '/health',
+      apiHealth: '/api/health',
+      users: '/api/users',
+      products: '/api/product',
+      cart: '/api/cart',
+      orders: '/api/order',
+      admin: '/api/admin',
+    }
   });
 });
 
@@ -154,25 +148,22 @@ app.get('/api/health', (req, res) => {
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // =====================
-// Database Connection Middleware - FIXED VERSION ✅
+// Database Connection Middleware
 // =====================
 const ensureDb = async (req, res, next) => {
   // Skip DB for health check routes
-  if (
-    req.path === '/' ||
-    req.path === '/health' ||
-    req.path === '/api/health' ||
-    req.path === '/favicon.ico'
-  ) {
+  const skipPaths = ['/', '/health', '/api/health', '/favicon.ico'];
+  if (skipPaths.includes(req.path)) {
     return next();
   }
 
   // Validate MongoDB URI
   if (!process.env.MONGODB_URI) {
-    logger.warn('MONGODB_URI not set');
+    logger.warn('MONGODB_URI not set in environment variables');
     return res.status(503).json({
       success: false,
       message: 'Database configuration error',
+      hint: 'Please set MONGODB_URI in your environment variables'
     });
   }
 
@@ -189,26 +180,26 @@ const ensureDb = async (req, res, next) => {
   const needsDb = dbRoutes.some((route) => req.path.startsWith(route));
   if (!needsDb) return next();
 
-  // ✅ FIX: Actually wait for the connection!
+  // Connect to database
   try {
     await connectDB();
     
-    // Double check connection is ready
+    // Verify connection is ready
     if (mongoose.connection.readyState !== 1) {
       logger.warn('Database not ready, state:', mongoose.connection.readyState);
       return res.status(503).json({
         success: false,
-        message: 'Database not ready',
+        message: 'Database not ready, please try again',
       });
     }
     
     next();
   } catch (err) {
-    logger.error('Database connection failed', err.message);
+    logger.error('Database connection failed:', err.message);
     return res.status(503).json({
       success: false,
       message: 'Service temporarily unavailable',
-      error: 'Database connection failed',
+      error: process.env.NODE_ENV === 'development' ? err.message : 'Database connection failed',
     });
   }
 };
@@ -234,16 +225,27 @@ app.use((req, res) => {
     message: 'Route not found',
     path: req.path,
     method: req.method,
+    availableRoutes: [
+      '/',
+      '/health',
+      '/api/health',
+      '/api/users',
+      '/api/product',
+      '/api/cart',
+      '/api/order',
+      '/api/admin',
+      '/api/monitoring'
+    ]
   });
 });
 
 // =====================
-// Error Handler (MUST BE LAST)
+// Global Error Handler (MUST BE LAST)
 // =====================
 app.use((err, req, res, next) => {
-  logger.error('Global error handler', {
+  logger.error('Global error handler:', {
     error: err.message,
-    stack: err.stack,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
     path: req.path,
   });
 
@@ -255,37 +257,50 @@ app.use((err, req, res, next) => {
 });
 
 // =====================
-// START SERVER (for local/Docker)
+// START SERVER (Local/Docker only)
 // =====================
 const PORT = process.env.PORT || 4000;
 
 if (!process.env.VERCEL) {
-  const server = app.listen(PORT, '0.0.0.0', () => {
-    logger.success('🚀 Server started successfully', {
-      port: PORT,
-      environment: process.env.NODE_ENV || 'production',
-      nodeVersion: process.version,
-    });
-  });
-
-  const gracefulShutdown = (signal) => {
-    logger.info(`${signal} received: closing gracefully`);
-    if (server) server.close(() => logger.info('Server closed'));
-    if (mongoose.connection?.readyState === 1) {
-      mongoose.connection.close(false, () => {
-        logger.info('MongoDB closed');
-        process.exit(0);
+  // Connect to MongoDB first, then start server
+  connectDB()
+    .then(() => {
+      const server = app.listen(PORT, '0.0.0.0', () => {
+        logger.success('🚀 Server started successfully');
+        logger.info('Port:', PORT);
+        logger.info('Environment:', process.env.NODE_ENV || 'production');
+        logger.info('Node Version:', process.version);
+        logger.info('-----------------------------------');
       });
-    } else {
-      process.exit(0);
-    }
-  };
 
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+      const gracefulShutdown = (signal) => {
+        logger.info(`${signal} received: closing gracefully...`);
+        
+        if (server) {
+          server.close(() => logger.info('✅ HTTP server closed'));
+        }
+        
+        if (mongoose.connection?.readyState === 1) {
+          mongoose.connection.close(false, () => {
+            logger.info('✅ MongoDB connection closed');
+            process.exit(0);
+          });
+        } else {
+          process.exit(0);
+        }
+      };
+
+      process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+      process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+    })
+    .catch((err) => {
+      logger.error('Failed to connect to MongoDB. Server not started.');
+      logger.error(err.message);
+      process.exit(1);
+    });
 }
 
 // =====================
-// EXPORT FOR VERCEL
+// EXPORT FOR VERCEL SERVERLESS
 // =====================
 export default app;

@@ -9,7 +9,7 @@ const ShopContextProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [token, setToken] = useState(null);
   const [authLoading, setAuthLoading] = useState(true); // ✅ new
-  const url = 'https://tropical-kiah-totacheco-1c5e3dcb.koyeb.app';
+  const url = 'https://back-3f93c82mw-alielghazoly1s-projects.vercel.app';
 
   // تحميل السلة من LocalStorage
   useEffect(() => {
@@ -36,7 +36,7 @@ const ShopContextProvider = ({ children }) => {
       const res = await axios.post(
         `${url}/api/cart/get`,
         {},
-        { headers: { Authorization: `Bearer ${userToken}` } }
+        { headers: { Authorization: `Bearer ${userToken}` } },
       );
       if (res.data.success && res.data.cartData) {
         setCartItems(res.data.cartData);
@@ -86,7 +86,7 @@ const ShopContextProvider = ({ children }) => {
       const res = await axios.post(
         `${url}/api/cart/add`,
         { id, quantity },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       // لو السيرفر رجع كارت محدث، نستخدمه كحالة موثوقة
@@ -111,7 +111,7 @@ const ShopContextProvider = ({ children }) => {
       const res = await axios.post(
         `${url}/api/cart/${removeAll ? 'remove-all' : 'remove-one'}`,
         { id, removeAll },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (res.data.success) {
@@ -129,7 +129,7 @@ const ShopContextProvider = ({ children }) => {
       await axios.post(
         `${url}/api/cart/clear`,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setCartItems({});
     } catch (err) {
