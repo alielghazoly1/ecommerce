@@ -1,11 +1,13 @@
-// index.js - FINAL WORKING VERSION ✅
-// Using CommonJS syntax for better Vercel compatibility
+// index.js - FIXED VERSION for Vercel ✅
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
 import mongoose from 'mongoose';
 import 'dotenv/config';
-import logger from './utils/logger.js';
+
+// =====================
+// Database Connection (MUST BE IMPORTED FROM config/db.js)
+// =====================
 import connectDB from './config/db.js';
 
 // Import routes
@@ -22,20 +24,24 @@ import monitoringRouter from './routes/monitoringRoutes.js';
 const app = express();
 
 // =====================
+// Logger Utility
+// =====================
+const logger = {
+  info: (...args) => console.log('[INFO]', ...args),
+  error: (...args) => console.error('[ERROR]', ...args),
+  warn: (...args) => console.warn('[WARN]', ...args),
+  success: (...args) => console.log('[SUCCESS]', ...args),
+};
+
+// =====================
 // Global Error Handlers
 // =====================
 process.on('unhandledRejection', (err) => {
-  logger.error('UNHANDLED REJECTION', {
-    error: err.message,
-    stack: err.stack,
-  });
+  logger.error('UNHANDLED REJECTION', err.message);
 });
 
 process.on('uncaughtException', (err) => {
-  logger.error('UNCAUGHT EXCEPTION', {
-    error: err.message,
-    stack: err.stack,
-  });
+  logger.error('UNCAUGHT EXCEPTION', err.message);
 });
 
 // =====================
@@ -58,9 +64,7 @@ app.use((req, res, next) => {
 // Body Parsing
 // =====================
 app.use(express.json({ limit: '10mb', strict: true }));
-app.use(
-  express.urlencoded({ extended: true, limit: '10mb', parameterLimit: 100 }),
-);
+app.use(express.urlencoded({ extended: true, limit: '10mb', parameterLimit: 100 }));
 
 // =====================
 // Performance
@@ -85,7 +89,8 @@ const corsOptions = {
     if (
       allowedOrigins.includes(origin) ||
       origin.includes('vercel.app') ||
-      origin.includes('railway.app')
+      origin.includes('railway.app') ||
+      origin.includes('koyeb.app')
     ) {
       callback(null, true);
     } else {
@@ -149,9 +154,10 @@ app.get('/api/health', (req, res) => {
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // =====================
-// Database Connection Middleware
+// Database Connection Middleware - FIXED VERSION ✅
 // =====================
 const ensureDb = async (req, res, next) => {
+  // Skip DB for health check routes
   if (
     req.path === '/' ||
     req.path === '/health' ||
@@ -161,6 +167,7 @@ const ensureDb = async (req, res, next) => {
     return next();
   }
 
+  // Validate MongoDB URI
   if (!process.env.MONGODB_URI) {
     logger.warn('MONGODB_URI not set');
     return res.status(503).json({
@@ -169,6 +176,7 @@ const ensureDb = async (req, res, next) => {
     });
   }
 
+  // Routes that need database
   const dbRoutes = [
     '/api/users',
     '/api/order',
@@ -181,11 +189,22 @@ const ensureDb = async (req, res, next) => {
   const needsDb = dbRoutes.some((route) => req.path.startsWith(route));
   if (!needsDb) return next();
 
+  // ✅ FIX: Actually wait for the connection!
   try {
     await connectDB();
+    
+    // Double check connection is ready
+    if (mongoose.connection.readyState !== 1) {
+      logger.warn('Database not ready, state:', mongoose.connection.readyState);
+      return res.status(503).json({
+        success: false,
+        message: 'Database not ready',
+      });
+    }
+    
     next();
   } catch (err) {
-    logger.error('Database connection failed', { error: err.message });
+    logger.error('Database connection failed', err.message);
     return res.status(503).json({
       success: false,
       message: 'Service temporarily unavailable',
@@ -236,9 +255,9 @@ app.use((err, req, res, next) => {
 });
 
 // =====================
-// START SERVER
+// START SERVER (for local/Docker)
 // =====================
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 4000;
 
 if (!process.env.VERCEL) {
   const server = app.listen(PORT, '0.0.0.0', () => {

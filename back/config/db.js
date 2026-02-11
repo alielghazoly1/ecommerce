@@ -1,19 +1,20 @@
+// config/db.js - FIXED VERSION for Vercel ✅
 import mongoose from 'mongoose';
 
 let isConnected = false;
 let connectionPromise = null;
 
 const connectDB = async () => {
-  // If already connected, return immediately
+  // ✅ If already connected, return immediately
   if (isConnected && mongoose.connection.readyState === 1) {
     console.log('✅ Using existing database connection');
     return mongoose.connection;
   }
 
-  // If connection is in progress, wait for it
+  // ✅ If connection is in progress, wait for it
   if (connectionPromise) {
     console.log('⏳ Waiting for ongoing connection...');
-    return connectionPromise;
+    return await connectionPromise;
   }
 
   // Validate MongoDB URI
@@ -23,16 +24,18 @@ const connectDB = async () => {
 
   try {
     console.log('🔄 Connecting to MongoDB...');
+    console.log('📍 URI:', process.env.MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//$1:****@'));
 
-    // Create new connection promise
+    // ✅ Create new connection promise
     connectionPromise = mongoose.connect(process.env.MONGODB_URI, {
       maxPoolSize: 10,
       minPoolSize: 2,
-      serverSelectionTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 15000, // Increased from 10s
       socketTimeoutMS: 45000,
       family: 4,
       retryWrites: true,
       retryReads: true,
+      bufferCommands: false, // ✅ Important for Vercel
     });
 
     const conn = await connectionPromise;
@@ -43,6 +46,9 @@ const connectDB = async () => {
       console.log('✅ MongoDB Connected Successfully');
       console.log(`📊 Database: ${conn.connections[0].name}`);
       console.log(`🌍 Host: ${conn.connections[0].host}`);
+      console.log(`🔌 State: ${conn.connections[0].readyState}`);
+    } else {
+      throw new Error('Connection established but not ready');
     }
 
     // Handle connection events
@@ -66,6 +72,7 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error.message);
+    console.error('Stack:', error.stack);
     isConnected = false;
     connectionPromise = null;
     throw error;
