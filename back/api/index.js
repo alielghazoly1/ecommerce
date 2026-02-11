@@ -8,15 +8,15 @@ import 'dotenv/config';
 // =====================
 // Database Connection (MUST BE IMPORTED FROM config/db.js)
 // =====================
-import connectDB from './config/db.js';
+import connectDB from '../config/db.js';
 
 // Import routes
-import userRouter from './routes/userRoutes.js';
-import orderRouter from './routes/orderRoutes.js';
-import productRouter from './routes/productRoutes.js';
-import cartRouter from './routes/cartRoutes.js';
-import adminRouter from './routes/adminRoutes.js';
-import monitoringRouter from './routes/monitoringRoutes.js';
+import userRouter from '../routes/userRoutes.js';
+import orderRouter from '../routes/orderRoutes.js';
+import productRouter from '../routes/productRoutes.js';
+import cartRouter from '../routes/cartRoutes.js';
+import adminRouter from '../routes/adminRoutes.js';
+import monitoringRouter from '../routes/monitoringRoutes.js';
 
 // =====================
 // Create Express App
