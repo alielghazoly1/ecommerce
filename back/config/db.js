@@ -30,12 +30,12 @@ const connectDB = async () => {
     connectionPromise = mongoose.connect(process.env.MONGODB_URI, {
       maxPoolSize: 10,
       minPoolSize: 2,
-      serverSelectionTimeoutMS: 15000, // Increased from 10s
+      serverSelectionTimeoutMS: 15000,
       socketTimeoutMS: 45000,
       family: 4,
       retryWrites: true,
       retryReads: true,
-      bufferCommands: false, // ✅ Important for Vercel
+      bufferCommands: false, // ✅ Important for Vercel!
     });
 
     const conn = await connectionPromise;

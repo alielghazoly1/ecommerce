@@ -208,6 +208,6 @@ productSchema.set('toJSON', { virtuals: true });
 productSchema.set('toObject', { virtuals: true });
 
 const productModel =
-  mongoose.models.product || mongoose.model('product', productSchema);
+  mongoose.models.Product || mongoose.model('Product', productSchema);
 
 export default productModel;
