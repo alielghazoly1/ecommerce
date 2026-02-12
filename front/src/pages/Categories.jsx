@@ -31,6 +31,63 @@ const formatEGP = (v) => {
   }
 };
 
+// Professional Product Card Skeleton with shimmer effect
+const ProductCardSkeleton = ({ index = 0 }) => (
+  <div
+    className="group relative bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl overflow-hidden border border-gray-100 animate-scaleIn"
+    style={{ animationDelay: `${index * 50}ms` }}
+  >
+    {/* Shimmer overlay */}
+    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent z-10" />
+
+    {/* Discount Badge Skeleton */}
+    <div className="absolute top-4 left-4 z-10">
+      <div className="h-10 w-16 bg-gradient-to-r from-red-200 to-pink-200 rounded-full" />
+    </div>
+
+    {/* Image Section Skeleton */}
+    <div className="relative w-full h-72 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100 flex items-center justify-center">
+      <div className="w-40 h-40 bg-gray-300/50 rounded-3xl" />
+    </div>
+
+    {/* Content Skeleton */}
+    <div className="p-6 space-y-4">
+      {/* Title and Description */}
+      <div className="space-y-2">
+        <div className="h-6 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg w-4/5" />
+        <div className="space-y-1 h-10">
+          <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-full" />
+          <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-3/4" />
+        </div>
+      </div>
+
+      {/* Rating Skeleton */}
+      <div className="flex items-center gap-2">
+        <div className="flex gap-1">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="w-4 h-4 bg-gray-200 rounded-full" />
+          ))}
+        </div>
+        <div className="h-4 w-8 bg-gray-200 rounded" />
+      </div>
+
+      {/* Price Skeleton */}
+      <div className="flex items-baseline gap-2">
+        <div className="h-8 bg-gradient-to-r from-blue-200 to-indigo-200 rounded-lg w-28" />
+        <div className="h-4 bg-gray-200 rounded w-20" />
+      </div>
+
+      {/* Button Skeleton */}
+      <div className="h-14 bg-gradient-to-r from-blue-200 to-indigo-200 rounded-2xl w-full" />
+    </div>
+  </div>
+);
+
+// Category Button Skeleton
+const CategoryButtonSkeleton = () => (
+  <div className="h-14 w-32 bg-gradient-to-r from-gray-200 to-gray-300 rounded-2xl animate-pulse" />
+);
+
 const Categories = () => {
   const { addToCart, url, all_products } = useContext(ShopContext);
   const navigate = useNavigate();
@@ -84,6 +141,7 @@ const Categories = () => {
     }
     return list;
   }, [selectedCategory, all_products, debouncedSearch]);
+  
   const TOAST_DURATION = 1800;
 
   const handleAddToCart = useCallback(
@@ -129,6 +187,9 @@ const Categories = () => {
     },
     [addToCart, addingIds, token, navigate],
   );
+
+  // Check if data is still loading
+  const isLoading = !all_products || all_products.length === 0;
 
   return (
     <>
@@ -198,38 +259,59 @@ const Categories = () => {
                   تصفية حسب الفئة
                 </h3>
               </div>
-              <div className="flex flex-wrap justify-center gap-3">
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`group relative px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 transform hover:scale-105 ${
-                      selectedCategory === cat
-                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xl shadow-blue-500/40'
-                        : 'bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-white shadow-lg hover:shadow-xl border border-gray-200'
-                    }`}
-                  >
-                    {selectedCategory === cat && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    )}
-                    <span className="relative flex items-center gap-2">
-                      {cat === 'All' ? (
-                        <>
-                          <TrendingUp className="w-5 h-5" />
-                          الكل
-                        </>
-                      ) : (
-                        cat
+              {isLoading ? (
+                // Category Filters Skeleton
+                <div className="flex flex-wrap justify-center gap-3">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <CategoryButtonSkeleton key={i} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-wrap justify-center gap-3">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`group relative px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 transform hover:scale-105 ${
+                        selectedCategory === cat
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-2xl shadow-blue-500/40'
+                          : 'bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-white shadow-lg hover:shadow-xl border border-gray-200'
+                      }`}
+                    >
+                      {selectedCategory === cat && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       )}
-                    </span>
-                  </button>
-                ))}
-              </div>
+                      <span className="relative flex items-center gap-2">
+                        {cat === 'All' ? (
+                          <>
+                            <TrendingUp className="w-5 h-5" />
+                            الكل
+                          </>
+                        ) : (
+                          cat
+                        )}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Products Grid */}
-          {filteredProducts.length === 0 ? (
+          {isLoading ? (
+            // Loading Skeleton
+            <>
+              <div className="flex items-center justify-between mb-8">
+                <div className="h-6 w-32 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg animate-pulse" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <ProductCardSkeleton key={i} index={i} />
+                ))}
+              </div>
+            </>
+          ) : filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-32 space-y-6">
               <div className="w-32 h-32 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
                 <Search className="w-16 h-16 text-gray-400" />
@@ -407,6 +489,14 @@ const Categories = () => {
           }
           .animate-scaleIn {
             animation: scaleIn 0.5s ease-out forwards;
+          }
+          @keyframes shimmer {
+            0% {
+              transform: translateX(-100%);
+            }
+            100% {
+              transform: translateX(100%);
+            }
           }
         `}</style>
       </div>

@@ -26,6 +26,47 @@ const formatEGP = (v) => {
   }
 };
 
+// Professional Skeleton Component with shimmer effect
+const ProductSkeleton = () => (
+  <div className="group relative bg-white rounded-2xl shadow-lg overflow-hidden">
+    {/* Shimmer overlay */}
+    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/60 to-transparent z-10" />
+    
+    {/* Discount Badge Skeleton */}
+    <div className="absolute top-3 left-3 z-10">
+      <div className="h-7 w-20 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full" />
+    </div>
+
+    {/* Image Skeleton */}
+    <div className="relative w-full h-64 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100 flex items-center justify-center">
+      <div className="w-32 h-32 bg-gray-300/50 rounded-2xl" />
+    </div>
+    
+    {/* Content Skeleton */}
+    <div className="p-5 space-y-4">
+      {/* Title Skeleton */}
+      <div className="space-y-2">
+        <div className="h-5 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg w-4/5" />
+      </div>
+      
+      {/* Description Skeleton */}
+      <div className="space-y-2 min-h-[40px]">
+        <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-full" />
+        <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-5/6" />
+      </div>
+      
+      {/* Price and Button Skeleton */}
+      <div className="flex justify-between items-center pt-2">
+        <div className="space-y-1">
+          <div className="h-6 bg-gradient-to-r from-cyan-200 to-cyan-300 rounded-lg w-24" />
+          <div className="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-20" />
+        </div>
+        <div className="h-10 bg-gradient-to-r from-cyan-200 to-cyan-300 rounded-xl w-32" />
+      </div>
+    </div>
+  </div>
+);
+
 const Offer = () => {
   const [toast, setToast] = useState(null);
   const TOAST_DURATION = 1800;
@@ -51,7 +92,7 @@ const Offer = () => {
     if (!all_products || !Array.isArray(all_products)) return null;
 
     return [...all_products]
-      .filter((p) => p.isActive && p.inStock && p.isFeatured) // فقط المنتجات المميزة والنشطة والمتوفرة
+      .filter((p) => p.isActive && p.inStock && p.isFeatured)
       .sort((a, b) => {
         // أولوية للمنتجات اللي عليها خصم
         const aHasDiscount =
@@ -120,6 +161,10 @@ const Offer = () => {
   const minutes = Math.floor((secs % 3600) / 60);
   const seconds = secs % 60;
 
+  // Check if data is still loading
+  // يعرض skeleton لو all_products لسه null أو array فاضي
+  const isLoading = !all_products || all_products.length === 0;
+
   return (
     <>
       <Toast toast={toast} onClose={() => setToast(null)} />
@@ -167,35 +212,21 @@ const Offer = () => {
           </header>
 
           {/* Products Grid */}
-          {products === null ? (
-            // Loading Skeleton
+          {isLoading ? (
+            // Professional Loading Skeleton
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="animate-pulse bg-white rounded-2xl shadow-lg overflow-hidden"
-                  aria-hidden="true"
-                >
-                  <div className="w-full h-64 bg-gray-200" />
-                  <div className="p-5 space-y-3">
-                    <div className="h-5 bg-gray-200 rounded w-3/4" />
-                    <div className="h-4 bg-gray-200 rounded w-full" />
-                    <div className="h-4 bg-gray-200 rounded w-5/6" />
-                    <div className="flex justify-between items-center pt-2">
-                      <div className="h-6 bg-gray-200 rounded w-20" />
-                      <div className="h-10 bg-gray-200 rounded w-24" />
-                    </div>
-                  </div>
-                </div>
+                <ProductSkeleton key={i} />
               ))}
             </div>
-          ) : products.length === 0 ? (
+          ) : products && products.length === 0 ? (
             // No Products
             <div className="text-center py-20">
-              <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center shadow-inner">
                 <ShoppingBag className="w-12 h-12 text-gray-400" />
               </div>
-              <p className="text-gray-500 text-lg">لا توجد عروض حالياً</p>
+              <p className="text-gray-500 text-lg font-medium">لا توجد عروض حالياً</p>
+              <p className="text-gray-400 text-sm mt-2">تحقق مرة أخرى قريباً</p>
             </div>
           ) : (
             // Products Grid
@@ -305,7 +336,7 @@ const Offer = () => {
                           {loading
                             ? 'جاري...'
                             : added
-                              ? 'تمت الاضافة✓'
+                              ? 'تمت الاضافة✔'
                               : 'أضف الي السلة'}
                         </button>
                       </div>
@@ -317,6 +348,18 @@ const Offer = () => {
           )}
         </div>
       </section>
+
+      {/* Add shimmer animation to global styles */}
+      <style jsx>{`
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+      `}</style>
     </>
   );
 };
