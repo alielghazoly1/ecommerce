@@ -31,7 +31,7 @@ import toast from 'react-hot-toast';
 const Dashboard = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
-  const url = "https://tropical-kiah-totacheco-1c5e3dcb.koyeb.app";
+  const url = "https://back-3f93c82mw-alielghazoly1s-projects.vercel.app";
   
   const [stats, setStats] = useState({
     totalOrders: 0,

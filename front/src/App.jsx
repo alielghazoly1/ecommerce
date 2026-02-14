@@ -12,7 +12,7 @@ import SignUp from './pages/SignUp';
 import Home from './pages/Home';
 import Cart from './pages/Cart';
 import MyOrders from './pages/MyOrders';
-import Product from './pages/Product';
+import Product from './pages/Product/Product';
 import Order from './pages/order/Order';
 import Categories from './pages/Categories';
 import Profile from './pages/Profile';

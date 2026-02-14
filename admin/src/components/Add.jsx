@@ -21,6 +21,7 @@ const CATEGORIES = [
   { value: 'يامش', label: 'يامش', icon: '🍬' },
   { value: 'بسكويت', label: 'بسكويت', icon: '🍪' },
   { value: 'حلويات', label: 'حلويات', icon: '🍰' },
+  { value: 'جملة',  label: "جملة" , icon : ""}
 ];
 
 const Add = () => {

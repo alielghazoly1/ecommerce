@@ -10,6 +10,7 @@ const ShopContextProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [authLoading, setAuthLoading] = useState(true); // ✅ new
   const url = 'https://back-3f93c82mw-alielghazoly1s-projects.vercel.app';
+  // const url = 'http://localhost:4000';
 
   // تحميل السلة من LocalStorage
   useEffect(() => {

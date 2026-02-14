@@ -4,10 +4,20 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from '../config/axiosConfig';
 import toast from 'react-hot-toast';
-import { 
-  Upload, Package, DollarSign, Tag, Image as ImageIcon, 
-  X, AlertCircle, CheckCircle, Box, Layers, TrendingUp,
-  ArrowLeft, Loader2
+import {
+  Upload,
+  Package,
+  DollarSign,
+  Tag,
+  Image as ImageIcon,
+  X,
+  AlertCircle,
+  CheckCircle,
+  Box,
+  Layers,
+  TrendingUp,
+  ArrowLeft,
+  Loader2,
 } from 'lucide-react';
 
 const CATEGORIES = [
@@ -16,16 +26,23 @@ const CATEGORIES = [
   { value: 'يامش', label: 'يامش', icon: '🍬' },
   { value: 'بسكويت', label: 'بسكويت', icon: '🍪' },
   { value: 'حلويات', label: 'حلويات', icon: '🍰' },
+  { value: 'جملة', label: 'جملة', icon: '' },
 ];
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+];
 
 const Edit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { token } = useAuth();
-  
+
   const [preview, setPreview] = useState(null);
   const [newImage, setNewImage] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -132,7 +149,7 @@ const Edit = () => {
   const onChangeHandler = (e) => {
     const { name, value, type, checked } = e.target;
     const fieldValue = type === 'checkbox' ? checked : value;
-    
+
     setData((prev) => ({ ...prev, [name]: fieldValue }));
 
     setValidationErrors((prev) => {
@@ -151,7 +168,7 @@ const Edit = () => {
 
   const onImageChange = (e) => {
     const file = e.target.files?.[0];
-    
+
     if (!file) return;
 
     if (file.size > MAX_FILE_SIZE) {
@@ -218,31 +235,34 @@ const Edit = () => {
 
     try {
       const formData = new FormData();
-      
+
       // Required fields
       formData.append('name', data.name.trim());
       formData.append('description', data.description.trim());
       formData.append('category', data.category);
       formData.append('price', Number(data.price).toFixed(2));
-      
+
       // Optional image (only if changed)
       if (newImage) {
         formData.append('image', newImage);
       }
-      
+
       // Optional fields
       if (data.stock) {
         formData.append('stock', Number(data.stock));
       }
-      
+
       if (data.brand && data.brand.trim()) {
         formData.append('brand', data.brand.trim());
       }
-      
+
       formData.append('isFeatured', data.isFeatured);
-      
+
       if (data.tags && data.tags.trim()) {
-        const tagsArray = data.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+        const tagsArray = data.tags
+          .split(',')
+          .map((tag) => tag.trim())
+          .filter((tag) => tag);
         formData.append('tags', JSON.stringify(tagsArray));
       }
 
@@ -260,7 +280,8 @@ const Edit = () => {
       }
     } catch (error) {
       console.error('Error updating product:', error);
-      const errorMsg = error.response?.data?.message || 'حدث خطأ أثناء تحديث المنتج';
+      const errorMsg =
+        error.response?.data?.message || 'حدث خطأ أثناء تحديث المنتج';
       toast.error(errorMsg);
     } finally {
       setUpdating(false);
@@ -290,7 +311,7 @@ const Edit = () => {
             <ArrowLeft className="w-5 h-5" />
             <span>العودة للقائمة</span>
           </button>
-          
+
           <div className="flex items-center gap-4">
             <div className="p-3 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-2xl">
               <Package className="w-10 h-10 text-purple-400" />
@@ -299,9 +320,7 @@ const Edit = () => {
               <h1 className="text-3xl md:text-4xl font-bold text-white">
                 تعديل المنتج
               </h1>
-              <p className="text-gray-400 mt-1">
-                قم بتحديث معلومات المنتج
-              </p>
+              <p className="text-gray-400 mt-1">قم بتحديث معلومات المنتج</p>
             </div>
           </div>
         </div>
@@ -312,7 +331,6 @@ const Edit = () => {
             {/* Form Content */}
             <div className="px-6 md:px-8 lg:px-10 pt-8 pb-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
                 {/* Product Name */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-200 mb-3">
@@ -327,7 +345,9 @@ const Edit = () => {
                       value={data.name}
                       onChange={onChangeHandler}
                       className={`w-full px-4 py-4 pr-12 bg-white/10 border ${
-                        validationErrors.name ? 'border-red-500' : 'border-white/20'
+                        validationErrors.name
+                          ? 'border-red-500'
+                          : 'border-white/20'
                       } rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all`}
                     />
                     {validationErrors.name && (
@@ -351,7 +371,9 @@ const Edit = () => {
                     value={data.description}
                     onChange={onChangeHandler}
                     className={`w-full px-4 py-4 bg-white/10 border ${
-                      validationErrors.description ? 'border-red-500' : 'border-white/20'
+                      validationErrors.description
+                        ? 'border-red-500'
+                        : 'border-white/20'
                     } rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none`}
                   />
                   {validationErrors.description && (
@@ -378,7 +400,9 @@ const Edit = () => {
                       step="0.01"
                       min="0"
                       className={`w-full px-4 py-4 pr-12 bg-white/10 border ${
-                        validationErrors.price ? 'border-red-500' : 'border-white/20'
+                        validationErrors.price
+                          ? 'border-red-500'
+                          : 'border-white/20'
                       } rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all`}
                     />
                     {validationErrors.price && (
@@ -404,7 +428,11 @@ const Edit = () => {
                       className="w-full px-4 py-4 pr-12 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all appearance-none cursor-pointer"
                     >
                       {CATEGORIES.map((cat) => (
-                        <option key={cat.value} value={cat.value} className="bg-slate-800">
+                        <option
+                          key={cat.value}
+                          value={cat.value}
+                          className="bg-slate-800"
+                        >
                           {cat.icon} {cat.label}
                         </option>
                       ))}
@@ -427,7 +455,9 @@ const Edit = () => {
                       onChange={onChangeHandler}
                       min="0"
                       className={`w-full px-4 py-4 pr-12 bg-white/10 border ${
-                        validationErrors.stock ? 'border-red-500' : 'border-white/20'
+                        validationErrors.stock
+                          ? 'border-red-500'
+                          : 'border-white/20'
                       } rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all`}
                     />
                     {validationErrors.stock && (
@@ -470,7 +500,9 @@ const Edit = () => {
                     onChange={onChangeHandler}
                     className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                   />
-                  <p className="text-xs text-gray-500 mt-2">استخدم الفاصلة (,) للفصل بين الكلمات</p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    استخدم الفاصلة (,) للفصل بين الكلمات
+                  </p>
                 </div>
 
                 {/* Featured */}
@@ -492,16 +524,22 @@ const Edit = () => {
                 {/* Image Upload */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold text-gray-200 mb-3">
-                    صورة المنتج {newImage && <span className="text-purple-400">(جديدة)</span>}
+                    صورة المنتج{' '}
+                    {newImage && (
+                      <span className="text-purple-400">(جديدة)</span>
+                    )}
                   </label>
-                  
+
                   <div className="relative rounded-2xl overflow-hidden border-2 border-white/20 bg-white/5 p-4">
                     <img
-                      src={preview || 'https://via.placeholder.com/400x300?text=No+Image'}
+                      src={
+                        preview ||
+                        'https://via.placeholder.com/400x300?text=No+Image'
+                      }
                       alt="معاينة المنتج"
                       className="w-full h-80 object-cover rounded-xl"
                     />
-                    
+
                     <div className="absolute top-6 left-6 flex gap-2">
                       <input
                         type="file"
@@ -517,7 +555,7 @@ const Edit = () => {
                         <Upload className="w-4 h-4" />
                         <span>تغيير الصورة</span>
                       </label>
-                      
+
                       {newImage && (
                         <button
                           type="button"
@@ -529,7 +567,7 @@ const Edit = () => {
                         </button>
                       )}
                     </div>
-                    
+
                     {newImage && (
                       <div className="mt-3 flex items-center gap-2 text-sm text-gray-400">
                         <ImageIcon className="w-4 h-4" />
@@ -539,9 +577,11 @@ const Edit = () => {
                         </span>
                       </div>
                     )}
-                    
+
                     <p className="text-xs text-gray-500 mt-2">
-                      {newImage ? 'سيتم استبدال الصورة الحالية' : 'اضغط "تغيير الصورة" لتحديث الصورة'}
+                      {newImage
+                        ? 'سيتم استبدال الصورة الحالية'
+                        : 'اضغط "تغيير الصورة" لتحديث الصورة'}
                     </p>
                   </div>
                 </div>

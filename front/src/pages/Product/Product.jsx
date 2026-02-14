@@ -1,19 +1,18 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ShopContext } from '../context/ShopContext';
-import LazyImage from '../components/LazyImage';
-import CardSkeleton from '../components/ui/CardSkeleton';
+import { ShopContext } from '../../context/ShopContext';
+import LazyImage from '../../components/LazyImage';
+import { formatEGP } from '../../components/utils';
+import ToastSmall from '../../components/ui/TostSmall';
+import ProductDetailsSkeleton from './ProductDetailsSkeleton';
 import {
   ShoppingCart,
-  Share2,
   X,
-  Heart,
   Star,
   Package,
   Truck,
   ShieldCheck,
   ChevronLeft,
-  ChevronRight,
   Check,
   Minus,
   Plus,
@@ -22,135 +21,12 @@ import {
   TrendingUp,
   Link2,
 } from 'lucide-react';
-
-// Format price
-const formatEGP = (v) => {
-  try {
-    return new Intl.NumberFormat('ar-EG', {
-      style: 'currency',
-      currency: 'EGP',
-      maximumFractionDigits: 2,
-    }).format(v);
-  } catch {
-    return `ج.م ${Number(v).toFixed(2)}`;
-  }
-};
-
-// Toast Component
-const Toast = ({ message, type = 'info', onClose }) => {
-  if (!message) return null;
-
-  const configs = {
-    success: { bg: 'bg-green-500', icon: Check },
-    error: { bg: 'bg-red-500', icon: X },
-    info: { bg: 'bg-cyan-500', icon: Check },
-  };
-
-  const config = configs[type] || configs.info;
-  const Icon = config.icon;
-
-  return (
-    <div
-      className={`fixed left-1/2 -translate-x-1/2 top-8 z-50 ${config.bg} text-white px-6 py-3 rounded-xl shadow-2xl animate-slide-down`}
-    >
-      <div className="flex items-center gap-3">
-        <Icon className="w-5 h-5" />
-        <div className="text-sm font-medium">{message}</div>
-        <button
-          onClick={onClose}
-          className="opacity-80 hover:opacity-100 transition-opacity"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// 🔥 Product Details Skeleton Component
-const ProductDetailsSkeleton = () => {
-  return (
-    <section className="min-h-screen py-8 md:py-12 px-4 bg-linear-to-br from-gray-50 via-white to-gray-50">
-      <div className="max-w-7xl mx-auto">
-        {/* Breadcrumb Skeleton */}
-        <div className="flex items-center gap-2 mb-6">
-          <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
-          <ChevronLeft className="w-4 h-4 text-gray-300" />
-          <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
-          <ChevronLeft className="w-4 h-4 text-gray-300" />
-          <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 bg-white rounded-3xl shadow-xl overflow-hidden">
-          {/* LEFT: Gallery Skeleton */}
-          <div className="p-6 lg:p-8">
-            {/* Main Image Skeleton */}
-            <div className="w-full aspect-square bg-gray-200 rounded-2xl animate-pulse mb-4"></div>
-          </div>
-
-          {/* RIGHT: Details Skeleton */}
-          <div className="p-6 lg:p-8">
-            {/* Title */}
-            <div className="h-8 w-3/4 bg-gray-200 rounded-lg animate-pulse mb-4"></div>
-
-            {/* Rating */}
-            <div className="flex items-center gap-2 mb-6">
-              <div className="h-5 w-32 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-
-            {/* Price */}
-            <div className="mb-6">
-              <div className="h-10 w-40 bg-gray-200 rounded-lg animate-pulse mb-2"></div>
-              <div className="h-4 w-28 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2 mb-6">
-              <div className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
-              <div className="h-4 w-5/6 bg-gray-200 rounded animate-pulse"></div>
-              <div className="h-4 w-4/5 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-
-            {/* Quantity & Add to Cart */}
-            <div className="flex gap-4 mb-6">
-              <div className="h-16 w-32 bg-gray-200 rounded-xl animate-pulse"></div>
-              <div className="h-16 flex-1 bg-gray-200 rounded-xl animate-pulse"></div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <div className="h-12 w-12 bg-gray-200 rounded-xl animate-pulse"></div>
-            </div>
-          </div>
-        </div>
-
-        {/* Related Products Skeleton */}
-        <div className="mt-12">
-          <div className="h-8 w-48 bg-gray-200 rounded-lg animate-pulse mb-6"></div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <CardSkeleton
-                key={i}
-                width={200}
-                height={280}
-                imageHeight={140}
-                radius={12}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
 const Product = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
   const {
     addToCart,
     all_products = [],
-    url,
     authLoading,
   } = useContext(ShopContext);
   // Loading State
@@ -169,13 +45,7 @@ const Product = () => {
   const [showLoginBanner, setShowLoginBanner] = useState(false);
   const [toast, setToast] = useState({ msg: '', type: 'info' });
 
-  // Gallery state - استخدام الصورة الرئيسية فقط
-  const images = useMemo(() => {
-    if (!product) return [];
-    return [product.image].filter(Boolean);
-  }, [product]);
 
-  const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   // Related products
@@ -197,7 +67,6 @@ const Product = () => {
   // Reset state on product change
   useEffect(() => {
     setQty(1);
-    setActiveIndex(0);
     setIsAdding(false);
     setIsAdded(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -284,7 +153,7 @@ const Product = () => {
 
   return (
     <section className="min-h-screen py-8 md:py-12 px-4 bg-linear-to-br from-gray-50 via-white to-gray-50">
-      <Toast
+      <ToastSmall
         message={toast.msg}
         type={toast.type}
         onClose={() => setToast({ msg: '', type: 'info' })}
@@ -506,7 +375,9 @@ const Product = () => {
                   <div className="font-semibold text-gray-900 text-xs lg:text-sm">
                     توصيل سريع
                   </div>
-                  <div className="text-[10px] lg:text-xs text-gray-500">2-3 أيام</div>
+                  <div className="text-[10px] lg:text-xs text-gray-500">
+                    2-3 أيام
+                  </div>
                 </div>
               </div>
 
@@ -518,7 +389,9 @@ const Product = () => {
                   <div className="font-semibold text-gray-900 text-xs lg:text-sm">
                     دفع آمن
                   </div>
-                  <div className="text-[10px] lg:text-xs text-gray-500">100% محمي</div>
+                  <div className="text-[10px] lg:text-xs text-gray-500">
+                    100% محمي
+                  </div>
                 </div>
               </div>
 
@@ -530,7 +403,9 @@ const Product = () => {
                   <div className="font-semibold text-gray-900 text-xs lg:text-sm">
                     ضمان الجودة
                   </div>
-                  <div className="text-[10px] lg:text-xs text-gray-500">منتج أصلي</div>
+                  <div className="text-[10px] lg:text-xs text-gray-500">
+                    منتج أصلي
+                  </div>
                 </div>
               </div>
             </div>

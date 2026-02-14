@@ -29,7 +29,7 @@ import toast from 'react-hot-toast';
 
 const Monitoring = () => {
   const { token } = useAuth();
-  const url = 'https://tropical-kiah-totacheco-1c5e3dcb.koyeb.app';
+  const url = 'https://back-3f93c82mw-alielghazoly1s-projects.vercel.app';
 
   const [data, setData] = useState(null);
   const [logs, setLogs] = useState([]);

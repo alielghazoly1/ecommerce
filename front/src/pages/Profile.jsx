@@ -20,7 +20,7 @@ import {
   Award,
 } from 'lucide-react';
 import Toast from '../components/ui/Toast';
-import { formatEGP } from '../pages/order/utils';
+import { formatEGP } from "../components/utils";
 import LazyImage from '../components/LazyImage';
 
 const ProfilePage = () => {

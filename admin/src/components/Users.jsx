@@ -60,7 +60,7 @@ const formatDate = (date) => {
 // ============================================
 const Users = () => {
   const { token, isAuthenticated, user: currentUser } = useAuth();
-  const url = 'https://tropical-kiah-totacheco-1c5e3dcb.koyeb.app';
+  const url = 'https://back-3f93c82mw-alielghazoly1s-projects.vercel.app';
 
   // State Management
   const [users, setUsers] = useState([]);

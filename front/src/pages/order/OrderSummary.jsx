@@ -1,5 +1,5 @@
 import LazyImage from '../../components/LazyImage';
-import { formatEGP } from './utils';
+import { formatEGP } from '../../components/utils';
 
 const OrderSummary = ({
   cartProducts,
@@ -44,7 +44,7 @@ const OrderSummary = ({
 
   const total =
     Math.round(
-      (subtotal - discountAmount + shippingFee + Number.EPSILON) * 100
+      (subtotal - discountAmount + shippingFee + Number.EPSILON) * 100,
     ) / 100;
 
   return (
@@ -75,11 +75,15 @@ const OrderSummary = ({
                     </h3>
                     <div className="flex items-center gap-3 mt-1">
                       <p className="text-sm text-gray-500">
-                        الكمية: <span className="font-medium">{item.quantity}</span>
+                        الكمية:{' '}
+                        <span className="font-medium">{item.quantity}</span>
                       </p>
                       <span className="text-gray-300">•</span>
                       <p className="text-sm text-gray-500">
-                        السعر: <span className="font-medium">{formatEGP(item.price)}</span>
+                        السعر:{' '}
+                        <span className="font-medium">
+                          {formatEGP(item.price)}
+                        </span>
                       </p>
                     </div>
                   </div>
@@ -132,7 +136,9 @@ const OrderSummary = ({
 
         {/* Total */}
         <div className="flex justify-between items-center pt-4 border-t-2 border-gray-300">
-          <span className="text-lg font-bold text-gray-900">الإجمالي النهائي</span>
+          <span className="text-lg font-bold text-gray-900">
+            الإجمالي النهائي
+          </span>
           <span className="text-2xl font-extrabold text-cyan-600">
             {formatEGP(total)}
           </span>

@@ -10,7 +10,7 @@ export const setAuthToken = (token) => {
 };
 
 const axiosInstance = axios.create({
-  baseURL: 'https://tropical-kiah-totacheco-1c5e3dcb.koyeb.app/api',
+  baseURL: 'https://back-3f93c82mw-alielghazoly1s-projects.vercel.app/api',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
