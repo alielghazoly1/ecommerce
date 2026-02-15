@@ -10,7 +10,7 @@ import SignUp from './pages/SignUp';
 // import Header from './components/Header';
 // import pages
 import Home from './pages/Home';
-import Cart from './pages/Cart';
+import Cart from './pages/Cart/Cart';
 import MyOrders from './pages/MyOrders';
 import Product from './pages/Product/Product';
 import Order from './pages/order/Order';
@@ -31,7 +31,6 @@ const App = () => {
           <Route path="/cart" element={<Cart />} />
           <Route path="/order" element={<Order />} />
           <Route path="/myorders" element={<MyOrders />} />
-        
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/categories" element={<Categories />} />
