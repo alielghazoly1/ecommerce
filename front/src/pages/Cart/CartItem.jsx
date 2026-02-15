@@ -1,8 +1,8 @@
 import { memo, useCallback } from 'react';
 import { Trash2, Plus, Minus } from 'lucide-react';
 import LazyImage from '../../components/LazyImage';
-
-const CartItem = memo(({ item, onAddToCart, onRemoveFromCart, formatPrice }) => {
+import { formatEGP } from '../../components/utils';
+const CartItem = memo(({ item, onAddToCart, onRemoveFromCart }) => {
   const handleRemove = useCallback(() => {
     onRemoveFromCart(item._id, true);
   }, [item._id, onRemoveFromCart]);
@@ -19,7 +19,7 @@ const CartItem = memo(({ item, onAddToCart, onRemoveFromCart, formatPrice }) => 
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
       <div className="flex gap-6">
         {/* Product Image */}
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gray-50 rounded-lg overflow-hidden">
             <LazyImage
               src={item.image}
@@ -42,7 +42,7 @@ const CartItem = memo(({ item, onAddToCart, onRemoveFromCart, formatPrice }) => 
             </div>
             <button
               onClick={handleRemove}
-              className="flex-shrink-0 h-9 w-9 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="shrink-0 h-9 w-9 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="حذف"
             >
               <Trash2 className="w-5 h-5" />
@@ -73,10 +73,10 @@ const CartItem = memo(({ item, onAddToCart, onRemoveFromCart, formatPrice }) => 
             {/* Price */}
             <div className="text-right">
               <p className="text-sm text-gray-600 mb-1">
-                {formatPrice(item.price)} × {item.quantity}
+                {formatEGP(item.price)} × {item.quantity}
               </p>
               <p className="text-lg font-bold text-gray-900">
-                {formatPrice(item.price * item.quantity)}
+                {formatEGP(item.price * item.quantity)}
               </p>
             </div>
           </div>

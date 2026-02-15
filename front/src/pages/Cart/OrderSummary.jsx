@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import { formatEGP } from '../../components/utils';
 const OrderSummary = memo(({ itemCount, total, formatPrice }) => {
   const navigate = useNavigate();
 
@@ -11,7 +11,7 @@ const OrderSummary = memo(({ itemCount, total, formatPrice }) => {
       <div className="space-y-4 mb-6">
         <div className="flex justify-between text-gray-600">
           <span>المنتجات ({itemCount})</span>
-          <span className="font-medium">{formatPrice(total)}</span>
+          <span className="font-medium">{formatEGP(total)}</span>
         </div>
         <div className="flex justify-between text-gray-600">
           <span>الشحن</span>
@@ -20,7 +20,7 @@ const OrderSummary = memo(({ itemCount, total, formatPrice }) => {
         <div className="border-t border-gray-200 pt-4">
           <div className="flex justify-between text-lg">
             <span className="font-semibold text-gray-900">المجموع الكلي</span>
-            <span className="font-bold text-gray-900">{formatPrice(total)}</span>
+            <span className="font-bold text-gray-900">{formatEGP(total)}</span>
           </div>
         </div>
       </div>

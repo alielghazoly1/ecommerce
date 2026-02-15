@@ -36,9 +36,6 @@ export const useCart = () => {
     }, 0);
   }, [cartItems, all_products]);
 
-  // Format price - stable callback
-  const formatPrice = useCallback((price) => `${price.toFixed(2)} ج.م`, []);
-
   // Load cart on mount
   useEffect(() => {
     if (!token) return;
@@ -55,7 +52,6 @@ export const useCart = () => {
     itemCount,
     total,
     loading,
-    formatPrice,
     addToCart,
     removeFromCart,
   };

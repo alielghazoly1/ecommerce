@@ -1,4 +1,3 @@
-import { memo } from 'react';
 import CartItem from './CartItem';
 import EmptyCart from './EmptyCart';
 import OrderSummary from './OrderSummary';
@@ -10,7 +9,6 @@ const Cart = () => {
     itemCount,
     total,
     loading,
-    formatPrice,
     addToCart,
     removeFromCart,
   } = useCart();
@@ -46,7 +44,7 @@ const Cart = () => {
                   item={item}
                   onAddToCart={addToCart}
                   onRemoveFromCart={removeFromCart}
-                  formatPrice={formatPrice}
+                  
                 />
               ))}
             </div>
@@ -55,7 +53,6 @@ const Cart = () => {
             <OrderSummary
               itemCount={itemCount}
               total={total}
-              formatPrice={formatPrice}
             />
           </div>
         )}
