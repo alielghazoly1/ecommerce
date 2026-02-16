@@ -1,4 +1,4 @@
-// middleware/rateLimiter.js - Rate Limiting System
+// middleware/rateLimiter.js - Rate Limiting System (Development Friendly)
 import logger from '../utils/logger.js';
 
 // Store for request counts
@@ -55,6 +55,12 @@ const strictRateLimiter = (maxRequests = 5, windowMs = 15 * 60 * 1000) => {
   const counts = new Map();
 
   return (req, res, next) => {
+    // 🔥 Skip rate limiting in development mode
+    if (process.env.NODE_ENV === 'development' && process.env.DISABLE_RATE_LIMIT === 'true') {
+      logger.debug('Rate limiting disabled in development mode');
+      return next();
+    }
+
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
     const now = Date.now();
 
@@ -76,6 +82,14 @@ const strictRateLimiter = (maxRequests = 5, windowMs = 15 * 60 * 1000) => {
 
     if (record.count >= maxRequests) {
       const timeLeft = Math.ceil((record.resetTime - now) / 1000 / 60);
+      
+      logger.warn('Rate limit exceeded', { 
+        ip, 
+        count: record.count, 
+        maxRequests,
+        timeLeft 
+      });
+
       return res.status(429).json({
         success: false,
         message: `Too many attempts. Please try again in ${timeLeft} minutes`,
@@ -121,13 +135,35 @@ process.on('SIGTERM', () => {
 // Rate limiters for specific routes
 // =====================
 
-// For login/register (5 requests per 15 minutes)
-export const authRateLimiter = strictRateLimiter(5, 15 * 60 * 1000);
+// 🔧 Adjust limits based on environment
+const isDevelopment = process.env.NODE_ENV === 'development';
 
-// For password reset (3 requests per 15 minutes)
-export const passwordResetLimiter = strictRateLimiter(3, 15 * 60 * 1000);
+// For login/register
+// Development: 50 requests per 15 minutes
+// Production: 5 requests per 15 minutes
+export const authRateLimiter = strictRateLimiter(
+  isDevelopment ? 50 : 5, 
+  15 * 60 * 1000
+);
 
-// For admin operations (20 requests per 15 minutes)
-export const adminRateLimiter = strictRateLimiter(20, 15 * 60 * 1000);
+// For password reset
+export const passwordResetLimiter = strictRateLimiter(
+  isDevelopment ? 20 : 3, 
+  15 * 60 * 1000
+);
+
+// For admin operations
+export const adminRateLimiter = strictRateLimiter(
+  isDevelopment ? 100 : 20, 
+  15 * 60 * 1000
+);
+
+// =====================
+// Manual reset function (for development)
+// =====================
+export const resetRateLimit = (ip) => {
+  requestCounts.delete(ip);
+  logger.info('Rate limit reset for IP', { ip });
+};
 
 export default rateLimiter;

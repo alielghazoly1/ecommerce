@@ -1,8 +1,9 @@
-// routes/userRoutes.js - ENHANCED VERSION
+// routes/userRoutes.js - ENHANCED VERSION with Logout
 import express from 'express';
 import {
   loginUser,
   registerUser,
+  logoutUser, // 🆕 إضافة Logout
   getUserProfile,
   updateProfile,
   demoteToUser,
@@ -31,6 +32,7 @@ userRouter.post('/register', authRateLimiter, validateRegister, registerUser);
 // =====================
 // PROTECTED USER ROUTES (لازم يكون مسجل دخول)
 // =====================
+userRouter.post('/logout', authMiddleware, logoutUser); // 🆕 Logout Route
 userRouter.get('/profile', authMiddleware, getUserProfile);
 userRouter.put('/profile', authMiddleware, updateProfile);
 

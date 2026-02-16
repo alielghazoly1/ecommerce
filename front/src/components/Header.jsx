@@ -7,12 +7,13 @@ import { ShopContext } from '../context/ShopContext';
 import { ShoppingCart } from 'lucide-react';
 
 const Header = () => {
-  const { cartItems, token } = useContext(ShopContext);
+  const { cartItems } = useContext(ShopContext); // ✅ إزالة token
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  
   const totalItems = useMemo(() => {
     return Object.values(cartItems).reduce((a, b) => a + b, 0);
-  }, [cartItems, token]);
+  }, [cartItems]);
 
   // اقفل السايدبار لو كبرت الشاشة
   useEffect(() => {

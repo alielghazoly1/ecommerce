@@ -23,9 +23,14 @@ import Toast from '../components/ui/Toast';
 import { formatEGP } from "../components/utils";
 import LazyImage from '../components/LazyImage';
 
+// ✅ axios instance مع withCredentials للـ Cookies
+const api = axios.create({
+  withCredentials: true,
+});
+
 const ProfilePage = () => {
   const {
-    token,
+    isAuthenticated,
     url,
     all_products: products,
     authLoading,
@@ -38,26 +43,25 @@ const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({ name: '', phone: '' });
 
-  // ✅ التحقق من الـ token بعد انتهاء authLoading
+  // ✅ التحقق من الـ authentication بعد انتهاء authLoading
   useEffect(() => {
     if (authLoading) return; // ⏳ انتظر حتى ينتهي التحميل
 
-    if (!token) {
-      // ❌ لا يوجد token - توجيه للـ login
+    if (!isAuthenticated) {
+      // ❌ غير مسجل دخول - توجيه للـ login
       navigate('/login', { replace: true });
       return;
     }
 
-    // ✅ يوجد token - جلب البيانات
+    // ✅ مسجل دخول - جلب البيانات
     fetchProfile();
-  }, [token, authLoading, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
 
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${url}/api/users/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // ✅ withCredentials بدل Authorization header - Cookie تتبعت تلقائياً
+      const res = await api.get(`${url}/api/users/profile`);
 
       if (res.data.success) {
         setUser(res.data.user);
@@ -69,9 +73,7 @@ const ProfilePage = () => {
     } catch (err) {
       console.error('Profile fetch error:', err);
 
-      // إذا كان الـ token غير صالح
       if (err.response?.status === 401) {
-        localStorage.removeItem('token');
         setToast({
           message: 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى',
           type: 'error',
@@ -87,9 +89,8 @@ const ProfilePage = () => {
 
   const handleUpdateProfile = async () => {
     try {
-      const res = await axios.put(`${url}/api/users/profile`, editData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // ✅ withCredentials بدل Authorization header
+      const res = await api.put(`${url}/api/users/profile`, editData);
 
       if (res.data.success) {
         setUser((prev) => ({ ...prev, ...editData }));
@@ -113,7 +114,7 @@ const ProfilePage = () => {
     }).format(new Date(date));
   };
 
-  // ✅ عرض Loading أثناء التحقق من الـ token أو جلب البيانات
+  // ✅ عرض Loading أثناء التحقق من الـ authentication أو جلب البيانات
   if (authLoading || loading) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">

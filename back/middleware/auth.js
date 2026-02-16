@@ -1,19 +1,18 @@
-// middleware/auth.js - CORRECT VERSION
+// middleware/auth.js - COOKIE-BASED VERSION 🍪
 import jwt from 'jsonwebtoken';
 import User from '../models/userModel.js';
 import logger from '../utils/logger.js';
 
 const authMiddleware = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  // 🍪 قراءة التوكن من الـ Cookie
+  const token = req.cookies?.token;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!token) {
     return res.status(401).json({
       success: false,
       message: 'Please login again',
     });
   }
-
-  const token = authHeader.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -32,7 +31,7 @@ const authMiddleware = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    logger.error('Authentication error', { error: error.message, token: token.substring(0, 20) + '...' });
+    logger.error('Authentication error', { error: error.message });
     return res.status(403).json({
       success: false,
       message: 'Invalid or expired token',

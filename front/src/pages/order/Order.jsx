@@ -7,13 +7,16 @@ import OrderSummary from './OrderSummary';
 import ShippingForm from './ShippingForm';
 import Toast from '../../components/ui/Toast';
 
+// ✅ axios instance برا الـ component - مش بيتعمل في كل render
+const api = axios.create({ withCredentials: true });
+
 const Order = () => {
   const {
     cartItems = {},
     clearCart,
     all_products = [],
     url,
-    token,
+    isAuthenticated,
     authLoading,
   } = useContext(ShopContext);
 
@@ -62,11 +65,11 @@ const Order = () => {
   /* ---------------- AUTH GUARD ---------------- */
   useEffect(() => {
     if (authLoading) return;
-    if (!token) {
+    if (!isAuthenticated) {
       setToast({ message: 'الرجاء تسجيل الدخول أولاً', type: 'error' });
       setTimeout(() => navigate('/login', { replace: true }), 1000);
     }
-  }, [authLoading, token, navigate]);
+  }, [authLoading, isAuthenticated, navigate]);
 
   /* ---------------- HELPERS ---------------- */
   const updateShipping = (field, value) => {
@@ -79,7 +82,6 @@ const Order = () => {
     if (!shipping.street?.trim()) e.street = 'العنوان مطلوب';
     if (!shipping.city?.trim()) e.city = 'المدينة مطلوبة';
     if (!/^\+?\d{7,15}$/.test(shipping.phone)) e.phone = 'رقم هاتف غير صحيح';
-
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -113,35 +115,26 @@ const Order = () => {
     submittingRef.current = true;
     setLoading(true);
 
-    // ✅ حساب المبلغ النهائي
     const discountAmount = (subtotal * discountPercent) / 100;
     const totalAmount = subtotal - discountAmount + shippingFee;
 
-    // ✅ تنسيق البيانات بما يتوافق مع الـ Backend
     const payload = {
-      items: cartProducts.map((p) => ({
-        id: p._id,           // ✅ Backend expects "id"
-        quantity: p.quantity,
-      })),
+      items: cartProducts.map((p) => ({ id: p._id, quantity: p.quantity })),
       address: {
-        street: shipping.street,       // ✅ Backend expects "street"
+        street: shipping.street,
         city: shipping.city,
         state: shipping.state || '',
         zipCode: shipping.zipCode || '',
         country: 'Egypt',
         phone: shipping.phone,
       },
-      amount: totalAmount,             // ✅ Backend expects "amount"
+      amount: totalAmount,
       paymentMethod: 'cash',
       notes: coupon ? `كوبون: ${coupon} (${discountPercent}% خصم)` : '',
     };
 
     try {
-      const res = await axios.post(`${url}/api/order/place`, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await api.post(`${url}/api/order/place`, payload);
 
       if (res.data?.success) {
         setToast({ message: 'تم إنشاء الطلب بنجاح ✓', type: 'success' });
@@ -155,10 +148,17 @@ const Order = () => {
       }
     } catch (err) {
       console.error('Order Error:', err.response?.data || err.message);
-      const errorMsg =
-        err.response?.data?.message ||
-        'فشل الاتصال بالسيرفر. تحقق من الاتصال بالإنترنت';
-      setToast({ message: errorMsg, type: 'error' });
+
+      if (err.response?.status === 401) {
+        setToast({ message: 'انتهت الجلسة، الرجاء تسجيل الدخول مرة أخرى', type: 'error' });
+        setTimeout(() => navigate('/login'), 1500);
+        return;
+      }
+
+      setToast({
+        message: err.response?.data?.message || 'فشل الاتصال بالسيرفر',
+        type: 'error',
+      });
     } finally {
       submittingRef.current = false;
       setLoading(false);

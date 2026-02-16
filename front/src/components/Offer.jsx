@@ -71,7 +71,7 @@ const Offer = () => {
   const [toast, setToast] = useState(null);
   const TOAST_DURATION = 1800;
 
-  const { addToCart, all_products } = useContext(ShopContext);
+  const { addToCart, all_products, isAuthenticated, authLoading } = useContext(ShopContext);
   const navigate = useNavigate();
 
   // Countdown timer - 5 days from now
@@ -119,8 +119,7 @@ const Offer = () => {
     async (id) => {
       if (!id || loadingIds.includes(id)) return;
 
-      const token = localStorage.getItem('token');
-      if (!token) {
+      if (!isAuthenticated) {
         setToast({
           type: 'error',
           message: 'يرجى تسجيل الدخول لإضافة منتجات للسلة',
@@ -152,7 +151,7 @@ const Offer = () => {
         setLoadingIds((prev) => prev.filter((x) => x !== id));
       }
     },
-    [addToCart, loadingIds, navigate],
+    [addToCart, loadingIds, navigate, isAuthenticated],
   );
 
   // Calculate time remaining
@@ -162,8 +161,8 @@ const Offer = () => {
   const seconds = secs % 60;
 
   // Check if data is still loading
-  // يعرض skeleton لو all_products لسه null أو array فاضي
-  const isLoading = !all_products || all_products.length === 0;
+  // ✅ isLoading صح - بيفرق بين لسه بيتحمل وفاضي فعلاً
+  const isLoading = authLoading || !all_products;
 
   return (
     <>
@@ -350,7 +349,7 @@ const Offer = () => {
       </section>
 
       {/* Add shimmer animation to global styles */}
-      <style jsx>{`
+      <style>{`
         @keyframes shimmer {
           0% {
             transform: translateX(-100%);

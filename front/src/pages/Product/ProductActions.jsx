@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ShoppingCart, Check, Minus, Plus, Link2 } from 'lucide-react';
 
-const ProductActions = ({  onAddToCart, onCopyLink, isAdding, isAdded }) => {
+const ProductActions = ({ onAddToCart, onCopyLink, isAdding, isAdded }) => {
   const [qty, setQty] = useState(1);
 
   const handleAddToCart = async () => {
@@ -43,7 +43,7 @@ const ProductActions = ({  onAddToCart, onCopyLink, isAdding, isAdded }) => {
           className={`flex-1 h-12 lg:h-16 rounded-xl font-semibold text-sm lg:text-base shadow-lg transition-all ${
             isAdded
               ? 'bg-green-500 text-white'
-              : 'bg-linear-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white'
+              : 'bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800 text-white'
           } disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
         >
           {isAdding ? (

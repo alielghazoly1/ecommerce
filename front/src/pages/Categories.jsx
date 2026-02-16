@@ -89,9 +89,8 @@ const CategoryButtonSkeleton = () => (
 );
 
 const Categories = () => {
-  const { addToCart, url, all_products } = useContext(ShopContext);
+  const { addToCart, url, all_products, isAuthenticated } = useContext(ShopContext);
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
   const [toast, setToast] = useState(null);
   const [addingIds, setAddingIds] = useState([]);
 
@@ -146,7 +145,7 @@ const Categories = () => {
 
   const handleAddToCart = useCallback(
     async (id) => {
-      if (!token) {
+      if (!isAuthenticated) {
         setToast({
           type: 'error',
           message: 'يرجى تسجيل الدخول لإضافة منتجات للسلة',
@@ -185,7 +184,7 @@ const Categories = () => {
         setAddingIds((s) => s.filter((x) => x !== id));
       }
     },
-    [addToCart, addingIds, token, navigate],
+    [addToCart, addingIds, isAuthenticated, navigate],
   );
 
   // Check if data is still loading
@@ -195,7 +194,7 @@ const Categories = () => {
     <>
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      <div className="relative w-full min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div className="relative w-full min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 pt-6 pb-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
         {/* Background Decorative Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 right-10 w-72 h-72 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl animate-pulse"></div>
@@ -463,7 +462,7 @@ const Categories = () => {
         </div>
 
         {/* Custom Animations */}
-        <style jsx>{`
+        <style>{`
           @keyframes gradient {
             0%,
             100% {

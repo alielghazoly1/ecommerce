@@ -1,4 +1,4 @@
-// userController.js - ENHANCED VERSION
+// userController.js - COOKIE-BASED VERSION 🍪
 import userModel from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
@@ -16,12 +16,27 @@ const createToken = (user) => {
       role: user.role,
     },
     process.env.JWT_SECRET,
-    { expiresIn: '1d' },
+    { expiresIn: '7d' }, // 7 days
   );
 };
 
 // =====================
-// Login User
+// Helper: Set Cookie with Token
+// =====================
+const setTokenCookie = (res, token) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  res.cookie('token', token, {
+    httpOnly: true,      // 🔒 JavaScript can't access it
+    secure: isProduction, // 🔒 HTTPS only in production
+    sameSite: isProduction ? 'none' : 'lax', // 🔒 CSRF protection
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: '/',
+  });
+};
+
+// =====================
+// Login User 🍪
 // =====================
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -47,11 +62,26 @@ const loginUser = asyncHandler(async (req, res) => {
   await user.updateLastLogin();
 
   const token = createToken(user);
-  res.json({ success: true, token });
+  
+  // 🍪 Set cookie
+  setTokenCookie(res, token);
+  
+  logger.info('User logged in', { email, userId: user._id });
+
+  res.json({ 
+    success: true,
+    message: 'Login successful',
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    }
+  });
 });
 
 // =====================
-// Register User
+// Register User 🍪
 // =====================
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -80,7 +110,44 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   const token = createToken(user);
-  res.status(201).json({ success: true, token });
+  
+  // 🍪 Set cookie
+  setTokenCookie(res, token);
+  
+  logger.info('User registered', { email, userId: user._id });
+
+  res.status(201).json({ 
+    success: true,
+    message: 'Registration successful',
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    }
+  });
+});
+
+// =====================
+// Logout User 🍪 (NEW)
+// =====================
+export const logoutUser = asyncHandler(async (req, res) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  // Clear the cookie
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/',
+  });
+
+  logger.info('User logged out', { userId: req.user?._id });
+
+  res.json({
+    success: true,
+    message: 'Logged out successfully',
+  });
 });
 
 // =====================
@@ -165,6 +232,8 @@ export const updateProfile = asyncHandler(async (req, res) => {
   }
   
   await user.save();
+  
+  logger.info('Profile updated', { userId: user._id });
   
   res.json({
     success: true,

@@ -1,13 +1,12 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
-import axios from 'axios';
 import { User, Mail, Lock, Phone } from 'lucide-react';
 import CenterAlert from '../components/ui/CenterAlert';
 
 const SignUp = () => {
   const navigate = useNavigate();
-  const { url, setToken } = useContext(ShopContext);
+  const { register } = useContext(ShopContext); // ✅ استخدام register من Context
 
   const [formData, setFormData] = useState({
     name: '',
@@ -36,41 +35,35 @@ const SignUp = () => {
       return;
     }
 
+    if (formData.password.length < 8) {
+      setErrorMessage('كلمة المرور يجب أن تكون 8 أحرف على الأقل');
+      setShowErrorAlert(true);
+      return;
+    }
+
     setIsLoading(true);
+    
     try {
-      const res = await axios.post(`${url}/api/users/register`, {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        phone: formData.phone,
-      });
+      const result = await register(
+        formData.name,
+        formData.email,
+        formData.password,
+        formData.phone
+      );
 
-      if (res.data.token) {
-        setToken(res.data.token);
-        localStorage.setItem('token', res.data.token);
-
+      if (result.success) {
         setShowSuccessAlert(true);
-
         setTimeout(() => {
           setIsLoading(false);
           navigate('/');
         }, 1500);
       } else {
-        setErrorMessage(res.data.message || 'فشل إنشاء الحساب');
+        setErrorMessage(result.message || 'فشل إنشاء الحساب');
         setShowErrorAlert(true);
         setIsLoading(false);
       }
     } catch (err) {
-      const status = err.response?.status;
-
-      if (status === 409) {
-        setErrorMessage('البريد الإلكتروني مستخدم بالفعل');
-      } else if (status === 400) {
-        setErrorMessage('يجب ان تكون كلمة السر حروف وارقام ');
-      } else {
-        setErrorMessage('حدث خطأ ما');
-      }
-
+      setErrorMessage('حدث خطأ ما');
       setShowErrorAlert(true);
       setIsLoading(false);
     }
@@ -112,7 +105,7 @@ const SignUp = () => {
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/20"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/20 placeholder-gray-500 text-gray-800 focus:ring-2 focus:ring-cyan-400 outline-none"
             />
           </div>
 
@@ -125,7 +118,7 @@ const SignUp = () => {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/20"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/20 placeholder-gray-500 text-gray-800 focus:ring-2 focus:ring-cyan-400 outline-none"
             />
           </div>
 
@@ -138,7 +131,7 @@ const SignUp = () => {
               value={formData.phone}
               onChange={handleChange}
               required
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/20"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/20 placeholder-gray-500 text-gray-800 focus:ring-2 focus:ring-cyan-400 outline-none"
             />
           </div>
 
@@ -151,7 +144,8 @@ const SignUp = () => {
               value={formData.password}
               onChange={handleChange}
               required
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/20"
+              minLength={8}
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/20 placeholder-gray-500 text-gray-800 focus:ring-2 focus:ring-cyan-400 outline-none"
             />
           </div>
 
@@ -164,27 +158,27 @@ const SignUp = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/20"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/20 placeholder-gray-500 text-gray-800 focus:ring-2 focus:ring-cyan-400 outline-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full py-3 rounded-2xl ${
+            className={`w-full py-3 rounded-2xl font-bold text-lg shadow-lg transition-all ${
               isLoading
-                ? 'bg-gray-300 cursor-wait'
-                : 'bg-linear-to-r from-cyan-400 via-blue-500 to-indigo-500 text-white'
+                ? 'bg-gray-300 text-gray-700 cursor-wait'
+                : 'bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 text-white hover:scale-105'
             }`}
           >
             {isLoading ? 'جاري إنشاء الحساب...' : 'إنشاء حساب'}
           </button>
         </form>
 
-        <p className="mt-6 text-center">
+        <p className="mt-6 text-center text-gray-700">
           لديك حساب بالفعل؟{' '}
           <span
-            className="text-cyan-500 cursor-pointer"
+            className="text-cyan-500 font-semibold cursor-pointer hover:underline"
             onClick={() => navigate('/login')}
           >
             تسجيل دخول

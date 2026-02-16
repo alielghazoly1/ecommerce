@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatEGP } from '../../components/utils';
-const OrderSummary = memo(({ itemCount, total, formatPrice }) => {
+const OrderSummary = memo(({ itemCount, total }) => {
   const navigate = useNavigate();
 
   return (

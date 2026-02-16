@@ -1,8 +1,9 @@
-// api/index.js - Vercel Serverless Ready ✅
+// api/index.js - Vercel Serverless Ready with Cookie Support 🍪
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
 import mongoose from 'mongoose';
+import cookieParser from 'cookie-parser'; // 🍪 مهم جداً
 import 'dotenv/config';
 
 // Import database connection
@@ -48,6 +49,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// 🍪 Cookie Parser - لازم يكون قبل أي route
+app.use(cookieParser());
+
 // Body Parsing
 app.use(express.json({ limit: '10mb', strict: true }));
 app.use(express.urlencoded({ extended: true, limit: '10mb', parameterLimit: 100 }));
@@ -83,7 +87,7 @@ const corsOptions = {
       callback(null, true); // Allow for now (change to false in production)
     }
   },
-  credentials: true,
+  credentials: true, // 🔥 مهم جداً عشان الـ Cookies
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -100,8 +104,8 @@ app.get('/', (req, res) => {
   res.status(200).json({
     success: true,
     status: 'running',
-    message: '🛒 E-Commerce API is running',
-    version: '1.0.0',
+    message: '🛒 E-Commerce API is running with Cookie Auth 🍪',
+    version: '2.0.0',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'production',
     endpoints: {
@@ -266,7 +270,7 @@ if (!process.env.VERCEL) {
   connectDB()
     .then(() => {
       const server = app.listen(PORT, '0.0.0.0', () => {
-        logger.success('🚀 Server started successfully');
+        logger.success('🚀 Server started successfully with Cookie Auth 🍪');
         logger.info('Port:', PORT);
         logger.info('Environment:', process.env.NODE_ENV || 'production');
         logger.info('Node Version:', process.version);

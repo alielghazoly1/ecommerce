@@ -1,9 +1,7 @@
 import { formatEGP } from '../../components/utils';
 
 const ProductInfo = ({ product, hasDiscount, discountPercent }) => {
-    console.log('Rendering ProductInfo with:', { product, hasDiscount, discountPercent });
   return (
-    
     <div>
       {/* Title */}
       <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-3 lg:mb-4 leading-tight">
@@ -24,8 +22,7 @@ const ProductInfo = ({ product, hasDiscount, discountPercent }) => {
         </div>
         {hasDiscount && (
           <p className="text-xs lg:text-sm text-green-600 font-semibold mt-1">
-            وفّر {formatEGP(product.originalPrice - product.price)} ({discountPercent}
-            % خصم)
+            وفّر {formatEGP(product.originalPrice - product.price)} ({discountPercent}% خصم)
           </p>
         )}
       </div>

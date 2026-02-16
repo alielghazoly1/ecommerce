@@ -4,6 +4,24 @@ import jwt from 'jsonwebtoken';
 import logger from '../utils/logger.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 
+// =====================
+// Helper: Set Cookie with Token
+// =====================
+const setTokenCookie = (res, token) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  res.cookie('token', token, {
+    httpOnly: true,      // 🔒 JavaScript can't access it
+    secure: isProduction, // 🔒 HTTPS only in production
+    sameSite: isProduction ? 'none' : 'lax', // 🔒 CSRF protection
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
+    path: '/',
+  });
+};
+
+// =====================
+// Admin Login with Cookie
+// =====================
 export const adminLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   logger.info('Admin login attempt', { email });
@@ -38,11 +56,18 @@ export const adminLogin = asyncHandler(async (req, res) => {
     { expiresIn: '1d' },
   );
 
+  // 🍪 Set cookie instead of sending token in response
+  setTokenCookie(res, token);
+
   logger.success('Admin logged in', { email, id: user._id });
 
   res.json({
     success: true,
-    token,
-    user: { name: user.name, email: user.email },
+    message: 'Admin login successful',
+    user: { 
+      name: user.name, 
+      email: user.email,
+      role: user.role 
+    },
   });
 });

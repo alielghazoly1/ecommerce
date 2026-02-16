@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 
 const LazyImage = ({ src, alt, className }) => {
-  const imgRef = useRef();
+  const imgRef = useRef(null);
   const [show, setShow] = useState(false);
 
   useEffect(() => {
+    const element = imgRef.current;
+
+    // ✅ تأكد إن الـ element موجود قبل الـ observe
+    if (!element) return;
+
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         setShow(true);
@@ -12,12 +17,24 @@ const LazyImage = ({ src, alt, className }) => {
       }
     });
 
-    observer.observe(imgRef.current);
+    observer.observe(element);
+
+    // ✅ cleanup عند الـ unmount
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   return (
-    <div ref={imgRef}>
-      {show && <img src={src} alt={alt} className={className}/>}
+    <div ref={imgRef} className="w-full h-full">
+      {show && (
+        <img
+          src={src}
+          alt={alt}
+          className={className}
+          loading="lazy"
+        />
+      )}
     </div>
   );
 };

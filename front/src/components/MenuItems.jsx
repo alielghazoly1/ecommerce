@@ -19,20 +19,16 @@ const menuItemData = [
 ];
 
 const MenuItems = ({ setSidebarOpen, isMobile }) => {
-  const { cartItems, token, setToken } = useContext(ShopContext);
+  const { cartItems, isAuthenticated, logout } = useContext(ShopContext);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ التوتال بيتحدّث تلقائي مع أي تغيير في cartItems
   const totalItems = useMemo(() => {
     return Object.values(cartItems).reduce((a, b) => a + b, 0);
-  }, [cartItems, token]);
+  }, [cartItems]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('cartItems');
-    setToken(false);
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
     setSidebarOpen && setSidebarOpen(false);
   };
@@ -58,8 +54,9 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
       } font-sans`}
     >
       {menuItemData.map(({ to, label, Icon }) => {
-        // ✅ استثناء "categories" تروح صفحة جديدة
+        // ✅ "categories" تروح صفحة /categories مع active state
         if (to === 'categories') {
+          const isActive = location.pathname === '/categories';
           return (
             <button
               key={to}
@@ -67,15 +64,19 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
                 navigate('/categories');
                 setSidebarOpen && setSidebarOpen(false);
               }}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all shrink-0 min-w-20 text-gray-800 hover:bg-gray-100 hover:shadow-md"
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all shrink-0 min-w-20 hover:shadow-md ${
+                isActive
+                  ? 'bg-cyan-100 text-cyan-700 shadow-lg'
+                  : 'text-gray-800 hover:bg-gray-100'
+              }`}
             >
-              <Icon className="w-6 h-6 text-gray-700" />
+              <Icon className={`w-6 h-6 ${isActive ? 'text-cyan-600' : 'text-gray-700'}`} />
               <span className="font-medium text-base">{label}</span>
             </button>
           );
         }
 
-        // باقي العناصر
+        // باقي العناصر - scroll links أو navigate
         return location.pathname === '/' ? (
           <ScrollLink
             key={to}
@@ -119,7 +120,7 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
         )}
       </button>
 
-      {!token ? (
+      {!isAuthenticated ? (
         <button
           onClick={() => {
             navigate('/login');

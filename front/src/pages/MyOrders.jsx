@@ -15,21 +15,21 @@ import {
   ShoppingBag,
 } from 'lucide-react';
 
+// ✅ axios instance برا الـ component - مش بيتعمل في كل render
+const api = axios.create({ withCredentials: true });
+
 const MyOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { url, token } = useContext(ShopContext);
+  const { url, isAuthenticated, authLoading } = useContext(ShopContext);
   const navigate = useNavigate();
 
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await axios.post(
-        `${url}/api/order/userorders`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      setError('');
+      const res = await api.post(`${url}/api/order/userorders`);
 
       if (res.data?.success) {
         const ordersData = Array.isArray(res.data.data)
@@ -41,6 +41,10 @@ const MyOrders = () => {
       }
     } catch (err) {
       console.error('Orders fetch error:', err);
+      if (err.response?.status === 401) {
+        navigate('/login');
+        return;
+      }
       setError('حدث خطأ في تحميل الطلبات');
       setOrders([]);
     } finally {
@@ -48,15 +52,16 @@ const MyOrders = () => {
     }
   };
 
+  // ✅ انتظر authLoading قبل ما تعمل أي حاجة
   useEffect(() => {
-    if (token) {
-      fetchOrders();
-    } else {
-      // navigate('/login');
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
     }
-  }, [token, navigate]);
+    fetchOrders();
+  }, [isAuthenticated, authLoading, navigate]);
 
-  // Format date
   const formatDate = (date) => {
     if (!date) return '';
     return new Intl.DateTimeFormat('ar-EG', {
@@ -68,7 +73,6 @@ const MyOrders = () => {
     }).format(new Date(date));
   };
 
-  // Format price
   const formatPrice = (price) => {
     return new Intl.NumberFormat('ar-EG', {
       style: 'currency',
@@ -77,7 +81,6 @@ const MyOrders = () => {
     }).format(price);
   };
 
-  // Get status config
   const getStatusConfig = (status) => {
     const configs = {
       pending: {
@@ -119,7 +122,8 @@ const MyOrders = () => {
     return configs[status] || configs.pending;
   };
 
-  if (loading) {
+  // ✅ لما authLoading أو loading تكون true
+  if (authLoading || loading) {
     return (
       <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-6">
         <div className="flex flex-col items-center">
@@ -193,7 +197,6 @@ const MyOrders = () => {
             </div>
           </div>
         ) : (
-          /* Orders Grid */
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {orders.map((order) => {
               const statusConfig = getStatusConfig(order.status);
@@ -207,9 +210,7 @@ const MyOrders = () => {
                   className="group bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
                 >
                   {/* Status Bar */}
-                  <div
-                    className={`h-2 ${statusConfig.bg} ${statusConfig.border} border-b-2`}
-                  ></div>
+                  <div className={`h-2 ${statusConfig.bg} ${statusConfig.border} border-b-2`} />
 
                   <div className="p-6">
                     {/* Order Header */}
@@ -222,9 +223,7 @@ const MyOrders = () => {
                           {order.orderNumber || `#${order._id.slice(-8).toUpperCase()}`}
                         </p>
                       </div>
-                      <div
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${statusConfig.bg} ${statusConfig.border} border`}
-                      >
+                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${statusConfig.bg} ${statusConfig.border} border`}>
                         <StatusIcon className={`w-4 h-4 ${statusConfig.color}`} />
                         <span className={`text-sm font-semibold ${statusConfig.color}`}>
                           {statusConfig.label}
@@ -246,7 +245,7 @@ const MyOrders = () => {
                         <Package className="w-4 h-4" />
                         المنتجات ({itemsCount})
                       </h4>
-                      <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
                         {order.items?.map((item, idx) => (
                           <div
                             key={item._id || idx}
@@ -297,24 +296,10 @@ const MyOrders = () => {
                       </div>
                     )}
 
-                    {/* Tracking Number */}
-                    {order.trackingNumber && (
-                      <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                        <h4 className="text-xs font-semibold text-purple-700 mb-1">
-                          رقم التتبع
-                        </h4>
-                        <p className="text-sm font-mono text-purple-900">
-                          {order.trackingNumber}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Total Amount */}
+                    {/* Total */}
                     <div className="pt-4 border-t border-gray-200">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-600">
-                          الإجمالي
-                        </span>
+                        <span className="text-sm font-medium text-gray-600">الإجمالي</span>
                         <span className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-cyan-700 bg-clip-text text-transparent">
                           {formatPrice(total)}
                         </span>
@@ -327,24 +312,6 @@ const MyOrders = () => {
           </div>
         )}
       </div>
-
-      {/* Custom Scrollbar Styles */}
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f5f9;
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
-      `}</style>
     </section>
   );
 };

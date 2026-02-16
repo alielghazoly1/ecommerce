@@ -1,13 +1,12 @@
 import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShopContext } from '../context/ShopContext';
-import axios from 'axios';
 import { Mail, Lock } from 'lucide-react';
 import CenterAlert from '../components/ui/CenterAlert';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { url, setToken } = useContext(ShopContext);
+  const { login } = useContext(ShopContext); // ✅ استخدام login من Context
 
   const [formData, setFormData] = useState({
     email: '',
@@ -16,7 +15,7 @@ const Login = () => {
 
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // حالة التحميل
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -24,35 +23,26 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    if (isLoading) return; // تجنب إرسال متكرر
+    if (isLoading) return;
     setIsLoading(true);
 
     try {
-      const res = await axios.post(`${url}/api/users/login`, formData);
+      const result = await login(formData.email, formData.password);
 
-      if (res.data.success) {
-        console.log('Login successful:', res.data);
-        setToken(res.data.token);
-        localStorage.setItem('token', res.data.token);
-
-        // إبقاء الزر في حالة "جاري تسجيل الدخول" قليلاً ثم التنقّل
+      if (result.success) {
+        console.log('Login successful');
+        // ✅ الـ Cookie اتحفظ أوتوماتيك من السيرفر
         setTimeout(() => {
           setIsLoading(false);
           navigate('/');
         }, 1500);
       } else {
-        // حالة فشل غير متوقعة من السيرفر
-        setErrorMessage(res.data.message || 'فشل تسجيل الدخول');
+        setErrorMessage('كلمة المرور أو البريد الإلكتروني غير صحيحة');
         setShowErrorAlert(true);
         setIsLoading(false);
       }
     } catch (err) {
-      const status = err.response?.status;
-      if (status === 401 || status === 400) {
-        setErrorMessage('البريد الإلكتروني أو كلمة المرور غير صحيحة');
-      } else {
-        setErrorMessage('حدث خطأ في الاتصال بالسيرفر');
-      }
+      setErrorMessage('حدث خطأ في الاتصال بالسيرفر');
       setShowErrorAlert(true);
       setIsLoading(false);
     }
@@ -113,12 +103,11 @@ const Login = () => {
             className={`w-full py-3 rounded-2xl ${
               isLoading
                 ? 'bg-gray-300 text-gray-700 cursor-wait'
-                : 'bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 text-white hover:scale-105'
+                : 'bg-linear-to-r from-cyan-400 via-blue-500 to-indigo-500 text-white hover:scale-105'
             } font-bold text-lg shadow-lg transition-transform flex items-center justify-center gap-3`}
           >
             {isLoading ? (
               <>
-                {/* سبينر صغير */}
                 <svg
                   className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
                   xmlns="http://www.w3.org/2000/svg"
