@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import axios from '../config/axiosConfig';
 import toast from 'react-hot-toast';
 import {
   Loader2,
@@ -70,8 +70,7 @@ const formatDate = (date) => {
 // MAIN COMPONENT
 // ============================================
 const Orders = () => {
-  const { token, isAuthenticated } = useAuth();
-  const url = 'https://back-3f93c82mw-alielghazoly1s-projects.vercel.app';
+  const { isAuthenticated } = useAuth();
 
   // State Management
   const [orders, setOrders] = useState([]);
@@ -86,26 +85,18 @@ const Orders = () => {
   // EFFECTS
   // ============================================
   useEffect(() => {
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchOrders();
     }
-  }, [token, isAuthenticated]);
+  }, [isAuthenticated]);
 
   // ============================================
   // API FUNCTIONS
   // ============================================
   const fetchOrders = async () => {
-    if (!token) {
-      toast.error('يجب تسجيل الدخول أولاً');
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
-      const res = await axios.get(`${url}/api/order/list`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get('/order/list');
 
       if (res.data.success) {
         setOrders(res.data.data || []);
@@ -123,23 +114,14 @@ const Orders = () => {
   };
 
   const updateStatus = async (orderId, newStatus, trackingNumber = '') => {
-    if (!token) {
-      toast.error('يجب تسجيل الدخول أولاً');
-      return;
-    }
-
     try {
       setUpdating(true);
 
-      const res = await axios.post(
-        `${url}/api/order/status`,
-        {
+      const res = await axios.post('/order/status', {
           orderId,
           status: newStatus,
           trackingNumber: trackingNumber || undefined,
-        },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+        });
 
       if (res.data.success) {
         toast.success('تم تحديث حالة الطلب بنجاح');

@@ -1,7 +1,7 @@
 // src/components/Monitoring.jsx - PROFESSIONAL MONITORING DASHBOARD ✨
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import axios from '../config/axiosConfig';
 import {
   Activity,
   Cpu,
@@ -28,8 +28,7 @@ import {
 import toast from 'react-hot-toast';
 
 const Monitoring = () => {
-  const { token } = useAuth();
-  const url = 'https://back-3f93c82mw-alielghazoly1s-projects.vercel.app';
+  const { isAuthenticated } = useAuth();
 
   const [data, setData] = useState(null);
   const [logs, setLogs] = useState([]);
@@ -52,18 +51,13 @@ const Monitoring = () => {
         }
 
         const [dashboardRes, logsRes] = await Promise.all([
-          axios.get(`${url}/api/monitoring/dashboard`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(`${url}/api/monitoring/logs?limit=50`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+          axios.get('/monitoring/dashboard'),
+          axios.get('/monitoring/logs?limit=50'),
         ]);
 
         if (dashboardRes.data.success) {
           setData(dashboardRes.data.data);
-          console.log(dashboardRes);
-        }
+          }
 
         if (logsRes.data.success) {
           setLogs(logsRes.data.data);
@@ -84,14 +78,14 @@ const Monitoring = () => {
         }
       }
     },
-    [token, url],
+    [isAuthenticated],
   );
 
   useEffect(() => {
-    if (token) {
+    if (isAuthenticated) {
       fetchMonitoringData();
     }
-  }, [token, fetchMonitoringData]);
+  }, [isAuthenticated, fetchMonitoringData]);
 
   // Auto-refresh every 10 seconds
   useEffect(() => {
@@ -116,9 +110,8 @@ const Monitoring = () => {
 
     try {
       const res = await axios.post(
-        `${url}/api/monitoring/logs/clear`,
+        '/monitoring/logs/clear',
         {},
-        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (res.data.success) {
@@ -133,8 +126,7 @@ const Monitoring = () => {
 
   const handleExportLogs = async () => {
     try {
-      const res = await axios.get(`${url}/api/monitoring/logs/export`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await axios.get('/monitoring/logs/export', {
         responseType: 'blob',
       });
 

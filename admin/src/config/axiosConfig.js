@@ -1,47 +1,34 @@
-// src/config/axiosConfig.js
+// src/config/axiosConfig.js - HttpOnly Cookie Version 🍪
 import axios from 'axios';
 
-// متغير لتخزين token الحالي
-let currentToken = localStorage.getItem('adminToken') || null;
-
-// دالة لتحديث token
-export const setAuthToken = (token) => {
-  currentToken = token;
-};
-
 const axiosInstance = axios.create({
-  baseURL: 'https://back-3f93c82mw-alielghazoly1s-projects.vercel.app/api',
+  baseURL: 'https://back-7cc728syx-alielghazoly1s-projects.vercel.app/api',
+  // baseURL: 'http://localhost:4000/api',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
+  // ✅ هذا هو المفتاح الأساسي - إرسال الـ Cookie تلقائياً
+  withCredentials: true,
 });
 
+// ─── Request Interceptor ─────────────────────────────────────────────────
 axiosInstance.interceptors.request.use(
   (config) => {
-    // استخدام token من المتغير الحالي (يتم تحديثه من Context)
-    const token = currentToken || localStorage.getItem('adminToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      // للتأكد من أن Token يُرسل (يمكن حذف هذا السطر لاحقاً)
-      if (config.data instanceof FormData) {
-        console.log('🔐 Token sent with FormData request:', config.url, '✅');
-      } else {
-        console.log('🔐 Token sent with request:', config.url, '✅');
-      }
-    } else {
-      console.warn('⚠️ No token found for request:', config.url);
-    }
+    // ✅ لا نضيف Authorization header - الـ Cookie سيُرسل تلقائياً
+    
     // لا نضيف Content-Type تلقائياً لـ multipart/form-data
     // axios سيقوم بإضافته تلقائياً مع boundary
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
+    
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => Promise.reject(error)
 );
 
+// ─── Response Interceptor ────────────────────────────────────────────────
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -56,15 +43,17 @@ axiosInstance.interceptors.response.use(
       });
     }
 
+    // ✅ في حالة 401 - الـ Cookie انتهت صلاحيته أو غير موجود
     if (error.response?.status === 401) {
-      // مسح token من المتغير والـ localStorage
-      currentToken = null;
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminRole');
-      window.location.href = '/admin/login';
+      // إعادة التوجيه لصفحة تسجيل الدخول فقط إذا لم نكن فيها بالفعل
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/admin/login' && !currentPath.includes('/admin/login')) {
+        window.location.href = '/admin/login';
+      }
     }
+    
     return Promise.reject(error);
-  },
+  }
 );
 
 export default axiosInstance;

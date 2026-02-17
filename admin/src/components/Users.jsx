@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import axios from '../config/axiosConfig';
 import toast from 'react-hot-toast';
 import {
   Trash2,
@@ -59,8 +59,7 @@ const formatDate = (date) => {
 // MAIN COMPONENT
 // ============================================
 const Users = () => {
-  const { token, isAuthenticated, user: currentUser } = useAuth();
-  const url = 'https://back-3f93c82mw-alielghazoly1s-projects.vercel.app';
+  const { isAuthenticated, user: currentUser } = useAuth();
 
   // State Management
   const [users, setUsers] = useState([]);
@@ -77,16 +76,8 @@ const Users = () => {
   // API FUNCTIONS
   // ============================================
   const fetchUsers = async () => {
-    if (!token) {
-      toast.error('يجب تسجيل الدخول أولاً');
-      setLoading(false);
-      return;
-    }
-
     try {
-      const res = await axios.get(`${url}/api/users/list`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get('/users/list');
 
       if (res.data && res.data.success) {
         setUsers(res.data.data || []);
@@ -106,9 +97,7 @@ const Users = () => {
   const fetchUserOrders = async (userId) => {
     setLoadingOrders(true);
     try {
-      const res = await axios.get(`${url}/api/order/list`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get('/order/list');
 
       if (res.data.success) {
         // Filter orders for this user
@@ -126,17 +115,10 @@ const Users = () => {
   const deleteUser = async (id) => {
     if (!window.confirm('هل أنت متأكد من حذف هذا المستخدم؟')) return;
 
-    if (!token) {
-      toast.error('يجب تسجيل الدخول أولاً');
-      return;
-    }
-
     setActionLoading((prev) => ({ ...prev, [id]: true }));
 
     try {
-      const res = await axios.delete(`${url}/api/users/delete/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.delete('/users/delete/' + id);
 
       if (res.data?.success) {
         setUsers((prev) => prev.filter((u) => u._id !== id));
@@ -153,21 +135,10 @@ const Users = () => {
   };
 
   const promoteToAdmin = async (id) => {
-    if (!token) {
-      toast.error('يجب تسجيل الدخول أولاً');
-      return;
-    }
-
     setActionLoading((prev) => ({ ...prev, [id]: true }));
 
     try {
-      const res = await axios.put(
-        `${url}/api/users/make-admin/${id}`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const res = await axios.put('/users/make-admin/' + id, {});
 
       if (res.data?.success) {
         setUsers((prev) =>
@@ -186,21 +157,10 @@ const Users = () => {
   };
 
   const demoteToUser = async (id) => {
-    if (!token) {
-      toast.error('يجب تسجيل الدخول أولاً');
-      return;
-    }
-
     setActionLoading((prev) => ({ ...prev, [id]: true }));
 
     try {
-      const res = await axios.put(
-        `${url}/api/users/demote/${id}`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const res = await axios.put('/users/demote/' + id, {});
 
       if (res.data?.success) {
         setUsers((prev) =>
@@ -228,10 +188,10 @@ const Users = () => {
   // EFFECTS
   // ============================================
   useEffect(() => {
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchUsers();
     }
-  }, [token, isAuthenticated]);
+  }, [isAuthenticated]);
 
   // ============================================
   // FILTERING

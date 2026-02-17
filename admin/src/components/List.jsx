@@ -34,7 +34,7 @@ const SORT_OPTIONS = [
 
 const List = () => {
   const navigate = useNavigate();
-  const { token, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState({});
@@ -46,7 +46,7 @@ const List = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const fetchProducts = async () => {
-    if (!token) {
+    if (!isAuthenticated) {
       toast.error('يجب تسجيل الدخول أولاً');
       setLoading(false);
       return;
@@ -71,15 +71,15 @@ const List = () => {
   };
 
   useEffect(() => {
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchProducts();
     }
-  }, [token, isAuthenticated]);
+  }, [isAuthenticated]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('هل أنت متأكد من حذف هذا المنتج؟')) return;
 
-    if (!token) {
+    if (!isAuthenticated) {
       toast.error('يجب تسجيل الدخول أولاً');
       return;
     }

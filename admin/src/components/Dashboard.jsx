@@ -1,37 +1,19 @@
-// src/components/Dashboard.jsx - ENHANCED VERSION ✨
+// src/components/Dashboard.jsx - STATIC VERSION (بدون حركة) 📊
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from '../config/axiosConfig';
 import { 
-  TrendingUp, 
-  TrendingDown,
-  ShoppingCart, 
-  Package, 
-  DollarSign, 
-  Users, 
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Loader2,
-  BarChart3,
-  RefreshCw,
-  Activity,
-  Calendar,
-  ArrowRight,
-  Eye,
-  Percent,
-  ShoppingBag,
-  Star,
-  TrendingUpIcon
+  TrendingUp, TrendingDown, ShoppingCart, Package, DollarSign, Users, 
+  Clock, CheckCircle, XCircle, Activity, Loader2, RefreshCw,
+  ArrowUpRight, ArrowDownRight, Calendar, Download, BarChart3, 
+  Crown, Target, Award, Percent, ShoppingBag, CreditCard, PieChart, Zap
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {
-  const { token } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-  const url = "https://back-3f93c82mw-alielghazoly1s-projects.vercel.app";
   
   const [stats, setStats] = useState({
     totalOrders: 0,
@@ -44,23 +26,29 @@ const Dashboard = () => {
     cancelledOrders: 0,
     todayOrders: 0,
     todayRevenue: 0,
+    yesterdayOrders: 0,
+    yesterdayRevenue: 0,
     weekOrders: 0,
     weekRevenue: 0,
+    lastWeekOrders: 0,
+    lastWeekRevenue: 0,
     monthOrders: 0,
     monthRevenue: 0,
+    lastMonthOrders: 0,
+    lastMonthRevenue: 0,
     averageOrderValue: 0,
+    growthRate: 0,
+    revenueGrowthRate: 0,
   });
   
-  const [recentOrders, setRecentOrders] = useState([]);
-  const [topProducts, setTopProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    if (token) {
+    if (isAuthenticated) {
       fetchDashboardData();
     }
-  }, [token]);
+  }, [isAuthenticated]);
 
   const fetchDashboardData = async (isRefresh = false) => {
     try {
@@ -71,16 +59,16 @@ const Dashboard = () => {
       }
 
       const [ordersRes, productsRes, usersRes] = await Promise.all([
-        axios.get(`${url}/api/order/list`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        axios.get(`${url}/api/product/list`),
-        axios.get(`${url}/api/users/list`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        axios.get('/order/list'),
+        axios.get('/product/list'),
+        axios.get('/users/list'),
       ]);
 
       if (ordersRes.data.success) {
         const orders = ordersRes.data.data;
         const products = productsRes.data.data || [];
+        const users = usersRes.data.data || [];
 
-        // حساب الإحصائيات المتقدمة
         const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
         const averageOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
         
@@ -89,87 +77,92 @@ const Dashboard = () => {
         const completedOrders = orders.filter(o => o.status === 'delivered').length;
         const cancelledOrders = orders.filter(o => o.status === 'cancelled').length;
 
-        // حساب إحصائيات اليوم
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const todayOrdersArr = orders.filter(o => new Date(o.createdAt) >= today);
         const todayRevenue = todayOrdersArr.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
 
-        // حساب إحصائيات الأسبوع
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayOrdersArr = orders.filter(o => {
+          const date = new Date(o.createdAt);
+          return date >= yesterday && date < today;
+        });
+        const yesterdayRevenue = yesterdayOrdersArr.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
         weekAgo.setHours(0, 0, 0, 0);
         const weekOrdersArr = orders.filter(o => new Date(o.createdAt) >= weekAgo);
         const weekRevenue = weekOrdersArr.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
 
-        // حساب إحصائيات الشهر
+        const lastWeekStart = new Date(weekAgo);
+        lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+        const lastWeekOrdersArr = orders.filter(o => {
+          const date = new Date(o.createdAt);
+          return date >= lastWeekStart && date < weekAgo;
+        });
+        const lastWeekRevenue = lastWeekOrdersArr.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
         const monthAgo = new Date();
         monthAgo.setDate(monthAgo.getDate() - 30);
         monthAgo.setHours(0, 0, 0, 0);
         const monthOrdersArr = orders.filter(o => new Date(o.createdAt) >= monthAgo);
         const monthRevenue = monthOrdersArr.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
 
+        const lastMonthStart = new Date(monthAgo);
+        lastMonthStart.setDate(lastMonthStart.getDate() - 30);
+        const lastMonthOrdersArr = orders.filter(o => {
+          const date = new Date(o.createdAt);
+          return date >= lastMonthStart && date < monthAgo;
+        });
+        const lastMonthRevenue = lastMonthOrdersArr.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
+        const growthRate = lastWeekOrdersArr.length > 0 
+          ? ((weekOrdersArr.length - lastWeekOrdersArr.length) / lastWeekOrdersArr.length) * 100 
+          : weekOrdersArr.length > 0 ? 100 : 0;
+
+        const revenueGrowthRate = lastWeekRevenue > 0
+          ? ((weekRevenue - lastWeekRevenue) / lastWeekRevenue) * 100
+          : weekRevenue > 0 ? 100 : 0;
+
         setStats({
           totalOrders: orders.length,
           totalRevenue,
           totalProducts: products.length,
-          totalUsers: usersRes.data.data?.length || 0,
+          totalUsers: users.length,
           pendingOrders,
           processingOrders,
           completedOrders,
           cancelledOrders,
           todayOrders: todayOrdersArr.length,
           todayRevenue,
+          yesterdayOrders: yesterdayOrdersArr.length,
+          yesterdayRevenue,
           weekOrders: weekOrdersArr.length,
           weekRevenue,
+          lastWeekOrders: lastWeekOrdersArr.length,
+          lastWeekRevenue,
           monthOrders: monthOrdersArr.length,
           monthRevenue,
+          lastMonthOrders: lastMonthOrdersArr.length,
+          lastMonthRevenue,
           averageOrderValue,
+          growthRate,
+          revenueGrowthRate,
         });
-
-        // أحدث 5 طلبات
-        const recentOrdersArr = orders
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-          .slice(0, 5);
-        setRecentOrders(recentOrdersArr);
-
-        // أشهر 5 منتجات (حسب عدد المبيعات)
-        const productSales = {};
-        orders.forEach(order => {
-          order.items?.forEach(item => {
-            if (productSales[item.productId]) {
-              productSales[item.productId].quantity += item.quantity;
-              productSales[item.productId].revenue += item.price * item.quantity;
-            } else {
-              productSales[item.productId] = {
-                name: item.name,
-                quantity: item.quantity,
-                revenue: item.price * item.quantity,
-                image: item.image,
-              };
-            }
-          });
-        });
-
-        const topProductsArr = Object.values(productSales)
-          .sort((a, b) => b.quantity - a.quantity)
-          .slice(0, 5);
-        setTopProducts(topProductsArr);
       }
 
       setLoading(false);
       setRefreshing(false);
       
       if (isRefresh) {
-        toast.success('تم تحديث البيانات بنجاح');
+        toast.success('✨ تم تحديث الإحصائيات بنجاح');
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       setLoading(false);
       setRefreshing(false);
-      if (isRefresh) {
-        toast.error('فشل تحديث البيانات');
-      }
     }
   };
 
@@ -177,392 +170,431 @@ const Dashboard = () => {
     fetchDashboardData(true);
   };
 
-  // =====================
-  // Components
-  // =====================
-
-  const StatCard = ({ icon: Icon, title, value, subtitle, trend, trendValue, bgColor, iconColor, onClick }) => (
-    <div 
-      className={`group bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 hover:border-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 ${onClick ? 'cursor-pointer' : ''}`}
-      onClick={onClick}
-    >
-      <div className="flex items-start justify-between mb-4">
-        <div className={`w-14 h-14 ${bgColor} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-          <Icon className={`w-7 h-7 ${iconColor}`} />
-        </div>
-        {trend && (
-          <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${
-            trend === 'up' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-          }`}>
-            {trend === 'up' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-            {trendValue}%
-          </div>
-        )}
-      </div>
-      <p className="text-gray-400 text-sm font-medium mb-2">{title}</p>
-      <p className="text-3xl font-black text-white mb-1">{value}</p>
-      {subtitle && (
-        <p className="text-sm text-gray-500">{subtitle}</p>
-      )}
-    </div>
-  );
-
-  const TimeRangeCard = ({ title, orders, revenue, icon: Icon, color }) => (
-    <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/10 p-4 hover:border-purple-500/20 transition-all">
-      <div className="flex items-center gap-3 mb-3">
-        <div className={`w-10 h-10 ${color} rounded-lg flex items-center justify-center`}>
-          <Icon className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <p className="text-gray-400 text-xs">{title}</p>
-          <p className="text-white font-bold text-lg">{orders} طلب</p>
-        </div>
-      </div>
-      <div className="flex items-center justify-between">
-        <p className="text-green-400 font-bold">{revenue.toFixed(2)} ج.م</p>
-        <ArrowRight className="w-4 h-4 text-gray-500" />
-      </div>
-    </div>
-  );
-
-  const getStatusBg = (status) => {
-    const colors = {
-      pending: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-      processing: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-      shipped: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-      delivered: 'bg-green-500/20 text-green-400 border-green-500/30',
-      cancelled: 'bg-red-500/20 text-red-400 border-red-500/30',
-    };
-    return colors[status] || colors.pending;
-  };
-
-  const getStatusLabel = (status) => {
-    const labels = {
-      pending: 'قيد الانتظار',
-      processing: 'قيد المعالجة',
-      shipped: 'تم الشحن',
-      delivered: 'تم التوصيل',
-      cancelled: 'ملغي',
-    };
-    return labels[status] || status;
-  };
-
-  // =====================
-  // Loading State
-  // =====================
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <Loader2 className="w-16 h-16 animate-spin text-purple-400 mx-auto mb-4" />
-          <p className="text-gray-400 text-lg">جارٍ تحميل البيانات...</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        {/* خلفية ثابتة */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-purple-950/30 to-slate-950"></div>
+
+        <div className="relative text-center">
+          <div className="relative w-32 h-32 mx-auto mb-8">
+            <div className="absolute inset-0 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
+            <div className="absolute inset-2 border-4 border-pink-500/30 border-t-pink-500 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <BarChart3 className="w-12 h-12 text-purple-400" />
+            </div>
+          </div>
+          <h2 className="text-3xl font-black text-white mb-2">جاري تحميل الإحصائيات</h2>
+          <p className="text-gray-400 text-lg">يرجى الانتظار...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 md:p-10 max-w-[1600px] mx-auto">
-      {/* ===================== */}
-      {/* Header */}
-      {/* ===================== */}
-      <div className="mb-10">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-4xl font-black text-white mb-3 flex items-center gap-3">
-              <BarChart3 className="w-10 h-10 text-purple-400" />
-              لوحة التحكم
-            </h1>
-            <p className="text-gray-400 text-lg">مرحباً بك في لوحة إدارة المتجر</p>
-          </div>
-          
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-semibold transition-all disabled:opacity-50"
-          >
-            <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-            تحديث
-          </button>
-        </div>
-
-        {/* Quick Time Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <TimeRangeCard 
-            title="اليوم"
-            orders={stats.todayOrders}
-            revenue={stats.todayRevenue}
-            icon={Activity}
-            color="bg-gradient-to-br from-cyan-500 to-blue-600"
-          />
-          <TimeRangeCard 
-            title="آخر 7 أيام"
-            orders={stats.weekOrders}
-            revenue={stats.weekRevenue}
-            icon={Calendar}
-            color="bg-gradient-to-br from-purple-500 to-pink-600"
-          />
-          <TimeRangeCard 
-            title="آخر 30 يوم"
-            orders={stats.monthOrders}
-            revenue={stats.monthRevenue}
-            icon={TrendingUpIcon}
-            color="bg-gradient-to-br from-orange-500 to-red-600"
-          />
-        </div>
+    <div className="min-h-screen bg-slate-950 relative">
+      {/* خلفية ثابتة - بدون حركة */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-950"></div>
+        {/* دوائر ثابتة - بدون animate-float */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl"></div>
       </div>
 
-      {/* ===================== */}
-      {/* Main Stats Grid */}
-      {/* ===================== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard
-          icon={DollarSign}
-          title="إجمالي الإيرادات"
-          value={`${(stats.totalRevenue || 0).toFixed(2)} ج.م`}
-          subtitle={`متوسط الطلب: ${(stats.averageOrderValue || 0).toFixed(2)} ج.م`}
-          bgColor="bg-gradient-to-br from-green-500 to-emerald-600"
-          iconColor="text-white"
-          trend="up"
-          trendValue="12.5"
-        />
-        
-        <StatCard
-          icon={ShoppingCart}
-          title="إجمالي الطلبات"
-          value={stats.totalOrders || 0}
-          subtitle={`اليوم: ${stats.todayOrders || 0} طلب`}
-          bgColor="bg-gradient-to-br from-blue-500 to-cyan-600"
-          iconColor="text-white"
-          trend="up"
-          trendValue="8.3"
-          onClick={() => navigate('/admin/orders')}
-        />
-        
-        <StatCard
-          icon={Package}
-          title="إجمالي المنتجات"
-          value={stats.totalProducts || 0}
-          bgColor="bg-gradient-to-br from-purple-500 to-pink-600"
-          iconColor="text-white"
-          onClick={() => navigate('/admin/list')}
-        />
-        
-        <StatCard
-          icon={Users}
-          title="إجمالي المستخدمين"
-          value={stats.totalUsers || 0}
-          bgColor="bg-gradient-to-br from-orange-500 to-red-600"
-          iconColor="text-white"
-          onClick={() => navigate('/admin/users')}
-        />
-      </div>
+      <div className="relative p-4 md:p-6 lg:p-10 max-w-[1800px] mx-auto">
+        {/* HEADER */}
+        <div className="mb-12">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="relative">
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 backdrop-blur-xl border border-purple-500/30 rounded-full">
+                  <BarChart3 className="w-4 h-4 text-purple-400" />
+                  <span className="text-sm font-bold text-purple-300">مرحباً بك، {user?.name || 'Admin'}</span>
+                  <Crown className="w-4 h-4 text-yellow-400" />
+                </div>
 
-      {/* ===================== */}
-      {/* Order Status Cards */}
-      {/* ===================== */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 hover:border-green-500/30 transition-all">
-          <div className="flex items-center gap-4 mb-3">
-            <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-green-400" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">طلبات مكتملة</p>
-              <p className="text-3xl font-black text-white">{stats.completedOrders || 0}</p>
-            </div>
-          </div>
-          <div className="w-full bg-white/10 rounded-full h-2">
-            <div 
-              className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${stats.totalOrders ? (stats.completedOrders / stats.totalOrders) * 100 : 0}%` }}
-            />
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {stats.totalOrders ? ((stats.completedOrders / stats.totalOrders) * 100).toFixed(1) : 0}% من الإجمالي
-          </p>
-        </div>
-
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 hover:border-yellow-500/30 transition-all">
-          <div className="flex items-center gap-4 mb-3">
-            <div className="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center">
-              <Clock className="w-6 h-6 text-yellow-400" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">قيد الانتظار</p>
-              <p className="text-3xl font-black text-white">{stats.pendingOrders || 0}</p>
-            </div>
-          </div>
-          <div className="w-full bg-white/10 rounded-full h-2">
-            <div 
-              className="bg-gradient-to-r from-yellow-500 to-orange-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${stats.totalOrders ? (stats.pendingOrders / stats.totalOrders) * 100 : 0}%` }}
-            />
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {stats.totalOrders ? ((stats.pendingOrders / stats.totalOrders) * 100).toFixed(1) : 0}% من الإجمالي
-          </p>
-        </div>
-
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 hover:border-blue-500/30 transition-all">
-          <div className="flex items-center gap-4 mb-3">
-            <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-              <Activity className="w-6 h-6 text-blue-400" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">قيد المعالجة</p>
-              <p className="text-3xl font-black text-white">{stats.processingOrders || 0}</p>
-            </div>
-          </div>
-          <div className="w-full bg-white/10 rounded-full h-2">
-            <div 
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${stats.totalOrders ? (stats.processingOrders / stats.totalOrders) * 100 : 0}%` }}
-            />
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {stats.totalOrders ? ((stats.processingOrders / stats.totalOrders) * 100).toFixed(1) : 0}% من الإجمالي
-          </p>
-        </div>
-
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 hover:border-red-500/30 transition-all">
-          <div className="flex items-center gap-4 mb-3">
-            <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
-              <XCircle className="w-6 h-6 text-red-400" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">طلبات ملغاة</p>
-              <p className="text-3xl font-black text-white">{stats.cancelledOrders || 0}</p>
-            </div>
-          </div>
-          <div className="w-full bg-white/10 rounded-full h-2">
-            <div 
-              className="bg-gradient-to-r from-red-500 to-pink-500 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${stats.totalOrders ? (stats.cancelledOrders / stats.totalOrders) * 100 : 0}%` }}
-            />
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {stats.totalOrders ? ((stats.cancelledOrders / stats.totalOrders) * 100).toFixed(1) : 0}% من الإجمالي
-          </p>
-        </div>
-      </div>
-
-      {/* ===================== */}
-      {/* Two Column Layout */}
-      {/* ===================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Recent Orders */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-              <ShoppingCart className="w-7 h-7 text-purple-400" />
-              أحدث الطلبات
-            </h2>
-            <button 
-              onClick={() => navigate('/admin/orders')}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg shadow-purple-500/30"
-            >
-              <Eye className="w-4 h-4" />
-              عرض الكل
-            </button>
-          </div>
-
-          {recentOrders.length === 0 ? (
-            <div className="text-center py-12">
-              <AlertCircle className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">لا توجد طلبات حتى الآن</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentOrders.map((order) => (
-                <div 
-                  key={order._id}
-                  className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-purple-500/30 hover:bg-white/10 transition-all cursor-pointer"
-                  onClick={() => navigate('/admin/orders')}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                        <ShoppingBag className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-white">{order.userName}</p>
-                        <p className="text-xs text-gray-400">{order.userEmail}</p>
-                      </div>
-                    </div>
-                    <span className={`px-3 py-1 rounded-lg text-xs font-bold border ${getStatusBg(order.status)}`}>
-                      {getStatusLabel(order.status)}
+                <h1 className="text-6xl font-black text-white leading-tight">
+                  لوحة الإحصائيات
+                </h1>
+                
+                <div className="flex items-center gap-4 text-gray-400">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-purple-400" />
+                    <span className="text-lg font-semibold">
+                      {new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-gray-400">
-                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString('ar-EG') : '-'}
-                    </p>
-                    <p className="font-bold text-green-400">{(order.totalAmount || 0).toFixed(2)} ج.م</p>
-                  </div>
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span className="text-sm font-bold text-green-400">مباشر</span>
                 </div>
-              ))}
+              </div>
             </div>
-          )}
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="group relative px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-2xl font-bold transition-all duration-300 shadow-xl shadow-purple-500/50 hover:shadow-purple-500/70 hover:scale-105 disabled:opacity-50"
+              >
+                <div className="relative flex items-center gap-2">
+                  <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+                  <span>{refreshing ? 'جاري التحديث...' : 'تحديث'}</span>
+                </div>
+              </button>
+
+              <button className="group relative px-6 py-3 bg-slate-800 border border-slate-700 hover:border-cyan-500/50 text-white rounded-2xl font-bold transition-all duration-300 hover:scale-105">
+                <div className="relative flex items-center gap-2">
+                  <Download className="w-5 h-5" />
+                  <span>تصدير</span>
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Top Products */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-              <Star className="w-7 h-7 text-yellow-400" />
-              أكثر المنتجات مبيعاً
-            </h2>
-            <button 
-              onClick={() => navigate('/admin/list')}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg shadow-yellow-500/30"
+        {/* MAIN STATISTICS - 4 Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {[
+            { 
+              title: 'إجمالي الطلبات',
+              value: stats.totalOrders,
+              change: stats.growthRate,
+              subtitle: `${stats.weekOrders} هذا الأسبوع`,
+              icon: ShoppingCart,
+              gradient: 'from-purple-500 to-purple-600',
+              bgGradient: 'from-purple-500/10 to-purple-600/5',
+            },
+            { 
+              title: 'إجمالي الإيرادات',
+              value: `${stats.totalRevenue.toFixed(0)}`,
+              change: stats.revenueGrowthRate,
+              subtitle: `${stats.weekRevenue.toFixed(0)} ج.م`,
+              icon: DollarSign,
+              gradient: 'from-green-500 to-emerald-600',
+              bgGradient: 'from-green-500/10 to-emerald-600/5',
+              suffix: 'ج.م',
+            },
+            { 
+              title: 'إجمالي المنتجات',
+              value: stats.totalProducts,
+              change: 0,
+              subtitle: 'منتج نشط',
+              icon: Package,
+              gradient: 'from-blue-500 to-cyan-600',
+              bgGradient: 'from-blue-500/10 to-cyan-600/5',
+            },
+            { 
+              title: 'إجمالي المستخدمين',
+              value: stats.totalUsers,
+              change: 0,
+              subtitle: 'مستخدم مسجل',
+              icon: Users,
+              gradient: 'from-cyan-500 to-blue-600',
+              bgGradient: 'from-cyan-500/10 to-blue-600/5',
+            },
+          ].map((stat, index) => (
+            <div 
+              key={index}
+              className="group relative"
             >
-              <Eye className="w-4 h-4" />
-              عرض الكل
-            </button>
-          </div>
-
-          {topProducts.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg">لا توجد مبيعات بعد</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {topProducts.map((product, index) => (
-                <div 
-                  key={index}
-                  className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-yellow-500/30 hover:bg-white/10 transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        {product.image ? (
-                          <img 
-                            src={product.image} 
-                            alt={product.name}
-                            className="w-12 h-12 rounded-lg object-cover"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                            <Package className="w-6 h-6 text-white" />
-                          </div>
-                        )}
-                        <div className="absolute -top-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-xs font-bold text-white border-2 border-slate-900">
-                          {index + 1}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-white">{product.name}</p>
-                        <p className="text-xs text-gray-400">{product.quantity} مبيعة</p>
-                      </div>
+              <div className={`absolute -inset-0.5 bg-gradient-to-r ${stat.gradient} opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-500 rounded-3xl`}></div>
+              
+              <div className="relative h-full bg-slate-900 border border-slate-800 group-hover:border-slate-700 rounded-3xl p-6 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
+                <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl`}></div>
+                
+                <div className="relative space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className={`p-4 bg-gradient-to-br ${stat.gradient} rounded-2xl shadow-xl group-hover:scale-110 transition-transform duration-300`}>
+                      <stat.icon className="w-8 h-8 text-white" />
                     </div>
-                    <p className="font-bold text-green-400">{(product.revenue || 0).toFixed(2)} ج.م</p>
+                    {stat.change !== 0 && (
+                      <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full ${stat.change >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                        {stat.change >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                        <span className="text-xs font-black">{Math.abs(stat.change).toFixed(1)}%</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-400 font-bold mb-2">{stat.title}</p>
+                    <p className="text-5xl font-black text-white mb-1">
+                      {stat.value}{stat.suffix && <span className="text-2xl"> {stat.suffix}</span>}
+                    </p>
+                    <p className="text-sm text-gray-500 font-semibold">{stat.subtitle}</p>
+                  </div>
+
+                  <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full bg-gradient-to-r ${stat.gradient} rounded-full`}
+                      style={{ width: '70%' }}
+                    ></div>
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
-          )}
+          ))}
+        </div>
+
+        {/* ORDER STATUS - 4 Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {[
+            { status: 'completed', icon: CheckCircle, label: 'تم التوصيل', count: stats.completedOrders, color: 'green', gradient: 'from-green-500 via-emerald-500 to-green-600', emoji: '✅' },
+            { status: 'pending', icon: Clock, label: 'قيد الانتظار', count: stats.pendingOrders, color: 'yellow', gradient: 'from-yellow-500 via-orange-500 to-yellow-600', emoji: '⏳' },
+            { status: 'processing', icon: Activity, label: 'قيد المعالجة', count: stats.processingOrders, color: 'blue', gradient: 'from-blue-500 via-cyan-500 to-blue-600', emoji: '⚡' },
+            { status: 'cancelled', icon: XCircle, label: 'ملغي', count: stats.cancelledOrders, color: 'red', gradient: 'from-red-500 via-pink-500 to-red-600', emoji: '❌' },
+          ].map(({ status, icon: Icon, label, count, color, gradient, emoji }, index) => {
+            const percentage = stats.totalOrders ? (count / stats.totalOrders) * 100 : 0;
+            return (
+              <div key={status} className="group relative">
+                <div className={`absolute -inset-0.5 bg-gradient-to-r ${gradient} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500 rounded-2xl`}></div>
+                
+                <div className="relative bg-slate-900 border border-slate-800 group-hover:border-slate-700 rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className={`p-3 bg-${color}-500/20 rounded-xl border border-${color}-500/40 group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon className={`w-6 h-6 text-${color}-400`} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-sm text-gray-400 font-bold">{label}</p>
+                        <span className="text-lg">{emoji}</span>
+                      </div>
+                      <p className="text-4xl font-black text-white">{count || 0}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="relative h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div 
+                      className={`absolute inset-y-0 left-0 bg-gradient-to-r ${gradient} rounded-full transition-all duration-1000`}
+                      style={{ width: `${percentage}%` }}
+                    ></div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mt-3">
+                    <p className="text-xs text-gray-500 font-black">{percentage.toFixed(1)}%</p>
+                    <p className="text-xs text-gray-600 font-bold">من الإجمالي</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ADVANCED STATISTICS */}
+        <div className="space-y-6">
+          {/* Row 1 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Today vs Yesterday */}
+            <div className="group relative">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-red-500 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500 rounded-3xl"></div>
+              
+              <div className="relative bg-slate-900 border border-slate-800 rounded-3xl p-8 hover:shadow-2xl transition-all duration-300">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-lg">
+                      <Calendar className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-black text-white">اليوم مقابل أمس</h2>
+                      <p className="text-sm text-gray-400 font-semibold">مقارنة الأداء اليومي</p>
+                    </div>
+                  </div>
+                  <Target className="w-8 h-8 text-orange-400" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-2xl border border-slate-700">
+                      <div>
+                        <p className="text-sm text-gray-400 font-bold mb-1">طلبات اليوم</p>
+                        <p className="text-3xl font-black text-white">{stats.todayOrders}</p>
+                      </div>
+                      <ShoppingBag className="w-8 h-8 text-orange-400" />
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-2xl border border-slate-700">
+                      <div>
+                        <p className="text-sm text-gray-400 font-bold mb-1">إيرادات اليوم</p>
+                        <p className="text-2xl font-black text-green-400">{stats.todayRevenue.toFixed(0)} ج.م</p>
+                      </div>
+                      <CreditCard className="w-8 h-8 text-green-400" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl border border-slate-700">
+                      <div>
+                        <p className="text-sm text-gray-500 font-bold mb-1">طلبات أمس</p>
+                        <p className="text-3xl font-black text-gray-500">{stats.yesterdayOrders}</p>
+                      </div>
+                      <ShoppingBag className="w-8 h-8 text-gray-600" />
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl border border-slate-700">
+                      <div>
+                        <p className="text-sm text-gray-500 font-bold mb-1">إيرادات أمس</p>
+                        <p className="text-2xl font-black text-gray-500">{stats.yesterdayRevenue.toFixed(0)} ج.م</p>
+                      </div>
+                      <CreditCard className="w-8 h-8 text-gray-600" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 p-4 bg-orange-500/5 rounded-2xl border border-orange-500/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-gray-300">الفرق</span>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-400 font-semibold">الطلبات:</span>
+                        <span className={`text-lg font-black ${stats.todayOrders >= stats.yesterdayOrders ? 'text-green-400' : 'text-red-400'}`}>
+                          {stats.todayOrders >= stats.yesterdayOrders ? '+' : ''}{stats.todayOrders - stats.yesterdayOrders}
+                        </span>
+                      </div>
+                      <div className="w-px h-6 bg-slate-700"></div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-400 font-semibold">الإيرادات:</span>
+                        <span className={`text-lg font-black ${stats.todayRevenue >= stats.yesterdayRevenue ? 'text-green-400' : 'text-red-400'}`}>
+                          {stats.todayRevenue >= stats.yesterdayRevenue ? '+' : ''}{(stats.todayRevenue - stats.yesterdayRevenue).toFixed(0)} ج.م
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Week vs Last Week */}
+            <div className="group relative">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500 rounded-3xl"></div>
+              
+              <div className="relative bg-slate-900 border border-slate-800 rounded-3xl p-8 hover:shadow-2xl transition-all duration-300">
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl shadow-lg">
+                      <TrendingUp className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-black text-white">الأسبوع الحالي vs الماضي</h2>
+                      <p className="text-sm text-gray-400 font-semibold">مقارنة الأداء الأسبوعي</p>
+                    </div>
+                  </div>
+                  <BarChart3 className="w-8 h-8 text-blue-400" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-2xl border border-slate-700">
+                      <div>
+                        <p className="text-sm text-gray-400 font-bold mb-1">هذا الأسبوع</p>
+                        <p className="text-3xl font-black text-white">{stats.weekOrders}</p>
+                      </div>
+                      <Zap className="w-8 h-8 text-blue-400" />
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-2xl border border-slate-700">
+                      <div>
+                        <p className="text-sm text-gray-400 font-bold mb-1">إيرادات الأسبوع</p>
+                        <p className="text-2xl font-black text-green-400">{stats.weekRevenue.toFixed(0)} ج.م</p>
+                      </div>
+                      <DollarSign className="w-8 h-8 text-green-400" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl border border-slate-700">
+                      <div>
+                        <p className="text-sm text-gray-500 font-bold mb-1">الأسبوع الماضي</p>
+                        <p className="text-3xl font-black text-gray-500">{stats.lastWeekOrders}</p>
+                      </div>
+                      <Zap className="w-8 h-8 text-gray-600" />
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl border border-slate-700">
+                      <div>
+                        <p className="text-sm text-gray-500 font-bold mb-1">إيرادات الأسبوع الماضي</p>
+                        <p className="text-2xl font-black text-gray-500">{stats.lastWeekRevenue.toFixed(0)} ج.م</p>
+                      </div>
+                      <DollarSign className="w-8 h-8 text-gray-600" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 p-4 bg-blue-500/5 rounded-2xl border border-blue-500/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-gray-300">معدل النمو</span>
+                    <div className="flex items-center gap-3">
+                      <div className={`flex items-center gap-2 px-4 py-2 rounded-xl ${stats.growthRate >= 0 ? 'bg-green-500/20 border border-green-500/40' : 'bg-red-500/20 border border-red-500/40'}`}>
+                        {stats.growthRate >= 0 ? <TrendingUp className="w-5 h-5 text-green-400" /> : <TrendingDown className="w-5 h-5 text-red-400" />}
+                        <span className={`text-xl font-black ${stats.growthRate >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {stats.growthRate >= 0 ? '+' : ''}{stats.growthRate.toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: Month Statistics */}
+          <div className="group relative">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500 rounded-3xl"></div>
+            
+            <div className="relative bg-slate-900 border border-slate-800 rounded-3xl p-8 hover:shadow-2xl transition-all duration-300">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-lg">
+                    <PieChart className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-white">إحصائيات الشهر</h2>
+                    <p className="text-sm text-gray-400 font-semibold">آخر 30 يوم</p>
+                  </div>
+                </div>
+                <Award className="w-8 h-8 text-purple-400" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-2 bg-purple-500/20 rounded-xl">
+                      <ShoppingCart className="w-6 h-6 text-purple-400" />
+                    </div>
+                    <span className="text-xs font-bold text-purple-400 px-3 py-1 bg-purple-500/10 rounded-full border border-purple-500/30">
+                      30 يوم
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-400 font-bold mb-2">طلبات الشهر</p>
+                  <p className="text-4xl font-black text-white mb-2">{stats.monthOrders}</p>
+                  <p className="text-xs text-gray-500 font-semibold">الشهر الماضي: {stats.lastMonthOrders}</p>
+                </div>
+
+                <div className="p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-2 bg-green-500/20 rounded-xl">
+                      <DollarSign className="w-6 h-6 text-green-400" />
+                    </div>
+                    <span className="text-xs font-bold text-green-400 px-3 py-1 bg-green-500/10 rounded-full border border-green-500/30">
+                      30 يوم
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-400 font-bold mb-2">إيرادات الشهر</p>
+                  <p className="text-4xl font-black text-green-400 mb-2">{stats.monthRevenue.toFixed(0)}</p>
+                  <p className="text-xs text-gray-500 font-semibold">الشهر الماضي: {stats.lastMonthRevenue.toFixed(0)} ج.م</p>
+                </div>
+
+                <div className="p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-2 bg-cyan-500/20 rounded-xl">
+                      <Percent className="w-6 h-6 text-cyan-400" />
+                    </div>
+                    <span className="text-xs font-bold text-cyan-400 px-3 py-1 bg-cyan-500/10 rounded-full border border-cyan-500/30">
+                      متوسط
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-400 font-bold mb-2">متوسط قيمة الطلب</p>
+                  <p className="text-4xl font-black text-cyan-400 mb-2">{stats.averageOrderValue.toFixed(0)}</p>
+                  <p className="text-xs text-gray-500 font-semibold">جنيه مصري</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
