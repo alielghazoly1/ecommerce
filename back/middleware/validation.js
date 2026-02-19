@@ -106,17 +106,33 @@ export const validateProduct = (req, res, next) => {
     errors.push('Description must be at least 10 characters');
   }
 
-  // Price validation
+  // Price validation (سعر البيع الفعلي)
   if (!price) {
-    errors.push('Price is required');
+    errors.push('سعر البيع مطلوب');
   } else {
     const priceNum = Number(price);
     if (isNaN(priceNum)) {
-      errors.push('Price must be a valid number');
+      errors.push('سعر البيع يجب أن يكون رقماً');
     } else if (priceNum < 0) {
-      errors.push('Price must be positive');
+      errors.push('سعر البيع يجب أن يكون موجباً');
     } else if (priceNum > 1000000) {
-      errors.push('Price must not exceed 1,000,000');
+      errors.push('سعر البيع تجاوز الحد الأقصى');
+    }
+  }
+
+  // originalPrice validation (السعر قبل الخصم)
+  if (req.body.originalPrice !== undefined && req.body.originalPrice !== null && req.body.originalPrice !== '') {
+    const origNum = Number(req.body.originalPrice);
+    if (isNaN(origNum) || origNum < 0) {
+      errors.push('السعر الأصلي يجب أن يكون رقماً موجباً');
+    }
+  }
+
+  // costPrice validation (سعر التكلفة/الاستيراد)
+  if (req.body.costPrice !== undefined && req.body.costPrice !== null && req.body.costPrice !== '') {
+    const costNum = Number(req.body.costPrice);
+    if (isNaN(costNum) || costNum < 0) {
+      errors.push('سعر التكلفة يجب أن يكون رقماً موجباً');
     }
   }
 

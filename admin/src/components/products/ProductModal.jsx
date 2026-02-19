@@ -32,10 +32,27 @@ const ProductModal = ({ product, onClose, onEdit }) => (
           </span>
         </div>
         <p className="text-gray-300 leading-relaxed">{product.description}</p>
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
           <div>
-            <p className="text-gray-500 text-sm mb-1">السعر</p>
-            <p className="text-2xl font-bold text-purple-400">{product.price} ج.م</p>
+            <p className="text-gray-500 text-sm mb-1">سعر البيع</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-2xl font-bold text-purple-400">{product.price} ج.م</p>
+              {product.originalPrice > product.price && (
+                <span className="text-sm text-gray-500 line-through">{product.originalPrice} ج.م</span>
+              )}
+            </div>
+            {product.discountPercentage > 0 && (
+              <span className="text-xs font-bold bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-lg mt-1 inline-block">خصم {product.discountPercentage}%</span>
+            )}
+          </div>
+          <div>
+            <p className="text-gray-500 text-sm mb-1">سعر التكلفة 🔒</p>
+            <p className="text-xl font-bold text-rose-400">{product.costPrice ? `${product.costPrice} ج.م` : '—'}</p>
+            {product.profitMargin != null && (
+              <p className={`text-xs font-bold mt-1 ${product.profitMargin >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                ربح: {product.profitMargin >= 0 ? '+' : ''}{product.profitMargin} ج.م ({product.profitMarginPct}%)
+              </p>
+            )}
           </div>
           <div>
             <p className="text-gray-500 text-sm mb-1">رقم المنتج</p>
