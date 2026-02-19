@@ -16,16 +16,16 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     // ✅ لا نضيف Authorization header - الـ Cookie سيُرسل تلقائياً
-    
+
     // لا نضيف Content-Type تلقائياً لـ multipart/form-data
     // axios سيقوم بإضافته تلقائياً مع boundary
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
-    
+
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // ─── Response Interceptor ────────────────────────────────────────────────
@@ -47,13 +47,16 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401) {
       // إعادة التوجيه لصفحة تسجيل الدخول فقط إذا لم نكن فيها بالفعل
       const currentPath = window.location.pathname;
-      if (currentPath !== '/admin/login' && !currentPath.includes('/admin/login')) {
+      if (
+        currentPath !== '/admin/login' &&
+        !currentPath.includes('/admin/login')
+      ) {
         window.location.href = '/admin/login';
       }
     }
-    
+
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosInstance;

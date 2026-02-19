@@ -25,7 +25,7 @@ import {
   Navigation,
   ExternalLink,
 } from 'lucide-react';
-import LocationPicker from '../components/Locationpicker';
+import LocationPicker from '../components/LocationPicker';
 
 const api = axios.create({ withCredentials: true });
 
