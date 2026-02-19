@@ -25,7 +25,7 @@ import {
   Navigation,
   ExternalLink,
 } from 'lucide-react';
-import LocationPicker from '../components/LocationPicker';
+import LocationPicker from '../components/Locationpicker';
 
 const api = axios.create({ withCredentials: true });
 
@@ -57,9 +57,13 @@ const TrackingBadge = ({ trackingNumber }) => {
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-all flex-shrink-0 active:scale-95"
         >
           {copied ? (
-            <><Check className="w-3.5 h-3.5" /> تم النسخ</>
+            <>
+              <Check className="w-3.5 h-3.5" /> تم النسخ
+            </>
           ) : (
-            <><Copy className="w-3.5 h-3.5" /> نسخ</>
+            <>
+              <Copy className="w-3.5 h-3.5" /> نسخ
+            </>
           )}
         </button>
       </div>
@@ -107,7 +111,9 @@ const OrderProgress = ({ status }) => {
               >
                 <Icon className="w-3.5 h-3.5" />
               </div>
-              <span className={`text-[10px] mt-1 font-medium ${isCompleted ? 'text-cyan-700' : 'text-gray-400'}`}>
+              <span
+                className={`text-[10px] mt-1 font-medium ${isCompleted ? 'text-cyan-700' : 'text-gray-400'}`}
+              >
                 {labels[step]}
               </span>
             </div>
@@ -125,7 +131,6 @@ const OrderProgress = ({ status }) => {
   );
 };
 
-
 // ─── Order Location Section ───────────────────────────────────────────────────
 // pending     → يضيف ويعدل الموقع بحرية
 // processing  → يشوف الموقع بس (view only)
@@ -133,13 +138,13 @@ const OrderProgress = ({ status }) => {
 
 const OrderLocationSection = ({ order, onLocationUpdate }) => {
   const { status } = order;
-  const canEdit   = status === 'pending';          // يعدل بس في pending
-  const viewOnly  = status === 'processing';       // يشوف بس
-  const isLocked  = ['shipped', 'delivered', 'cancelled'].includes(status);
+  const canEdit = status === 'pending'; // يعدل بس في pending
+  const viewOnly = status === 'processing'; // يشوف بس
+  const isLocked = ['shipped', 'delivered', 'cancelled'].includes(status);
 
   const [editLocation, setEditLocation] = useState(null);
-  const [saving, setSaving]             = useState(false);
-  const [showPicker, setShowPicker]     = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
 
   const handleSave = async () => {
     if (!editLocation?.latitude) return;
@@ -152,11 +157,14 @@ const OrderLocationSection = ({ order, onLocationUpdate }) => {
 
   // ── Helper: view card (used in view-only + locked modes) ──────────────────
   const LocationViewCard = ({ footerMsg, footerColor = 'amber' }) => {
-    const coords    = order.googleMapsLink.replace('https://www.google.com/maps?q=', '');
+    const coords = order.googleMapsLink.replace(
+      'https://www.google.com/maps?q=',
+      '',
+    );
     const placeName = order.shippingAddress?.location?.placeName;
     const footerColors = {
       amber: 'bg-amber-50 border-amber-100 text-amber-700',
-      blue:  'bg-blue-50  border-blue-100  text-blue-700',
+      blue: 'bg-blue-50  border-blue-100  text-blue-700',
     };
 
     return (
@@ -172,10 +180,15 @@ const OrderLocationSection = ({ order, onLocationUpdate }) => {
           <div className="flex items-center gap-2 min-w-0">
             <MapPin className="w-4 h-4 text-green-600 flex-shrink-0" />
             <div className="min-w-0">
-              {placeName
-                ? <p className="text-sm font-bold text-green-800 leading-snug">{placeName}</p>
-                : <p className="text-xs font-mono text-green-700 truncate">{coords}</p>
-              }
+              {placeName ? (
+                <p className="text-sm font-bold text-green-800 leading-snug">
+                  {placeName}
+                </p>
+              ) : (
+                <p className="text-xs font-mono text-green-700 truncate">
+                  {coords}
+                </p>
+              )}
             </div>
           </div>
           <a
@@ -191,7 +204,9 @@ const OrderLocationSection = ({ order, onLocationUpdate }) => {
 
         {/* Footer message */}
         {footerMsg && (
-          <div className={`px-3 py-2 border-t text-xs font-semibold ${footerColors[footerColor]}`}>
+          <div
+            className={`px-3 py-2 border-t text-xs font-semibold ${footerColors[footerColor]}`}
+          >
             {footerMsg}
           </div>
         )}
@@ -205,12 +220,22 @@ const OrderLocationSection = ({ order, onLocationUpdate }) => {
   if (order.googleMapsLink) {
     // processing → view only
     if (viewOnly) {
-      return <LocationViewCard footerColor="blue" footerMsg="⏳ طلبك قيد التجهيز — لا يمكن تعديل الموقع الآن" />;
+      return (
+        <LocationViewCard
+          footerColor="blue"
+          footerMsg="⏳ طلبك قيد التجهيز — لا يمكن تعديل الموقع الآن"
+        />
+      );
     }
 
     // shipped+ → locked
     if (isLocked) {
-      return <LocationViewCard footerColor="amber" footerMsg="🔒 تم شحن الطلب — لا يمكن تعديل الموقع" />;
+      return (
+        <LocationViewCard
+          footerColor="amber"
+          footerMsg="🔒 تم شحن الطلب — لا يمكن تعديل الموقع"
+        />
+      );
     }
 
     // pending → can edit
@@ -238,10 +263,18 @@ const OrderLocationSection = ({ order, onLocationUpdate }) => {
           <div className="flex items-center gap-2 min-w-0">
             <MapPin className="w-4 h-4 text-green-600 flex-shrink-0" />
             <div className="min-w-0">
-              {order.shippingAddress?.location?.placeName
-                ? <p className="text-sm font-bold text-green-800">{order.shippingAddress.location.placeName}</p>
-                : <p className="text-xs font-mono text-green-700 truncate">{order.googleMapsLink.replace('https://www.google.com/maps?q=', '')}</p>
-              }
+              {order.shippingAddress?.location?.placeName ? (
+                <p className="text-sm font-bold text-green-800">
+                  {order.shippingAddress.location.placeName}
+                </p>
+              ) : (
+                <p className="text-xs font-mono text-green-700 truncate">
+                  {order.googleMapsLink.replace(
+                    'https://www.google.com/maps?q=',
+                    '',
+                  )}
+                </p>
+              )}
             </div>
           </div>
           <a
@@ -258,8 +291,14 @@ const OrderLocationSection = ({ order, onLocationUpdate }) => {
         {/* Edit picker */}
         {showPicker && (
           <div className="px-3 pb-3 pt-2 border-t border-green-100 bg-white space-y-3">
-            <p className="text-xs text-gray-500 font-semibold">اختر الموقع الجديد من الخريطة أو اسحب البين:</p>
-            <LocationPicker value={editLocation} onChange={setEditLocation} disabled={false} />
+            <p className="text-xs text-gray-500 font-semibold">
+              اختر الموقع الجديد من الخريطة أو اسحب البين:
+            </p>
+            <LocationPicker
+              value={editLocation}
+              onChange={setEditLocation}
+              disabled={false}
+            />
             <div className="flex gap-2">
               <button
                 onClick={handleSave}
@@ -270,7 +309,10 @@ const OrderLocationSection = ({ order, onLocationUpdate }) => {
                 {saving ? 'جارٍ الحفظ...' : '💾 حفظ الموقع الجديد'}
               </button>
               <button
-                onClick={() => { setShowPicker(false); setEditLocation(null); }}
+                onClick={() => {
+                  setShowPicker(false);
+                  setEditLocation(null);
+                }}
                 className="px-4 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 text-sm font-bold hover:bg-gray-50 transition-colors"
               >
                 إلغاء
@@ -306,7 +348,11 @@ const OrderLocationSection = ({ order, onLocationUpdate }) => {
             تحديد موقع التوصيل
           </div>
           <div className="p-3 bg-white space-y-3">
-            <LocationPicker value={editLocation} onChange={setEditLocation} disabled={false} />
+            <LocationPicker
+              value={editLocation}
+              onChange={setEditLocation}
+              disabled={false}
+            />
             <div className="flex gap-2">
               <button
                 onClick={handleSave}
@@ -317,7 +363,10 @@ const OrderLocationSection = ({ order, onLocationUpdate }) => {
                 {saving ? 'جارٍ الحفظ...' : '💾 حفظ الموقع'}
               </button>
               <button
-                onClick={() => { setShowPicker(false); setEditLocation(null); }}
+                onClick={() => {
+                  setShowPicker(false);
+                  setEditLocation(null);
+                }}
                 className="px-4 py-2.5 rounded-xl border-2 border-gray-200 text-gray-600 text-sm font-bold hover:bg-gray-50 transition-colors"
               >
                 إلغاء
@@ -389,12 +438,16 @@ const OrderCard = ({ order, formatDate, formatPrice, onLocationUpdate }) => {
         {/* Header row */}
         <div className="flex items-start justify-between mb-4">
           <div>
-            <p className="text-[11px] text-gray-400 font-medium mb-0.5">رقم الطلب</p>
+            <p className="text-[11px] text-gray-400 font-medium mb-0.5">
+              رقم الطلب
+            </p>
             <p className="text-base font-extrabold text-gray-900 tracking-tight font-mono">
               {order.orderNumber || `#${order._id.slice(-8).toUpperCase()}`}
             </p>
           </div>
-          <span className={`text-xs font-bold px-3 py-1.5 rounded-full border ${cfg.pill} border-transparent`}>
+          <span
+            className={`text-xs font-bold px-3 py-1.5 rounded-full border ${cfg.pill} border-transparent`}
+          >
             {cfg.label}
           </span>
         </div>
@@ -412,9 +465,15 @@ const OrderCard = ({ order, formatDate, formatPrice, onLocationUpdate }) => {
           )}
           <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg">
             {order.paymentMethod === 'cash' ? (
-              <><Banknote className="w-3.5 h-3.5 text-green-500" /><span>كاش عند الاستلام</span></>
+              <>
+                <Banknote className="w-3.5 h-3.5 text-green-500" />
+                <span>كاش عند الاستلام</span>
+              </>
             ) : (
-              <><CreditCard className="w-3.5 h-3.5 text-blue-500" /><span>بطاقة</span></>
+              <>
+                <CreditCard className="w-3.5 h-3.5 text-blue-500" />
+                <span>بطاقة</span>
+              </>
             )}
           </div>
         </div>
@@ -422,32 +481,36 @@ const OrderCard = ({ order, formatDate, formatPrice, onLocationUpdate }) => {
         {/* Items preview - first item always visible */}
         {order.items?.length > 0 && (
           <div className="space-y-2 mb-4">
-            {(expanded ? order.items : order.items.slice(0, 1)).map((item, idx) => (
-              <div
-                key={item._id || idx}
-                className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 hover:bg-cyan-50/50 transition-colors"
-              >
-                {item.image && (
-                  <div className="w-14 h-14 bg-white rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-gray-100">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-contain p-1"
-                      loading="lazy"
-                    />
+            {(expanded ? order.items : order.items.slice(0, 1)).map(
+              (item, idx) => (
+                <div
+                  key={item._id || idx}
+                  className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 hover:bg-cyan-50/50 transition-colors"
+                >
+                  {item.image && (
+                    <div className="w-14 h-14 bg-white rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-gray-100">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-contain p-1"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">
+                      {item.name}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      الكمية: {item.quantity || 1}
+                    </p>
                   </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">
-                    {item.name}
+                  <p className="text-sm font-bold text-gray-800 flex-shrink-0">
+                    {formatPrice(item.price * (item.quantity || 1))}
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5">الكمية: {item.quantity || 1}</p>
                 </div>
-                <p className="text-sm font-bold text-gray-800 flex-shrink-0">
-                  {formatPrice(item.price * (item.quantity || 1))}
-                </p>
-              </div>
-            ))}
+              ),
+            )}
 
             {order.items.length > 1 && (
               <button
@@ -455,9 +518,14 @@ const OrderCard = ({ order, formatDate, formatPrice, onLocationUpdate }) => {
                 className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-cyan-600 hover:text-cyan-700 py-2 rounded-lg hover:bg-cyan-50 transition-all"
               >
                 {expanded ? (
-                  <><ChevronUp className="w-3.5 h-3.5" /> إخفاء المنتجات</>
+                  <>
+                    <ChevronUp className="w-3.5 h-3.5" /> إخفاء المنتجات
+                  </>
                 ) : (
-                  <><ChevronDown className="w-3.5 h-3.5" /> عرض {order.items.length - 1} منتجات أخرى</>
+                  <>
+                    <ChevronDown className="w-3.5 h-3.5" /> عرض{' '}
+                    {order.items.length - 1} منتجات أخرى
+                  </>
                 )}
               </button>
             )}
@@ -465,7 +533,9 @@ const OrderCard = ({ order, formatDate, formatPrice, onLocationUpdate }) => {
         )}
 
         {/* Tracking Number */}
-        {order.trackingNumber && <TrackingBadge trackingNumber={order.trackingNumber} />}
+        {order.trackingNumber && (
+          <TrackingBadge trackingNumber={order.trackingNumber} />
+        )}
 
         {/* Shipping Address */}
         {order.shippingAddress && (
@@ -476,7 +546,9 @@ const OrderCard = ({ order, formatDate, formatPrice, onLocationUpdate }) => {
                 <p className="text-xs text-gray-500 mb-0.5">عنوان التوصيل</p>
                 <p className="text-sm font-medium text-gray-700">
                   {order.shippingAddress.street}، {order.shippingAddress.city}
-                  {order.shippingAddress.country ? ` - ${order.shippingAddress.country}` : ''}
+                  {order.shippingAddress.country
+                    ? ` - ${order.shippingAddress.country}`
+                    : ''}
                 </p>
                 {order.shippingAddress.phone && (
                   <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
@@ -498,7 +570,10 @@ const OrderCard = ({ order, formatDate, formatPrice, onLocationUpdate }) => {
         {/* Footer total */}
         <div className="mt-5 pt-4 border-t border-dashed border-gray-200 flex items-center justify-between">
           <div className="text-xs text-gray-400">
-            <span className="font-medium text-gray-600">{order.itemsCount || order.items?.length || 0}</span> منتج
+            <span className="font-medium text-gray-600">
+              {order.itemsCount || order.items?.length || 0}
+            </span>{' '}
+            منتج
           </div>
           <div className="text-right">
             <p className="text-[10px] text-gray-400 mb-0.5">الإجمالي</p>
@@ -624,7 +699,10 @@ const MyOrders = () => {
   // Loading
   if (authLoading || loading) {
     return (
-      <section className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 px-4 sm:px-6 lg:px-8 py-12" dir="rtl">
+      <section
+        className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 px-4 sm:px-6 lg:px-8 py-12"
+        dir="rtl"
+      >
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <div className="w-16 h-16 bg-cyan-600 rounded-2xl mx-auto mb-4 animate-pulse" />
@@ -632,7 +710,9 @@ const MyOrders = () => {
             <div className="h-5 bg-gray-100 rounded-lg w-28 mx-auto animate-pulse" />
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => <OrderSkeleton key={i} />)}
+            {[1, 2, 3].map((i) => (
+              <OrderSkeleton key={i} />
+            ))}
           </div>
         </div>
       </section>
@@ -642,13 +722,18 @@ const MyOrders = () => {
   // Error
   if (error) {
     return (
-      <section className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-gray-100 px-6" dir="rtl">
+      <section
+        className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-gray-100 px-6"
+        dir="rtl"
+      >
         <div className="text-center bg-white rounded-3xl shadow-xl p-12 max-w-sm">
           <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <XCircle className="w-10 h-10 text-red-400" />
           </div>
           <h2 className="text-xl font-bold text-gray-800 mb-2">{error}</h2>
-          <p className="text-gray-500 text-sm mb-6">تحقق من اتصالك بالإنترنت وحاول مرة أخرى</p>
+          <p className="text-gray-500 text-sm mb-6">
+            تحقق من اتصالك بالإنترنت وحاول مرة أخرى
+          </p>
           <button
             onClick={fetchOrders}
             className="flex items-center gap-2 px-6 py-2.5 bg-cyan-600 text-white rounded-xl hover:bg-cyan-700 transition-colors mx-auto font-semibold"
@@ -667,7 +752,6 @@ const MyOrders = () => {
       dir="rtl"
     >
       <div className="max-w-7xl mx-auto">
-
         {/* ── Page Header ── */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 gap-4">
           <div className="flex items-center gap-4">
@@ -675,7 +759,9 @@ const MyOrders = () => {
               <ShoppingBag className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl sm:text-4xl font-black text-gray-900">طلباتي</h1>
+              <h1 className="text-3xl sm:text-4xl font-black text-gray-900">
+                طلباتي
+              </h1>
               <p className="text-gray-500 text-sm mt-0.5">
                 {orders.length > 0
                   ? `${orders.length} ${orders.length === 1 ? 'طلب' : 'طلبات'} مسجلة`
@@ -699,7 +785,9 @@ const MyOrders = () => {
               <div className="w-28 h-28 mx-auto mb-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full flex items-center justify-center shadow-inner">
                 <ShoppingBag className="w-14 h-14 text-gray-300" />
               </div>
-              <h3 className="text-2xl font-black text-gray-800 mb-3">لا توجد طلبات بعد</h3>
+              <h3 className="text-2xl font-black text-gray-800 mb-3">
+                لا توجد طلبات بعد
+              </h3>
               <p className="text-gray-500 mb-8 leading-relaxed">
                 ابدأ التسوق الآن واستمتع بأفضل تجربة شراء
               </p>
