@@ -1,0 +1,163 @@
+[33m9170b6e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeature/update-admin-dashboard[m[33m, [m[1;31morigin/feature/update-admin-dashboard[m[33m)[m update url production
+[33m58dfe0f[m `Added GPS location feature to admin and user interfaces`
+[33m44ae415[m refactor: replace Context API with Redux Toolkit for global state management
+[33mf557da7[m[33m ([m[1;32mmain[m[33m, [m[1;32mfeature/add-invoice[m[33m)[m A major development in the dashboard
+[33m7e0dc4f[m refactor(auth): replace localStorage JWT with HttpOnly cookie
+[33m3664967[m update fromatEGP for ceo
+[33m123c9a2[m update cart from forder group componants
+[33mdb63d5c[m update product
+[33m220671a[m Some performance modifications, code improvements and simplification, and the creation of a skeleton component.
+[33meb900e0[m update add productes skelton
+[33m1e3f7f5[m update
+[33mf091ddf[m up
+[33mcb5d310[m fix: vercel configuration
+[33m8896b15[m fix: restructure for Vercel deployment
+[33m8c6c2da[m fix: use Vercel API routes structure
+[33m7e68068[m fix: change model name from 'product' to 'Product'
+[33m9f05c5e[m update
+[33m8386c03[m update api link
+[33m6d7a9e2[m Update API URL to use HTTPS
+[33mb884419[m Update API URL in ShopContext
+[33m609892d[m update
+[33m6374fdf[m Fix server
+[33m9c35b20[m Fix: Simplify route imports and initialization
+[33m7973cd3[m Fix: Use Express 4.19.0 for Node 24 compatibility
+[33m406b73a[m `Removed negotiator module and its dependencies`
+[33m060580c[m Fix: Update multer, loosen node engine constraint
+[33m1e91ba4[m Fix: Update express to stable version 4.18.2
+[33m397277a[m Fix: Update express to stable version 4.18.2
+[33m7d857dd[m Fix: Add missing folders and security improvements
+[33m2c3ce45[m Fix: Railway port listening issue
+[33m8d31ef3[m Add missing files
+[33mc678709[m fix: use dynamic PORT for deployment
+[33mf072373[m Fix: Regenerated package-lock.json
+[33ma7a02ec[m update
+[33m5a77aef[m Refactor MongoDB connection handling in db.js
+[33m4f6b9cc[m Update package.json dependencies and engines
+[33mae94e2a[m Add memory limit to Vercel function configuration
+[33mb7331fb[m Optimize index.js for Vercel serverless deployment
+[33m2a545b1[m Downgrade express and serverless-http dependencies
+[33mabde512[m Add environment variable and function settings to vercel.json
+[33m63b9afb[m Remove app export for local development
+[33m7d272f7[m Change export to default for serverless handler
+[33md750c95[m Remove leading './' from index.js path
+[33m03aad54[m Initial commit
+[33mc52eaee[m fix: update cloudinary to v2.5.1
+[33m17930ca[m fix vercel
+[33ma5b6e11[m fix vercel
+[33m249b0b9[m fix: update cloudinary version
+[33ma13225c[m Fix cloudinary and clean install node_modules
+[33m9a06736[m Fix missing debug module and sync dependencies
+[33md1035e3[m Fix missing dependencies (debug)
+[33ma5122f7[m update
+[33m9dcedf2[m update
+[33m0f56113[m update
+[33md80c841[m[33m ([m[1;31morigin/rollback-to-old-commit[m[33m, [m[1;32mrollback-to-old-commit[m[33m)[m update ui
+[33m79cd048[m update
+[33m2bd47aa[m update form sample in form submit
+[33m83cbff8[m update back solve problem in remove product
+[33m8b43ac7[m update
+[33m9cbd809[m update offer
+[33mdce2f64[m  update
+[33m7a624a3[m add: Toast for add-to-cart & login redirect
+[33mda067e3[m feat: add reusable skeleton loaders for pages and components
+[33mda79448[m update
+[33mb251f90[m fix(build): resolve Verify page import path for Vercel build
+[33m0de594c[m update
+[33m037e923[m feat(ui): add account label under user icon and update log
+[33md90cbbb[m update
+[33m3a987a1[m update
+[33m9655a41[m Fix vercel routing and axios baseURL
+[33mf7cfb40[m Fix vercel routing and axios baseURL
+[33mff05a75[m update
+[33m90cd5e7[m ubdate
+[33mb24ca6a[m Fix: Define app before use
+[33md064143[m update
+[33m3652599[m Fix: Vercel timeout
+[33m35e309a[m ubdate
+[33m2b9af96[m update
+[33maf41dbd[m Fix Dashboard to handle undefined values and prevent crashes
+[33mb66e3ba[m update
+[33mc0c5636[m update
+[33m4337038[m ub
+[33m59ddf86[m ub
+[33m58cbf57[m update
+[33mf5539de[m Setup project environment and prepare for deployment
+[33md008d74[m fix: correct users API routes and align frontend requests
+[33mab0ea20[m update
+[33mab1eabd[m[33m ([m[1;31morigin/restore-f76205[m[33m, [m[1;32mrestore-f76205[m[33m)[m up
+[33ma16b7a7[m up
+[33m224631f[m up
+[33m8bd57ca[m update
+[33md00f481[m update
+[33medea7f7[m up
+[33m00eca43[m up
+[33m128c96f[m update back
+[33md9f003a[m up
+[33mcead79f[m update
+[33mfc50ea0[m update
+[33m34b74c6[m update
+[33m890840b[m update
+[33ma352aca[m update
+[33m7c65965[m update
+[33m9391080[m update
+[33m31a07bc[m up date
+[33mba591db[m update
+[33m460445e[m update
+[33me74d512[m update
+[33mec3fc9c[m update
+[33m1cf4789[m update
+[33m0b5310d[m eat: updated code with minor changes to db connection, routes, and package.json
+[33m235970f[m Update vercel.json configuration
+[33m72436d6[m Update vercel.json configuration
+[33m9042e5a[m Update package.json to reflect new Node and npm versions
+[33m0ae4cc0[m update
+[33m4aed11b[m git
+[33md148e8c[m ub date
+[33m6efa1c6[m update
+[33mb154886[m ubdate
+[33me614566[m ubdate
+[33m3320950[m ubate back
+[33m71a0243[m update
+[33me53e2c3[m ubdate code in packeage
+[33m4830620[m update index.js
+[33m2a6c500[m chore: deploy backend on Vercel with compression & CORS
+[33m1ea14d3[m ubdate back
+[33mfffe803[m feat(profile): add user profile page with cart summary and orders button
+[33m19020ad[m Modifying a lot of clean code
+[33m5133f26[m refactor(Product): clean UI, add alerts & copy link feature
+[33m8085c89[m chore: clean up and refactor today’s changes
+[33maaf6995[m `Updated various components with minor styling and functionality changes`
+[33m69d0cd7[m Feat: complete order & cart system overhaul with UI/UX improvements
+[33m3a3f579[m style(orders): improve UI and order card layout
+[33m91bde1b[m update
+[33mbec94b4[m feat: add users management (list, promote, demote, delete)
+[33mce2be79[m feat(users): implement user management endpoints and router
+[33m5edf80d[m update my order combonant
+[33mcdc228d[m We made some changes
+[33m6d264a2[m fix: correct order placement and validation flow
+[33m04e8e19[m refactor: enhance MyOrders UI and order handling logic
+[33m67716e6[m feat: add MyOrders page structure and fetch user orders
+[33mdfeba2f[m Add payment verification page with order status handling
+[33mb56bf00[m Fix orders fetching and status update logic
+[33m65baeec[m Add responsive admin sidebar with navigation and logout
+[33m5e0b358[m Initially, complete component login.
+[33m6e97c4a[m  Completing the component list and the ability to edit products
+[33mdf1303d[m finsh sentax in add.jsx
+[33mb962f29[m create add componant
+[33mb0686e3[m Finishing the backend section and creating the admin folder
+[33m5cad665[m update with ai in folder back end
+[33m5ec716a[m Supplementing some back-end JS files using AI
+[33m7a7a23d[m Using some backend codes with artificial intelligence
+[33m081d8fd[m Using some backend codes with artificial intelligence
+[33m10c325b[m Optimize categories rendering and fix transition bug
+[33m3971716[m Add color, size, and quantity selection to product page
+[33m548ae93[m Add product details page with lazy loading and cart integration
+[33m5c30266[m Create a login section without running the official logic, just UI/UX.
+[33mf8314ce[m The account creation process contained some errors, but these will be addressed later.
+[33me137e87[m The order completion components have been temporarily finalized and are being processed professionally
+[33mec2915c[m Building the basic structure of component order
+[33m32136c4[m After working on the cart and fixing some errors, and using the sum of products function coming from the context
+[33m1a5b44d[m Create a component cart and use context within it
+[33m2bd7753[m I need help with the footer section, some modifications, and creating a form for problems, comments, and anyone who wants to contact me
+[33m
