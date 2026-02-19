@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react';
-import LocationPicker from "../../components/LocationPicker"
+import LocationPicker from '../../components/Locationpicker';
 
 const ShippingForm = ({
   shipping,
@@ -31,10 +31,16 @@ const ShippingForm = ({
           onChange={(e) => updateShipping('street', e.target.value)}
           placeholder="مثال: 15 شارع النيل، الدور الثالث"
           className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
-            errors.street ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-cyan-500'
+            errors.street
+              ? 'border-red-400 focus:border-red-500'
+              : 'border-gray-300 focus:border-cyan-500'
           } focus:outline-none focus:ring-2 focus:ring-cyan-200`}
         />
-        {errors.street && <span className="text-xs text-red-500 mt-1 block">{errors.street}</span>}
+        {errors.street && (
+          <span className="text-xs text-red-500 mt-1 block">
+            {errors.street}
+          </span>
+        )}
       </div>
 
       {/* City */}
@@ -47,10 +53,14 @@ const ShippingForm = ({
           onChange={(e) => updateShipping('city', e.target.value)}
           placeholder="مثال: القاهرة"
           className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
-            errors.city ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-cyan-500'
+            errors.city
+              ? 'border-red-400 focus:border-red-500'
+              : 'border-gray-300 focus:border-cyan-500'
           } focus:outline-none focus:ring-2 focus:ring-cyan-200`}
         />
-        {errors.city && <span className="text-xs text-red-500 mt-1 block">{errors.city}</span>}
+        {errors.city && (
+          <span className="text-xs text-red-500 mt-1 block">{errors.city}</span>
+        )}
       </div>
 
       {/* Phone */}
@@ -64,10 +74,16 @@ const ShippingForm = ({
           placeholder="مثال: 01012345678"
           type="tel"
           className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
-            errors.phone ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-cyan-500'
+            errors.phone
+              ? 'border-red-400 focus:border-red-500'
+              : 'border-gray-300 focus:border-cyan-500'
           } focus:outline-none focus:ring-2 focus:ring-cyan-200`}
         />
-        {errors.phone && <span className="text-xs text-red-500 mt-1 block">{errors.phone}</span>}
+        {errors.phone && (
+          <span className="text-xs text-red-500 mt-1 block">
+            {errors.phone}
+          </span>
+        )}
       </div>
 
       {/* ✅ Location Picker */}
