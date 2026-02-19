@@ -87,6 +87,28 @@ const orderSchema = new mongoose.Schema(
         required: [true, 'Phone number is required'],
         trim: true,
       },
+
+      // ✅ GPS Location (اختياري)
+      location: {
+        latitude: {
+          type: Number,
+          min: [-90, 'Invalid latitude'],
+          max: [90, 'Invalid latitude'],
+        },
+        longitude: {
+          type: Number,
+          min: [-180, 'Invalid longitude'],
+          max: [180, 'Invalid longitude'],
+        },
+        accuracy: {
+          type: Number,
+          min: 0,
+        },
+        placeName: {
+          type: String,
+          trim: true,
+        },
+      },
     },
 
     status: {

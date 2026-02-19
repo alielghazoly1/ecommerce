@@ -5,6 +5,7 @@ import {
   userOrders,
   listOrders,
   updateStatus,
+  updateLocation,
 } from '../controllers/orderController.js';
 import authMiddleware from '../middleware/auth.js';
 import { adminOnly } from '../middleware/adminOnly.js';
@@ -17,6 +18,9 @@ const orderRouter = express.Router();
 // =====================
 orderRouter.post('/place', authMiddleware,validateOrder, placeOrder);
 orderRouter.post('/userorders', authMiddleware, userOrders);
+
+// ✅ Update Location (User - يعدل موقعه بعد الطلب)
+orderRouter.post('/update-location', authMiddleware, updateLocation);
 
 // =====================
 // ADMIN ROUTES (محمية بـ auth + adminOnly)
