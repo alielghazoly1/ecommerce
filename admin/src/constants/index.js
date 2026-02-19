@@ -1,13 +1,6 @@
 // src/constants/index.js
 
-export const CATEGORIES = [
-  { value: 'شوكولاتة', label: 'شوكولاتة', icon: '🍫' },
-  { value: 'مكسرات', label: 'مكسرات', icon: '🥜' },
-  { value: 'يامش', label: 'يامش', icon: '🍬' },
-  { value: 'بسكويت', label: 'بسكويت', icon: '🍪' },
-  { value: 'حلويات', label: 'حلويات', icon: '🍰' },
-  { value: 'جملة', label: 'جملة', icon: '📦' },
-];
+
 
 export const ORDER_STATUSES = [
   { value: 'all', label: 'الكل' },

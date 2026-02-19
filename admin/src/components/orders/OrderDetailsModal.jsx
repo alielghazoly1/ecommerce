@@ -1,6 +1,6 @@
 // src/components/orders/OrderDetailsModal.jsx
 import { useState } from 'react';
-import { Package, ShoppingCart, Calendar, CreditCard, User, MapPin, Phone, Truck, CheckCircle, Loader2 } from 'lucide-react';
+import { Package, ShoppingCart, Calendar, CreditCard, User, MapPin, Phone, Truck, CheckCircle, Loader2, Navigation } from 'lucide-react';
 import Modal from '../common/Modal';
 import StatusBadge from '../common/StatusBadge';
 import { formatPrice, formatDate, getStatusLabel } from '../../utils/helpers';
@@ -65,6 +65,33 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, updating }) => {
           ) : <p className="text-gray-400">لا توجد معلومات شحن</p>}
         </div>
       </div>
+
+      {/* ✅ GPS Location */}
+      {order.googleMapsLink && (
+        <div className="bg-slate-800 rounded-2xl border-2 border-green-500/30 p-6">
+          <h3 className="text-xl font-black text-white mb-4 flex items-center gap-2">
+            <Navigation className="w-6 h-6 text-green-400" />
+            الموقع الجغرافي للعميل
+          </h3>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex-1 space-y-1">
+              <p className="text-gray-400 text-sm font-semibold">الإحداثيات</p>
+              <p className="text-white font-bold font-mono text-sm">
+                {order.googleMapsLink.replace('https://www.google.com/maps?q=', '')}
+              </p>
+            </div>
+            <a
+              href={order.googleMapsLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl font-bold text-base transition-all transform hover:scale-105 shadow-lg shadow-green-500/30 whitespace-nowrap"
+            >
+              <MapPin className="w-5 h-5" />
+              فتح على الخريطة
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* Order Items */}
       <div className="bg-slate-800 rounded-2xl border-2 border-cyan-500/30 p-6">

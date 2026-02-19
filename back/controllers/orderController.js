@@ -97,6 +97,14 @@ const placeOrder = asyncHandler(async (req, res) => {
       zipCode: address.zipCode,
       country: address.country || 'Egypt',
       phone: address.phone,
+      // ✅ GPS location (optional)
+      ...(address.location?.latitude && address.location?.longitude && {
+        location: {
+          latitude: address.location.latitude,
+          longitude: address.location.longitude,
+          accuracy: address.location.accuracy || null,
+        },
+      }),
     },
     paymentMethod,
     notes,
@@ -142,10 +150,21 @@ const userOrders = asyncHandler(async (req, res) => {
     itemsCount: order.itemsCount,
     status: order.status,
     paymentStatus: order.paymentStatus,
+    paymentMethod: order.paymentMethod,
     isPaid: order.isPaid,
     isDelivered: order.isDelivered,
+    deliveredAt: order.deliveredAt || null,
+    trackingNumber: order.trackingNumber || null,
+    notes: order.notes || '',
+    cancelReason: order.cancelReason || null,
     createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
     shippingAddress: order.shippingAddress,
+    // ✅ Google Maps link لو اليوزر بعت موقعه
+    googleMapsLink: order.shippingAddress?.location?.latitude
+      ? `https://www.google.com/maps?q=${order.shippingAddress.location.latitude},${order.shippingAddress.location.longitude}`
+      : null,
+    locationPlaceName: order.shippingAddress?.location?.placeName || null,
   }));
 
   res.json({
@@ -236,6 +255,11 @@ const listOrders = asyncHandler(async (req, res) => {
       // ✅ Cancel info (if applicable)
       cancelReason: order.cancelReason || null,
       cancelledAt: order.cancelledAt || null,
+
+      // ✅ Google Maps link للأدمن
+      googleMapsLink: order.shippingAddress?.location?.latitude
+        ? `https://www.google.com/maps?q=${order.shippingAddress.location.latitude},${order.shippingAddress.location.longitude}`
+        : null,
     };
   });
 
@@ -319,4 +343,50 @@ const getTodaysOrders = asyncHandler(async (req, res) => {
   });
 });
 
-export { placeOrder, userOrders, listOrders, updateStatus, getTodaysOrders };
+// Update Order Location (User endpoint - يسمح لليوزر يضيف/يعدل موقعه بعد الطلب)
+const updateLocation = asyncHandler(async (req, res) => {
+  const { orderId, location } = req.body;
+
+  if (!orderId) {
+    return res.status(400).json({ success: false, message: 'Order ID is required' });
+  }
+
+  if (!location?.latitude || !location?.longitude) {
+    return res.status(400).json({ success: false, message: 'Valid location is required' });
+  }
+
+  const order = await orderModel.findOne({ _id: orderId, userId: req.user._id });
+
+  if (!order) {
+    return res.status(404).json({ success: false, message: 'Order not found' });
+  }
+
+  // ✅ فقط لو الأوردر لسه في مرحلة pending أو processing
+  if (!['pending', 'processing'].includes(order.status)) {
+    return res.status(400).json({
+      success: false,
+      message: 'لا يمكن تعديل الموقع بعد شحن الطلب',
+    });
+  }
+
+  order.shippingAddress.location = {
+    latitude: location.latitude,
+    longitude: location.longitude,
+    accuracy: location.accuracy || null,
+    placeName: location.placeName || null,
+  };
+
+  await order.save();
+
+  const googleMapsLink = `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
+
+  logger.info('Order location updated', { orderId, userId: req.user._id });
+
+  res.json({
+    success: true,
+    message: 'تم تحديث الموقع بنجاح',
+    googleMapsLink,
+  });
+});
+
+export { placeOrder, userOrders, listOrders, updateStatus, getTodaysOrders, updateLocation };

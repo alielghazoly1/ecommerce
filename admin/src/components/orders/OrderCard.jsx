@@ -8,7 +8,7 @@ const OrderCard = ({ order, onViewDetails }) => (
     <div className="p-6">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-6 border-b-2 border-slate-700">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+          <div className="w-14 h-14 bg-linear-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
             <Package className="w-7 h-7 text-white" />
           </div>
           <div>
@@ -36,7 +36,7 @@ const OrderCard = ({ order, onViewDetails }) => (
           <span className="flex items-center gap-2 text-gray-200 font-semibold"><Phone className="w-5 h-5 text-green-400" />{order.userPhone || order.shippingAddress?.phone || 'غير متوفر'}</span>
         </div>
         <button onClick={onViewDetails}
-          className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-2xl shadow-purple-500/50">
+          className="flex items-center gap-3 px-8 py-4 bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-bold text-lg transition-all transform hover:scale-105 shadow-2xl shadow-purple-500/50">
           <Eye className="w-6 h-6" /> عرض التفاصيل
         </button>
       </div>

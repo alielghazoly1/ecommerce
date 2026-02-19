@@ -34,7 +34,7 @@ const FormField = ({
         {Icon && (
           <Icon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none" />
         )}
-        
+
         {type === 'textarea' ? (
           <textarea
             name={name}
@@ -91,7 +91,7 @@ const FormField = ({
             className={inputClasses}
           />
         )}
-        
+
         {error && (
           <div className="flex items-center gap-2 mt-2 text-red-400 text-sm">
             <AlertCircle className="w-4 h-4" />

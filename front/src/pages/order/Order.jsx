@@ -7,7 +7,6 @@ import OrderSummary from './OrderSummary';
 import ShippingForm from './ShippingForm';
 import Toast from '../../components/ui/Toast';
 
-// ✅ axios instance برا الـ component - مش بيتعمل في كل render
 const api = axios.create({ withCredentials: true });
 
 const Order = () => {
@@ -56,6 +55,10 @@ const Order = () => {
   /* ---------------- COUPON ---------------- */
   const [coupon, setCoupon] = useState('');
   const [discountPercent, setDiscountPercent] = useState(0);
+
+  /* ---------------- LOCATION ---------------- */
+  // { latitude, longitude, accuracy, placeName }
+  const [location, setLocation] = useState(null);
 
   /* ---------------- UI STATE ---------------- */
   const [loading, setLoading] = useState(false);
@@ -106,7 +109,6 @@ const Order = () => {
       setToast({ message: 'السلة فارغة', type: 'error' });
       return;
     }
-
     if (!validate()) {
       setToast({ message: 'راجع بيانات الشحن', type: 'error' });
       return;
@@ -127,6 +129,15 @@ const Order = () => {
         zipCode: shipping.zipCode || '',
         country: 'Egypt',
         phone: shipping.phone,
+        // ✅ location مع اسم المكان لو موجود
+        ...(location?.latitude && location?.longitude && {
+          location: {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            accuracy: location.accuracy || null,
+            placeName: location.placeName || null,
+          },
+        }),
       },
       amount: totalAmount,
       paymentMethod: 'cash',
@@ -135,30 +146,20 @@ const Order = () => {
 
     try {
       const res = await api.post(`${url}/api/order/place`, payload);
-
       if (res.data?.success) {
         setToast({ message: 'تم إنشاء الطلب بنجاح ✓', type: 'success' });
         await clearCart();
         setTimeout(() => navigate('/myorders'), 800);
       } else {
-        setToast({
-          message: res.data?.message || 'حدث خطأ في إنشاء الطلب',
-          type: 'error',
-        });
+        setToast({ message: res.data?.message || 'حدث خطأ في إنشاء الطلب', type: 'error' });
       }
     } catch (err) {
-      console.error('Order Error:', err.response?.data || err.message);
-
       if (err.response?.status === 401) {
         setToast({ message: 'انتهت الجلسة، الرجاء تسجيل الدخول مرة أخرى', type: 'error' });
         setTimeout(() => navigate('/login'), 1500);
         return;
       }
-
-      setToast({
-        message: err.response?.data?.message || 'فشل الاتصال بالسيرفر',
-        type: 'error',
-      });
+      setToast({ message: err.response?.data?.message || 'فشل الاتصال بالسيرفر', type: 'error' });
     } finally {
       submittingRef.current = false;
       setLoading(false);
@@ -168,13 +169,8 @@ const Order = () => {
   /* ---------------- UI ---------------- */
   return (
     <section className="min-h-screen bg-gray-50 py-12 px-4">
-      <Toast
-        toast={toast}
-        onClose={() => setToast({ message: '', type: 'info' })}
-      />
-
+      <Toast toast={toast} onClose={() => setToast({ message: '', type: 'info' })} />
       <div className="mt-15 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Order Summary */}
         <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow">
           <h2 className="text-2xl font-bold mb-4">مراجعة الطلب</h2>
           <OrderSummary
@@ -187,8 +183,6 @@ const Order = () => {
             navigate={navigate}
           />
         </div>
-
-        {/* Shipping */}
         <aside className="bg-white rounded-2xl p-6 shadow">
           <ShippingForm
             shipping={shipping}
@@ -203,6 +197,8 @@ const Order = () => {
             onSubmit={placeOrder}
             navigate={navigate}
             cartProducts={cartProducts}
+            location={location}
+            onLocationChange={setLocation}
           />
         </aside>
       </div>

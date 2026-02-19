@@ -1,12 +1,18 @@
 // src/context/AuthContext.jsx — HttpOnly Cookie version 🍪
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 import axios from '../config/axiosConfig';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser]                   = useState(null);
-  const [loading, setLoading]             = useState(true);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // ✅ لا يوجد token state أو localStorage — الـ Cookie بتتحكم في كل حاجة
@@ -36,9 +42,9 @@ export const AuthProvider = ({ children }) => {
 
       if (response.data.success) {
         setUser({
-          name:  response.data.user?.name  || 'Admin',
+          name: response.data.user?.name || 'Admin',
           email: response.data.user?.email || '',
-          role:  response.data.user?.role  || 'admin',
+          role: response.data.user?.role || 'admin',
         });
         setIsAuthenticated(true);
       } else {
@@ -65,9 +71,9 @@ export const AuthProvider = ({ children }) => {
       if (data.success) {
         // ✅ السيرفر بيحط HttpOnly Cookie تلقائياً — مش بنحفظ token هنا
         setUser({
-          name:  data.user?.name  || 'Admin',
+          name: data.user?.name || 'Admin',
           email: data.user?.email || email,
-          role:  data.role        || 'admin',
+          role: data.role || 'admin',
         });
         setIsAuthenticated(true);
         return { success: true };
@@ -98,11 +104,7 @@ export const AuthProvider = ({ children }) => {
     checkAuthStatus,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
