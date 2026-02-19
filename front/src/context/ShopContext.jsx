@@ -16,8 +16,8 @@ const ShopContextProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // const url ='https://back-7cc728syx-alielghazoly1s-projects.vercel.app';
-  const url = 'http://localhost:4000';
+  const url ='https://back-alielghazoly1-alielghazoly1s-projects.vercel.app';
+  // const url = 'http://localhost:4000';
 
   // ✅ تحميل السلة من LocalStorage للـ guest users فقط عند أول تحميل
   useEffect(() => {
