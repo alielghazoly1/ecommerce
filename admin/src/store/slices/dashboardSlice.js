@@ -1,90 +1,97 @@
 // src/store/slices/dashboardSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from '../../config/axiosConfig';
-import { calcDashboardStats } from '../../utils/helpers';
 import toast from 'react-hot-toast';
 
+// ── Fetch everything in parallel from analytics API ───────────────────────────
 export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetch',
   async (isRefresh = false, { rejectWithValue }) => {
     try {
-      const [ordersRes, productsRes, usersRes] = await Promise.all([
-        axios.get('/order/list'),
-        axios.get('/product/list'),
-        axios.get('/users/list'),
-      ]);
+      const [summaryRes, revenueRes, topProductsRes, cityRes, hourlyRes, funnelRes, recentRes] =
+        await Promise.all([
+          axios.get('/analytics/summary'),
+          axios.get('/analytics/revenue?period=30d'),
+          axios.get('/analytics/top-products?limit=8'),
+          axios.get('/analytics/by-city'),
+          axios.get('/analytics/hourly'),
+          axios.get('/analytics/funnel'),
+          axios.get('/analytics/recent?limit=8'),
+        ]);
 
-      const orders = ordersRes.data.success ? ordersRes.data.data : [];
-      const products = productsRes.data.success
-        ? productsRes.data.data || []
-        : [];
-      const users = usersRes.data.success ? usersRes.data.data || [] : [];
-
-      return { stats: calcDashboardStats(orders, products, users), isRefresh };
+      return {
+        summary:     summaryRes.data.success     ? summaryRes.data.data         : null,
+        revenue:     revenueRes.data.success      ? revenueRes.data.data         : [],
+        topProducts: topProductsRes.data.success  ? topProductsRes.data.data     : [],
+        cities:      cityRes.data.success         ? cityRes.data.data            : [],
+        hourly:      hourlyRes.data.success       ? hourlyRes.data.data          : [],
+        funnel:      funnelRes.data.success       ? funnelRes.data.data          : null,
+        recent:      recentRes.data.success       ? recentRes.data.data          : [],
+        isRefresh,
+      };
     } catch (err) {
-      return rejectWithValue(
-        err.response?.data?.message || 'فشل تحميل الإحصائيات',
-      );
+      return rejectWithValue(err.response?.data?.message || 'فشل تحميل الإحصائيات');
     }
   },
 );
 
-const defaultStats = {
-  totalOrders: 0,
-  totalRevenue: 0,
-  totalProducts: 0,
-  totalUsers: 0,
-  pendingOrders: 0,
-  processingOrders: 0,
-  completedOrders: 0,
-  cancelledOrders: 0,
-  todayOrders: 0,
-  todayRevenue: 0,
-  yesterdayOrders: 0,
-  yesterdayRevenue: 0,
-  weekOrders: 0,
-  weekRevenue: 0,
-  lastWeekOrders: 0,
-  lastWeekRevenue: 0,
-  monthOrders: 0,
-  monthRevenue: 0,
-  lastMonthOrders: 0,
-  lastMonthRevenue: 0,
-  averageOrderValue: 0,
-  growthRate: 0,
-  revenueGrowthRate: 0,
-};
+// ── Fetch only revenue trend (for period switcher) ────────────────────────────
+export const fetchRevenueTrend = createAsyncThunk(
+  'dashboard/fetchRevenue',
+  async (period = '30d', { rejectWithValue }) => {
+    try {
+      const res = await axios.get(`/analytics/revenue?period=${period}`);
+      return res.data.success ? res.data.data : [];
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'فشل تحميل بيانات الإيرادات');
+    }
+  },
+);
 
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState: {
-    stats: defaultStats,
-    loading: false,
-    refreshing: false,
-    error: null,
+    summary:     null,
+    revenue:     [],
+    topProducts: [],
+    cities:      [],
+    hourly:      [],
+    funnel:      null,
+    recent:      [],
+    loading:     false,
+    refreshing:  false,
+    revenueLoading: false,
+    error:       null,
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchDashboardData.pending, (state, action) => {
-        if (action.meta.arg) {
-          state.refreshing = true;
-        } else {
-          state.loading = true;
-        }
+        action.meta.arg ? (state.refreshing = true) : (state.loading = true);
+        state.error = null;
       })
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loading    = false;
         state.refreshing = false;
-        state.stats = action.payload.stats;
-        if (action.payload.isRefresh)
-          toast.success('✨ تم تحديث الإحصائيات بنجاح');
+        state.summary     = action.payload.summary;
+        state.revenue     = action.payload.revenue;
+        state.topProducts = action.payload.topProducts;
+        state.cities      = action.payload.cities;
+        state.hourly      = action.payload.hourly;
+        state.funnel      = action.payload.funnel;
+        state.recent      = action.payload.recent;
+        if (action.payload.isRefresh) toast.success('✨ تم تحديث الإحصائيات بنجاح');
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
-        state.loading = false;
+        state.loading    = false;
         state.refreshing = false;
-        state.error = action.payload;
-      });
+        state.error      = action.payload;
+        toast.error(action.payload || 'فشل تحميل الإحصائيات');
+      })
+
+      .addCase(fetchRevenueTrend.pending,   (state) => { state.revenueLoading = true; })
+      .addCase(fetchRevenueTrend.fulfilled, (state, action) => { state.revenueLoading = false; state.revenue = action.payload; })
+      .addCase(fetchRevenueTrend.rejected,  (state) => { state.revenueLoading = false; });
   },
 });
 
