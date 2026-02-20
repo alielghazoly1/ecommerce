@@ -46,6 +46,12 @@ const productSchema = new mongoose.Schema(
       type: Number,
       min: [0, 'Original price must be positive'],
     },
+    // ✅ سعر التكلفة / الاستيراد — خاص بالأدمن فقط، مش بيظهر للعملاء
+    costPrice: {
+      type: Number,
+      min: [0, 'Cost price must be positive'],
+      default: null,
+    },
     image: { type: String, required: [true, 'Image is required'] },
     images: { type: [String], default: [] },
     cloudinary_id: { type: String, sparse: true },
@@ -116,6 +122,22 @@ productSchema.virtual('discountPercentage').get(function () {
     );
   }
   return 0;
+});
+
+// ✅ هامش الربح (بالجنيه)
+productSchema.virtual('profitMargin').get(function () {
+  if (this.costPrice && this.costPrice > 0) {
+    return Math.round(this.price - this.costPrice);
+  }
+  return null;
+});
+
+// ✅ هامش الربح (بالنسبة المئوية)
+productSchema.virtual('profitMarginPct').get(function () {
+  if (this.costPrice && this.costPrice > 0) {
+    return Math.round(((this.price - this.costPrice) / this.costPrice) * 100);
+  }
+  return null;
 });
 
 productSchema.virtual('inStock').get(function () {

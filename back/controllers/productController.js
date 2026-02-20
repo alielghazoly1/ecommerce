@@ -54,6 +54,7 @@ const addProduct = asyncHandler(async (req, res) => {
     description,
     price,
     originalPrice,
+    costPrice,
     category,
     stock,
     brand,
@@ -78,6 +79,15 @@ const addProduct = asyncHandler(async (req, res) => {
   }
 
   // معالجة السعر القديم
+  // ✅ costPrice — سعر التكلفة/الاستيراد (اختياري)
+  let parsedCostPrice = null;
+  if (costPrice !== undefined && costPrice !== null && costPrice !== '') {
+    parsedCostPrice = Number(costPrice);
+    if (isNaN(parsedCostPrice) || parsedCostPrice < 0) {
+      return res.status(400).json({ success: false, message: 'سعر التكلفة يجب أن يكون رقماً موجباً' });
+    }
+  }
+
   let parsedOriginalPrice = null;
   if (originalPrice) {
     parsedOriginalPrice = Number(originalPrice);
@@ -143,6 +153,7 @@ const addProduct = asyncHandler(async (req, res) => {
       description: description.trim(),
       price: parsedPrice,
       originalPrice: parsedOriginalPrice,
+      costPrice: parsedCostPrice,
       category: category.trim().toLowerCase(),
       image: result.secure_url,
       images: [result.secure_url],
@@ -233,6 +244,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     description,
     price,
     originalPrice,
+    costPrice,
     category,
     stock,
     brand,
@@ -261,6 +273,19 @@ const updateProduct = asyncHandler(async (req, res) => {
       });
     }
     product.price = parsedPrice;
+  }
+
+  // ✅ Update costPrice
+  if (costPrice !== undefined) {
+    if (costPrice === null || costPrice === '') {
+      product.costPrice = null;
+    } else {
+      const parsedCostPrice = Number(costPrice);
+      if (isNaN(parsedCostPrice) || parsedCostPrice < 0) {
+        return res.status(400).json({ success: false, message: 'سعر التكلفة يجب أن يكون رقماً موجباً' });
+      }
+      product.costPrice = parsedCostPrice;
+    }
   }
 
   // Update originalPrice
@@ -453,6 +478,7 @@ const removeProduct = asyncHandler(async (req, res) => {
 const listProducts = asyncHandler(async (req, res) => {
   const products = await productModel
     .find({ isActive: true })
+    .select('-costPrice')   // ✅ سعر التكلفة سري — للأدمن بس
     .sort({ createdAt: -1 });
 
   res.json({
@@ -481,7 +507,7 @@ const listAllProducts = asyncHandler(async (req, res) => {
 const getProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const product = await productModel.findById(id);
+  const product = await productModel.findById(id).select('-costPrice'); // ✅ سعر التكلفة للأدمن بس
 
   if (!product) {
     return res.status(404).json({

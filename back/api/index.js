@@ -126,10 +126,9 @@ const ensureDb = async (req, res, next) => {
   if (!needsDb) return next();
 
   try {
+    // ✅ FIX: فقط await connectDB() — هي بتكفل إن الاتصال جاهز
+    // ❌ مش بنعمل readyState check بعدها — ده كان سبب المشكلة على Vercel
     await connectDB();
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ success: false, message: 'Database not ready, please try again' });
-    }
     next();
   } catch (err) {
     logger.error('Database connection failed:', err.message);

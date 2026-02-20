@@ -17,8 +17,8 @@ const Edit = () => {
   const updating = actionLoading.update;
 
   const [data, setData] = useState({
-    name: '', description: '', price: '', category: 'شوكولاتة',
-    stock: '0', brand: '', isFeatured: false, tags: '', image: '',
+    name: '', description: '', price: '', originalPrice: '', costPrice: '',
+    category: 'شوكولاتة', stock: '0', brand: '', isFeatured: false, tags: '', image: '',
   });
   const [newImage, setNewImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -34,6 +34,8 @@ const Edit = () => {
         name: selectedProduct.name || '',
         description: selectedProduct.description || '',
         price: selectedProduct.price?.toString() || '',
+        originalPrice: selectedProduct.originalPrice?.toString() || '',
+        costPrice: selectedProduct.costPrice?.toString() || '',
         category: selectedProduct.category || 'شوكولاتة',
         stock: selectedProduct.stock?.toString() || '0',
         brand: selectedProduct.brand || '',

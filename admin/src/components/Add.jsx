@@ -9,8 +9,8 @@ import ProductForm from './products/ProductForm';
 import toast from 'react-hot-toast';
 
 const INITIAL_DATA = {
-  name: '', description: '', price: '', category: 'شوكولاتة',
-  stock: '0', brand: '', isFeatured: false, tags: '',
+  name: '', description: '', price: '', originalPrice: '', costPrice: '',
+  category: 'شوكولاتة', stock: '0', brand: '', isFeatured: false, tags: '',
 };
 
 const Add = () => {

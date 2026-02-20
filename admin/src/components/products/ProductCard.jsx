@@ -28,7 +28,12 @@ const ProductCard = ({ product, onView, onEdit, onDelete, deleteLoading, viewMod
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="text-2xl font-bold text-purple-400 ml-4">{product.price} ج.م</div>
+              <div className="text-right ml-4">
+                {product.originalPrice > product.price && (
+                  <p className="text-xs text-gray-500 line-through">{product.originalPrice} ج.م</p>
+                )}
+                <p className="text-2xl font-bold text-purple-400">{product.price} ج.م</p>
+              </div>
               <ProductActions product={product} onView={onView} onEdit={onEdit} onDelete={onDelete} deleteLoading={deleteLoading} />
             </div>
           </div>
@@ -59,7 +64,17 @@ const ProductCard = ({ product, onView, onEdit, onDelete, deleteLoading, viewMod
         <p className="text-sm text-gray-400 line-clamp-2 mb-4">{product.description}</p>
         <div className="flex items-center justify-between mb-4">
           <span className="px-3 py-1 bg-purple-500/20 text-purple-400 text-xs rounded-lg">{product.category}</span>
-          <div className="text-2xl font-bold text-purple-400">{product.price} ج.م</div>
+          <div className="text-right">
+            <div className="flex items-center gap-2 justify-end">
+              {product.originalPrice > product.price && (
+                <span className="text-sm text-gray-500 line-through">{product.originalPrice} ج.م</span>
+              )}
+              {product.discountPercentage > 0 && (
+                <span className="text-xs font-bold bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded-lg">-{product.discountPercentage}%</span>
+              )}
+            </div>
+            <div className="text-2xl font-bold text-purple-400">{product.price} ج.م</div>
+          </div>
         </div>
         <ProductActions product={product} onView={onView} onEdit={onEdit} onDelete={onDelete} deleteLoading={deleteLoading} />
       </div>

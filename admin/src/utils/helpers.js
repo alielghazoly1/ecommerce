@@ -54,6 +54,18 @@ export const validateProductField = (name, value) => {
         return 'السعر يجب أن يكون رقماً موجباً';
       if (Number(value) > 999999) return 'السعر مرتفع جداً';
       return null;
+    case 'originalPrice':
+      if (value !== '' && value !== null && value !== undefined) {
+        const n = Number(value);
+        if (isNaN(n) || n < 0) return 'السعر قبل الخصم يجب أن يكون رقماً موجباً';
+      }
+      return null;
+    case 'costPrice':
+      if (value !== '' && value !== null && value !== undefined) {
+        const n = Number(value);
+        if (isNaN(n) || n < 0) return 'سعر التكلفة يجب أن يكون رقماً موجباً';
+      }
+      return null;
     case 'stock':
       if (value !== '' && (isNaN(Number(value)) || Number(value) < 0))
         return 'الكمية يجب أن تكون رقماً موجباً';
@@ -89,6 +101,12 @@ export const buildProductFormData = (data, image) => {
       .filter(Boolean);
     formData.append('tags', JSON.stringify(tagsArray));
   }
+  // ✅ الأسعار الإضافية
+  if (data.originalPrice !== '' && data.originalPrice != null)
+    formData.append('originalPrice', Number(data.originalPrice).toFixed(2));
+  if (data.costPrice !== '' && data.costPrice != null)
+    formData.append('costPrice', Number(data.costPrice).toFixed(2));
+
   if (image) formData.append('image', image);
   return formData;
 };
