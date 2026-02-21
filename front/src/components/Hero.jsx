@@ -57,10 +57,10 @@ const Hero = () => {
 
           {/* Badge خصم */}
           <div
-            className="absolute top-4 left-4 bg-red-400 text-white px-4 py-2 rounded-full
+            className="absolute top-4 left-4 bg-amber-950 text-white px-4 py-2 rounded-full
                           font-semibold shadow-lg animate-pulse text-base"
           >
-            خصم 50% لفترة محدودة!
+            خصومات قد تصل إلى %50
           </div>
         </div>
       </div>

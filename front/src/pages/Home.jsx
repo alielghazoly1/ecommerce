@@ -2,15 +2,14 @@ import Features from "../components/Features"
 import Hero from "../components/Hero"
 import Offer from "../components/Offer"
 import Footer from "../components/Footer"
-import HeroRamadan from "../components/HeroRamadan"
+
 
 const Home = () => {
   return (
     <div>
       {/* home section */}
-
       <section id='home'>
-        <HeroRamadan />
+        <Hero />
       </section>
       <section id="shop">
         <Offer />
