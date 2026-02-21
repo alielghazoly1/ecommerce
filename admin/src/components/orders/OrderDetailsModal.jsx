@@ -99,23 +99,89 @@ const OrderDetailsModal = ({ order, onClose, onUpdateStatus, updating }) => {
           <Package className="w-6 h-6 text-cyan-400" />المنتجات ({order.items?.length || 0})
         </h3>
         <div className="space-y-3 max-h-60 overflow-y-auto">
-          {order.items?.map((item, idx) => (
-            <div key={item._id || idx} className="flex items-center gap-4 bg-slate-700 rounded-xl p-4 border-2 border-slate-600">
-              {item.image && (
-                <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg"
-                  onError={(e) => { e.target.style.display = 'none'; }} />
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-white font-bold text-lg truncate">{item.name || 'منتج'}</p>
-                <p className="text-base text-gray-300">{item.quantity || 1} × {formatPrice(item.price)} ج.م</p>
+          {order.items?.map((item, i) => {
+            const hasDiscount = item.originalPrice && item.originalPrice > item.price;
+            const discountPct = hasDiscount
+              ? Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)
+              : 0;
+            const lineTotal = (item.price || 0) * (item.quantity || 1);
+            const lineCost  = item.costPrice ? item.costPrice * (item.quantity || 1) : null;
+            const lineProfit = lineCost !== null ? Math.round(lineTotal - lineCost) : null;
+
+            return (
+              <div key={item._id || i} className="flex items-center gap-4 bg-slate-700 rounded-xl p-4 border-2 border-slate-600">
+                {item.image && (
+                  <div className="relative flex-shrink-0">
+                    <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg"
+                      onError={(e) => { e.target.style.display = 'none'; }} />
+                    {hasDiscount && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                        -{discountPct}%
+                      </span>
+                    )}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-bold text-lg truncate">{item.name || 'منتج'}</p>
+                  {/* ✅ السعر مع الخصم */}
+                  <div className="flex items-center gap-2 flex-wrap mt-1">
+                    <span className="text-gray-300 text-sm">{item.quantity || 1} ×</span>
+                    {hasDiscount ? (
+                      <>
+                        <span className="text-gray-500 text-sm line-through">{formatPrice(item.originalPrice)} ج.م</span>
+                        <span className="text-green-400 font-bold text-sm">{formatPrice(item.price)} ج.م</span>
+                        <span className="text-xs bg-orange-500/30 text-orange-300 px-2 py-0.5 rounded-full font-bold">
+                          خصم {discountPct}%
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-gray-300 text-sm">{formatPrice(item.price)} ج.م</span>
+                    )}
+                  </div>
+                  {/* 🔒 سعر التكلفة وهامش الربح — للأدمن فقط */}
+                  {item.costPrice != null && (
+                    <p className="text-xs mt-1">
+                      <span className="text-rose-400 font-bold">
+                        🔒 تكلفة: {formatPrice(item.costPrice)} ج.م/قطعة
+                      </span>
+                      {lineProfit !== null && (
+                        <span className={`mr-2 font-bold ${lineProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                          | ربح: {lineProfit >= 0 ? '+' : ''}{formatPrice(lineProfit)} ج.م
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </div>
+                <p className="text-xl font-black text-green-400 flex-shrink-0">{formatPrice(lineTotal)} ج.م</p>
               </div>
-              <p className="text-xl font-black text-green-400">{formatPrice((item.price || 0) * (item.quantity || 1))} ج.م</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
-        <div className="mt-6 pt-6 border-t-2 border-slate-700 flex justify-between items-center">
-          <p className="text-2xl font-black text-white">المجموع الكلي</p>
-          <p className="text-4xl font-black text-green-400">{formatPrice(order.totalAmount)} ج.م</p>
+        <div className="mt-6 pt-6 border-t-2 border-slate-700 space-y-2">
+          {/* subtotal */}
+          {order.subtotal != null && order.subtotal !== order.totalAmount && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-400">المجموع الفرعي</span>
+              <span className="text-white font-bold">{formatPrice(order.subtotal)} ج.م</span>
+            </div>
+          )}
+          {/* خصم المنتجات */}
+          {order.totalDiscount > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-green-400">🏷️ خصم المنتجات</span>
+              <span className="text-green-400 font-bold">-{formatPrice(order.totalDiscount)} ج.م</span>
+            </div>
+          )}
+          {/* مصاريف الشحن */}
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-400">🚚 مصاريف الشحن</span>
+            <span className="text-orange-400 font-bold">{formatPrice(order.shippingFee ?? 60)} ج.م</span>
+          </div>
+          {/* الإجمالي */}
+          <div className="flex justify-between items-center pt-3 border-t border-slate-600">
+            <p className="text-2xl font-black text-white">المجموع الكلي</p>
+            <p className="text-4xl font-black text-green-400">{formatPrice(order.totalAmount)} ج.م</p>
+          </div>
         </div>
       </div>
 

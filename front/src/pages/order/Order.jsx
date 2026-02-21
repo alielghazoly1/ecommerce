@@ -9,6 +9,8 @@ import Toast from '../../components/ui/Toast';
 
 const api = axios.create({ withCredentials: true });
 
+const SHIPPING_FEE = 60; // ✅ مصاريف الشحن الثابتة 60 ج
+
 const Order = () => {
   const {
     cartItems = {},
@@ -31,6 +33,7 @@ const Order = () => {
       .filter(Boolean);
   }, [cartItems, all_products]);
 
+  // ✅ Subtotal بسعر البيع الفعلي (price بعد الخصم)
   const subtotal = useMemo(() => {
     return cartProducts.reduce(
       (sum, item) => sum + Number(item.price) * Number(item.quantity),
@@ -38,10 +41,17 @@ const Order = () => {
     );
   }, [cartProducts]);
 
-  /* ---------------- SHIPPING ---------------- */
-  const [shippingMethod, setShippingMethod] = useState('standard');
-  const shippingFee = shippingMethod === 'express' ? 50 : 20;
+  // ✅ إجمالي وفورات المنتجات (originalPrice - price) × quantity
+  const totalProductDiscount = useMemo(() => {
+    return cartProducts.reduce((sum, item) => {
+      if (item.originalPrice && item.originalPrice > item.price) {
+        return sum + (item.originalPrice - item.price) * item.quantity;
+      }
+      return sum;
+    }, 0);
+  }, [cartProducts]);
 
+  /* ---------------- SHIPPING ---------------- */
   const [shipping, setShipping] = useState({
     street: '',
     city: '',
@@ -49,15 +59,9 @@ const Order = () => {
     zipCode: '',
     phone: '',
   });
-
   const [errors, setErrors] = useState({});
 
-  /* ---------------- COUPON ---------------- */
-  const [coupon, setCoupon] = useState('');
-  const [discountPercent, setDiscountPercent] = useState(0);
-
   /* ---------------- LOCATION ---------------- */
-  // { latitude, longitude, accuracy, placeName }
   const [location, setLocation] = useState(null);
 
   /* ---------------- UI STATE ---------------- */
@@ -89,17 +93,6 @@ const Order = () => {
     return Object.keys(e).length === 0;
   };
 
-  const applyCoupon = () => {
-    const trimmedCoupon = coupon.trim().toUpperCase();
-    if (trimmedCoupon === 'TAWA10') {
-      setDiscountPercent(10);
-      setToast({ message: 'تم تطبيق خصم 10%', type: 'success' });
-    } else if (trimmedCoupon) {
-      setDiscountPercent(0);
-      setToast({ message: 'كود خصم غير صالح', type: 'error' });
-    }
-  };
-
   /* ---------------- PLACE ORDER ---------------- */
   const placeOrder = async (e) => {
     e.preventDefault();
@@ -117,9 +110,7 @@ const Order = () => {
     submittingRef.current = true;
     setLoading(true);
 
-    const discountAmount = (subtotal * discountPercent) / 100;
-    const totalAmount = subtotal - discountAmount + shippingFee;
-
+    // ✅ الـ backend يحسب الخصومات والشحن من المنتجات نفسها
     const payload = {
       items: cartProducts.map((p) => ({ id: p._id, quantity: p.quantity })),
       address: {
@@ -129,7 +120,6 @@ const Order = () => {
         zipCode: shipping.zipCode || '',
         country: 'Egypt',
         phone: shipping.phone,
-        // ✅ location مع اسم المكان لو موجود
         ...(location?.latitude && location?.longitude && {
           location: {
             latitude: location.latitude,
@@ -139,9 +129,8 @@ const Order = () => {
           },
         }),
       },
-      amount: totalAmount,
+      amount: subtotal + SHIPPING_FEE,
       paymentMethod: 'cash',
-      notes: coupon ? `كوبون: ${coupon} (${discountPercent}% خصم)` : '',
     };
 
     try {
@@ -176,9 +165,8 @@ const Order = () => {
           <OrderSummary
             cartProducts={cartProducts}
             subtotal={subtotal}
-            shippingFee={shippingFee}
-            shippingMethod={shippingMethod}
-            discountPercent={discountPercent}
+            totalProductDiscount={totalProductDiscount}
+            shippingFee={SHIPPING_FEE}
             url={url}
             navigate={navigate}
           />
@@ -188,11 +176,6 @@ const Order = () => {
             shipping={shipping}
             errors={errors}
             updateShipping={updateShipping}
-            shippingMethod={shippingMethod}
-            setShippingMethod={setShippingMethod}
-            coupon={coupon}
-            setCoupon={setCoupon}
-            applyCoupon={applyCoupon}
             loading={loading}
             onSubmit={placeOrder}
             navigate={navigate}

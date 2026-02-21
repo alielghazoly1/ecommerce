@@ -11,10 +11,22 @@ const orderItemSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  price: {
+  price: {           // سعر البيع الفعلي (بعد الخصم)
     type: Number,
     required: true,
     min: 0,
+  },
+  originalPrice: {   // السعر قبل الخصم (لو فيه خصم)
+    type: Number,
+    default: null,
+  },
+  discountAmount: {  // مبلغ الخصم على المنتج × الكمية
+    type: Number,
+    default: 0,
+  },
+  costPrice: {       // سعر التكلفة (للأدمن فقط - لحساب الأرباح)
+    type: Number,
+    default: null,
   },
   quantity: {
     type: Number,
@@ -52,7 +64,19 @@ const orderSchema = new mongoose.Schema(
       },
     },
 
-    totalAmount: {
+    subtotal: {        // مجموع المنتجات قبل الشحن والخصم
+      type: Number,
+      default: 0,
+    },
+    totalDiscount: {   // إجمالي الخصومات على المنتجات
+      type: Number,
+      default: 0,
+    },
+    shippingFee: {     // مصاريف الشحن (ثابتة 60 ج)
+      type: Number,
+      default: 60,
+    },
+    totalAmount: {     // الإجمالي النهائي = subtotal - discount + shippingFee
       type: Number,
       required: [true, 'Total amount is required'],
       min: [0, 'Amount must be positive'],
