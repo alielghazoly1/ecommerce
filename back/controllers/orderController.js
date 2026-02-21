@@ -42,8 +42,10 @@ const placeOrder = asyncHandler(async (req, res) => {
   }
 
   // Prepare order items with product details
+  const SHIPPING_FEE = 60; // مصاريف الشحن الثابتة
   const orderItems = [];
-  let calculatedTotal = 0;
+  let subtotal = 0;
+  let totalDiscount = 0;
 
   for (const item of items) {
     const product = await productModel.findById(item.id);
@@ -71,24 +73,39 @@ const placeOrder = asyncHandler(async (req, res) => {
       });
     }
 
+    // ✅ حساب الخصم على المنتج
+    const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+    const itemDiscount = hasDiscount
+      ? Math.round((product.originalPrice - product.price) * item.quantity * 100) / 100
+      : 0;
+
     orderItems.push({
       productId: product._id,
       name: product.name,
-      price: product.price,
+      price: product.price,                          // سعر البيع الفعلي
+      originalPrice: hasDiscount ? product.originalPrice : null,
+      discountAmount: itemDiscount,                  // الخصم على المنتج × الكمية
+      costPrice: product.costPrice || null,          // للأدمن (حساب الأرباح)
       quantity: item.quantity,
       image: product.image,
     });
 
-    calculatedTotal += product.price * item.quantity;
+    subtotal += product.price * item.quantity;
+    totalDiscount += itemDiscount;
 
     // Decrease stock
     await product.decreaseStock(item.quantity);
   }
 
+  const calculatedTotal = subtotal + SHIPPING_FEE;
+
   // Create order with new schema
   const newOrder = new orderModel({
     userId: req.user._id,
     items: orderItems,
+    subtotal,
+    totalDiscount,
+    shippingFee: SHIPPING_FEE,
     totalAmount: calculatedTotal,
     shippingAddress: {
       street: address.street,
@@ -145,7 +162,20 @@ const userOrders = asyncHandler(async (req, res) => {
   const formattedOrders = orders.map((order) => ({
     _id: order._id,
     orderNumber: order.orderNumber,
-    items: order.items,
+    items: order.items.map(item => ({
+      _id: item._id,
+      productId: item.productId,
+      name: item.name,
+      price: item.price,
+      originalPrice: item.originalPrice || null,   // ✅ للعميل يشوف الخصم
+      discountAmount: item.discountAmount || 0,
+      quantity: item.quantity,
+      image: item.image || null,
+      // ❌ costPrice مش بتظهر للعميل
+    })),
+    subtotal: order.subtotal || order.totalAmount,
+    totalDiscount: order.totalDiscount || 0,
+    shippingFee: order.shippingFee ?? 60,
     totalAmount: order.totalAmount,
     itemsCount: order.itemsCount,
     status: order.status,
@@ -160,7 +190,6 @@ const userOrders = asyncHandler(async (req, res) => {
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
     shippingAddress: order.shippingAddress,
-    // ✅ Google Maps link لو اليوزر بعت موقعه
     googleMapsLink: order.shippingAddress?.location?.latitude
       ? `https://www.google.com/maps?q=${order.shippingAddress.location.latitude},${order.shippingAddress.location.longitude}`
       : null,
@@ -206,18 +235,33 @@ const listOrders = asyncHandler(async (req, res) => {
       userPhone: user.phone || order.shippingAddress?.phone || 'N/A',
       userId: user._id || null,
       
-      // ✅ Order Items with full details
-      items: order.items.map(item => ({
-        _id: item._id,
-        productId: item.productId,
-        name: item.name,
-        price: item.price || 0,
-        quantity: item.quantity || 1,
-        image: item.image || null,
-        total: (item.price || 0) * (item.quantity || 1)
-      })),
+      // ✅ Order Items with full details (admin sees costPrice + profit)
+      items: order.items.map(item => {
+        const lineTotal = (item.price || 0) * (item.quantity || 1);
+        const lineCost  = item.costPrice ? item.costPrice * (item.quantity || 1) : null;
+        return {
+          _id: item._id,
+          productId: item.productId,
+          name: item.name,
+          price: item.price || 0,
+          originalPrice: item.originalPrice || null,   // ✅ سعر قبل الخصم
+          discountAmount: item.discountAmount || 0,     // ✅ الخصم على هذا المنتج
+          costPrice: item.costPrice || null,            // 🔒 للأدمن فقط
+          quantity: item.quantity || 1,
+          image: item.image || null,
+          total: lineTotal,
+          // ✅ هامش الربح على المنتج (للأدمن)
+          profit: lineCost !== null ? Math.round(lineTotal - lineCost) : null,
+          profitPct: lineCost !== null && lineCost > 0
+            ? Math.round(((lineTotal - lineCost) / lineCost) * 100)
+            : null,
+        };
+      }),
       
       // ✅ Order totals
+      subtotal: order.subtotal || order.totalAmount || 0,
+      totalDiscount: order.totalDiscount || 0,
+      shippingFee: order.shippingFee ?? 60,
       totalAmount: order.totalAmount || 0,
       itemsCount: order.itemsCount || order.items?.length || 0,
       
