@@ -10,6 +10,7 @@ import {
   getHourlyOrders,
   getOrderFunnel,
   getRecentActivity,
+  getProfitSummary,
 } from '../controllers/analyticsController.js';
 
 const analyticsRouter = express.Router();
@@ -37,5 +38,8 @@ analyticsRouter.get('/funnel',       getOrderFunnel);
 
 // GET /api/analytics/recent?limit=10 → آخر الطلبات
 analyticsRouter.get('/recent',       getRecentActivity);
+
+// GET /api/analytics/profit  → ملخص الأرباح لكل المنتجات
+analyticsRouter.get('/profit', getProfitSummary);
 
 export default analyticsRouter;

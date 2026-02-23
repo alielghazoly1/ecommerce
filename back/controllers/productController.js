@@ -11,6 +11,25 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// ─── Profit Calculator ────────────────────────────────────────────────────────
+// Centralised so every endpoint uses identical logic — easy to update later
+const calcProfit = (product) => {
+  const revenue     = Math.round(product.price * product.sold);
+  const cost        = product.costPrice != null
+    ? Math.round(product.costPrice * product.sold)
+    : null;
+  const profit      = cost !== null ? revenue - cost : null;
+  const profitPct   = cost !== null && cost > 0
+    ? Math.round((profit / cost) * 100)
+    : null;
+  const marginPerUnit = product.costPrice != null
+    ? Math.round(product.price - product.costPrice)
+    : null;
+
+  return { revenue, cost, profit, profitPct, marginPerUnit };
+};
+
+
 // =====================
 // Helper: Delete Image from Cloudinary
 // =====================
@@ -494,11 +513,12 @@ const listProducts = asyncHandler(async (req, res) => {
 const listAllProducts = asyncHandler(async (req, res) => {
   const products = await productModel.find().sort({ createdAt: -1 });
 
-  res.json({
-    success: true,
-    data: products,
-    count: products.length,
-  });
+  const data = products.map((p) => ({
+    ...p.toObject({ virtuals: true }),
+    ...calcProfit(p),           // 🔒 أرباح — للأدمن فقط (route محمي بـ adminOnly)
+  }));
+
+  res.json({ success: true, data, count: data.length });
 });
 
 // =====================
@@ -592,6 +612,27 @@ const bulkUpdateStock = asyncHandler(async (req, res) => {
   });
 });
 
+
+// =====================
+// Get Single Product (Admin) — includes costPrice + profit
+// =====================
+const getProductAdmin = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const product = await productModel.findById(id);
+
+  if (!product) {
+    return res.status(404).json({ success: false, message: 'Product not found' });
+  }
+
+  res.json({
+    success: true,
+    data: {
+      ...product.toObject({ virtuals: true }),
+      ...calcProfit(product),   // 🔒 أرباح — للأدمن فقط
+    },
+  });
+});
+
 export {
   addProduct,
   updateProduct,
@@ -599,6 +640,7 @@ export {
   listProducts,
   listAllProducts,
   getProduct,
+  getProductAdmin,
   toggleProductStatus,
   bulkUpdateStock,
 };

@@ -3,12 +3,12 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from '../../config/axiosConfig';
 import toast from 'react-hot-toast';
 
-// ── Fetch everything in parallel from analytics API ───────────────────────────
+// ── Fetch everything in parallel ──────────────────────────────────────────────
 export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetch',
   async (isRefresh = false, { rejectWithValue }) => {
     try {
-      const [summaryRes, revenueRes, topProductsRes, cityRes, hourlyRes, funnelRes, recentRes] =
+      const [summaryRes, revenueRes, topProductsRes, cityRes, hourlyRes, funnelRes, recentRes, profitRes] =
         await Promise.all([
           axios.get('/analytics/summary'),
           axios.get('/analytics/revenue?period=30d'),
@@ -17,16 +17,18 @@ export const fetchDashboardData = createAsyncThunk(
           axios.get('/analytics/hourly'),
           axios.get('/analytics/funnel'),
           axios.get('/analytics/recent?limit=8'),
+          axios.get('/analytics/profit'),          // ✅ جديد
         ]);
 
       return {
-        summary:     summaryRes.data.success     ? summaryRes.data.data         : null,
-        revenue:     revenueRes.data.success      ? revenueRes.data.data         : [],
-        topProducts: topProductsRes.data.success  ? topProductsRes.data.data     : [],
-        cities:      cityRes.data.success         ? cityRes.data.data            : [],
-        hourly:      hourlyRes.data.success       ? hourlyRes.data.data          : [],
-        funnel:      funnelRes.data.success       ? funnelRes.data.data          : null,
-        recent:      recentRes.data.success       ? recentRes.data.data          : [],
+        summary:     summaryRes.data.success     ? summaryRes.data.data             : null,
+        revenue:     revenueRes.data.success      ? revenueRes.data.data             : [],
+        topProducts: topProductsRes.data.success  ? topProductsRes.data.data         : [],
+        cities:      cityRes.data.success         ? cityRes.data.data                : [],
+        hourly:      hourlyRes.data.success       ? hourlyRes.data.data              : [],
+        funnel:      funnelRes.data.success       ? funnelRes.data.data              : null,
+        recent:      recentRes.data.success       ? recentRes.data.data              : [],
+        profit:      profitRes.data.success       ? profitRes.data.data              : null,  // ✅ جديد
         isRefresh,
       };
     } catch (err) {
@@ -35,7 +37,7 @@ export const fetchDashboardData = createAsyncThunk(
   },
 );
 
-// ── Fetch only revenue trend (for period switcher) ────────────────────────────
+// ── Fetch only revenue trend (period switcher) ────────────────────────────────
 export const fetchRevenueTrend = createAsyncThunk(
   'dashboard/fetchRevenue',
   async (period = '30d', { rejectWithValue }) => {
@@ -51,17 +53,18 @@ export const fetchRevenueTrend = createAsyncThunk(
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState: {
-    summary:     null,
-    revenue:     [],
-    topProducts: [],
-    cities:      [],
-    hourly:      [],
-    funnel:      null,
-    recent:      [],
-    loading:     false,
-    refreshing:  false,
+    summary:        null,
+    revenue:        [],
+    topProducts:    [],
+    cities:         [],
+    hourly:         [],
+    funnel:         null,
+    recent:         [],
+    profit:         null,   // ✅ { summary, products }
+    loading:        false,
+    refreshing:     false,
     revenueLoading: false,
-    error:       null,
+    error:          null,
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -71,15 +74,16 @@ const dashboardSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
-        state.loading    = false;
-        state.refreshing = false;
-        state.summary     = action.payload.summary;
-        state.revenue     = action.payload.revenue;
-        state.topProducts = action.payload.topProducts;
-        state.cities      = action.payload.cities;
-        state.hourly      = action.payload.hourly;
-        state.funnel      = action.payload.funnel;
-        state.recent      = action.payload.recent;
+        state.loading       = false;
+        state.refreshing    = false;
+        state.summary       = action.payload.summary;
+        state.revenue       = action.payload.revenue;
+        state.topProducts   = action.payload.topProducts;
+        state.cities        = action.payload.cities;
+        state.hourly        = action.payload.hourly;
+        state.funnel        = action.payload.funnel;
+        state.recent        = action.payload.recent;
+        state.profit        = action.payload.profit;    // ✅
         if (action.payload.isRefresh) toast.success('✨ تم تحديث الإحصائيات بنجاح');
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
@@ -90,8 +94,8 @@ const dashboardSlice = createSlice({
       })
 
       .addCase(fetchRevenueTrend.pending,   (state) => { state.revenueLoading = true; })
-      .addCase(fetchRevenueTrend.fulfilled, (state, action) => { state.revenueLoading = false; state.revenue = action.payload; })
-      .addCase(fetchRevenueTrend.rejected,  (state) => { state.revenueLoading = false; });
+      .addCase(fetchRevenueTrend.fulfilled,  (state, action) => { state.revenueLoading = false; state.revenue = action.payload; })
+      .addCase(fetchRevenueTrend.rejected,   (state) => { state.revenueLoading = false; });
   },
 });
 

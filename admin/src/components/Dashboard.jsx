@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { RefreshCw, BarChart3, Crown, Wifi, WifiOff } from 'lucide-react';
 import { fetchDashboardData } from '../store/slices/dashboardSlice';
 import LoadingSpinner from './common/LoadingSpinner';
-import { DashboardMainStats, DashboardOrderStatus } from './dashboard/DashboardStats';
+import { DashboardMainStats, DashboardOrderStatus, ProfitStats } from './dashboard/DashboardStats';
 import {
   RevenueTrendChart,
   TopProductsChart,
@@ -18,7 +18,7 @@ import {
 const Dashboard = () => {
   const dispatch = useDispatch();
   const { user } = useAuth();
-  const { summary, revenue, topProducts, cities, hourly, funnel, recent, loading, refreshing, error } =
+  const { summary, revenue, topProducts, cities, hourly, funnel, recent, profit, loading, refreshing, error } =
     useSelector((s) => s.dashboard);
 
   useEffect(() => { dispatch(fetchDashboardData(false)); }, [dispatch]);
@@ -104,6 +104,9 @@ const Dashboard = () => {
             <RecentOrdersTable data={recent} />
           </div>
         </div>
+
+        {/* ── Profit Table ───────────────────────────────────────────────────── */}
+        <ProfitStats profit={profit} />
 
       </div>
     </div>

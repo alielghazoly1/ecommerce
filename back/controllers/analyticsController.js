@@ -375,3 +375,72 @@ export const getRecentActivity = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+// ─── 8. Profit Summary ────────────────────────────────────────────────────────
+// GET /api/analytics/profit
+// ملخص الأرباح: إجمالي + لكل منتج — للداشبورد الأدمن
+
+export const getProfitSummary = async (req, res) => {
+  try {
+    // ✅ جلب المنتجات اللي عندها costPrice + sold > 0
+    const products = await productModel
+      .find({ costPrice: { $ne: null }, sold: { $gt: 0 } })
+      .select('name image price costPrice sold category brand')
+      .lean();
+
+    // ✅ حساب الأرباح لكل منتج
+    const productProfits = products.map((p) => {
+      const revenue       = Math.round(p.price * p.sold);
+      const totalCost     = Math.round(p.costPrice * p.sold);
+      const profit        = revenue - totalCost;
+      const profitPct     = totalCost > 0 ? Math.round((profit / totalCost) * 100) : 0;
+      const marginPerUnit = Math.round(p.price - p.costPrice);
+
+      return {
+        productId:    p._id,
+        name:         p.name,
+        image:        p.image,
+        category:     p.category,
+        brand:        p.brand,
+        unitsSold:    p.sold,
+        salePrice:    p.price,
+        costPrice:    p.costPrice,
+        marginPerUnit,          // هامش الربح للقطعة الواحدة
+        revenue,                // الإيراد الكلي
+        totalCost,              // التكلفة الكلية
+        profit,                 // الربح الصافي
+        profitPct,              // نسبة الربح %
+      };
+    });
+
+    // ✅ ترتيب تنازلي بالربح
+    productProfits.sort((a, b) => b.profit - a.profit);
+
+    // ✅ الإجماليات
+    const totals = productProfits.reduce(
+      (acc, p) => ({
+        revenue:   acc.revenue   + p.revenue,
+        totalCost: acc.totalCost + p.totalCost,
+        profit:    acc.profit    + p.profit,
+      }),
+      { revenue: 0, totalCost: 0, profit: 0 }
+    );
+
+    const overallProfitPct = totals.totalCost > 0
+      ? Math.round((totals.profit / totals.totalCost) * 100)
+      : 0;
+
+    res.json({
+      success: true,
+      data: {
+        summary: {
+          ...totals,
+          overallProfitPct,
+          productsTracked: productProfits.length,  // عدد المنتجات اللي عندها costPrice
+        },
+        products: productProfits,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

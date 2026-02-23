@@ -8,6 +8,7 @@ import {
   listProducts,
   listAllProducts,
   getProduct,
+  getProductAdmin,
   toggleProductStatus,
   bulkUpdateStock,
 } from '../controllers/productController.js';
@@ -124,6 +125,15 @@ productRouter.get(
   authMiddleware,
   adminOnly,
   listAllProducts
+);
+
+// ✅ Get Single Product (Admin) — includes costPrice + profit
+productRouter.get(
+  '/admin/:id',
+  authMiddleware,
+  adminOnly,
+  validateMongoId('id'),
+  getProductAdmin
 );
 
 // ✅ Bulk Update Stock
