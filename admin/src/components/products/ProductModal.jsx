@@ -48,9 +48,9 @@ const ProductModal = ({ product, onClose, onEdit }) => (
           <div>
             <p className="text-gray-500 text-sm mb-1">سعر التكلفة 🔒</p>
             <p className="text-xl font-bold text-rose-400">{product.costPrice ? `${product.costPrice} ج.م` : '—'}</p>
-            {product.profitMargin != null && (
-              <p className={`text-xs font-bold mt-1 ${product.profitMargin >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                ربح: {product.profitMargin >= 0 ? '+' : ''}{product.profitMargin} ج.م ({product.profitMarginPct}%)
+            {product.marginPerUnit != null && (
+              <p className={`text-xs font-bold mt-1 ${product.marginPerUnit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                هامش القطعة: {product.marginPerUnit >= 0 ? '+' : ''}{product.marginPerUnit} ج.م
               </p>
             )}
           </div>
@@ -59,6 +59,32 @@ const ProductModal = ({ product, onClose, onEdit }) => (
             <p className="text-lg text-white">{product.sku || 'غير متوفر'}</p>
           </div>
         </div>
+        {/* ── المبيعات والأرباح الفعلية ── */}
+        {product.sold > 0 && (
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+              <p className="text-gray-500 text-xs mb-1">إجمالي المبيعات</p>
+              <p className="text-2xl font-black text-white">{product.sold} <span className="text-sm text-gray-400">قطعة</span></p>
+              <p className="text-xs text-gray-500 mt-1">إيراد: <span className="text-purple-400 font-bold">{product.revenue} ج.م</span></p>
+            </div>
+            <div className={`bg-slate-800/50 rounded-xl p-4 border ${product.profit != null ? (product.profit >= 0 ? 'border-emerald-800' : 'border-red-800') : 'border-slate-700'}`}>
+              <p className="text-gray-500 text-xs mb-1">صافي الربح 🔒</p>
+              {product.profit != null ? (
+                <>
+                  <p className={`text-2xl font-black ${product.profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {product.profit >= 0 ? '+' : ''}{product.profit} <span className="text-sm">ج.م</span>
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    نسبة: <span className={`font-bold ${product.profitPct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{product.profitPct}%</span>
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-gray-600 mt-2">أضف سعر التكلفة لحساب الربح</p>
+              )}
+            </div>
+          </div>
+        )}
+
         {product.tags?.length > 0 && (
           <div>
             <p className="text-gray-500 text-sm mb-2">الكلمات المفتاحية</p>
