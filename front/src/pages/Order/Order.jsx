@@ -7,7 +7,6 @@ import Toast from '../../components/ui/Toast';
 import { useAuth, useCartProducts, useCartActions } from '../../store/selectors';
 import { api } from '../../config/api';
 
-
 const SHIPPING_FEE = 60;
 
 const Order = () => {
@@ -15,7 +14,6 @@ const Order = () => {
   const { isAuthenticated, authLoading } = useAuth();
   const { clearCart } = useCartActions();
   const cartProducts = useCartProducts();
-  
 
   const subtotal = useMemo(
     () => cartProducts.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0),
@@ -32,10 +30,11 @@ const Order = () => {
   );
 
   const [shipping, setShipping] = useState({ street: '', city: '', state: '', zipCode: '', phone: '' });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors]     = useState({});
   const [location, setLocation] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState({ message: '', type: 'info' });
+  const [loading, setLoading]   = useState(false);
+  const [toast, setToast]       = useState({ message: '', type: 'info' });
+  const [summaryOpen, setSummaryOpen] = useState(false); // موبايل: accordion للمنتجات
   const submittingRef = useRef(false);
 
   useEffect(() => {
@@ -54,7 +53,7 @@ const Order = () => {
   const validate = () => {
     const e = {};
     if (!shipping.street?.trim()) e.street = 'العنوان مطلوب';
-    if (!shipping.city?.trim()) e.city = 'المدينة مطلوبة';
+    if (!shipping.city?.trim())   e.city   = 'المدينة مطلوبة';
     if (!/^\+?\d{7,15}$/.test(shipping.phone)) e.phone = 'رقم هاتف غير صحيح';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -64,7 +63,7 @@ const Order = () => {
     e.preventDefault();
     if (submittingRef.current) return;
     if (!cartProducts.length) { setToast({ message: 'السلة فارغة', type: 'error' }); return; }
-    if (!validate()) { setToast({ message: 'راجع بيانات الشحن', type: 'error' }); return; }
+    if (!validate())           { setToast({ message: 'راجع بيانات الشحن', type: 'error' }); return; }
 
     submittingRef.current = true;
     setLoading(true);
@@ -76,7 +75,10 @@ const Order = () => {
         state: shipping.state || '', zipCode: shipping.zipCode || '',
         country: 'Egypt', phone: shipping.phone,
         ...(location?.latitude && location?.longitude && {
-          location: { latitude: location.latitude, longitude: location.longitude, accuracy: location.accuracy || null, placeName: location.placeName || null },
+          location: {
+            latitude: location.latitude, longitude: location.longitude,
+            accuracy: location.accuracy || null, placeName: location.placeName || null,
+          },
         }),
       },
       amount: subtotal + SHIPPING_FEE,
@@ -106,16 +108,73 @@ const Order = () => {
   };
 
   return (
-    <section className="min-h-screen bg-gray-50 py-12 px-4">
+    <section className="min-h-screen bg-gray-50 py-6 px-4 sm:py-12">
       <Toast toast={toast} onClose={() => setToast({ message: '', type: 'info' })} />
-      <div className="mt-15 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow">
-          <h2 className="text-2xl font-bold mb-4">مراجعة الطلب</h2>
-          <OrderSummary  cartProducts={cartProducts} subtotal={subtotal} totalProductDiscount={totalProductDiscount} shippingFee={SHIPPING_FEE} navigate={navigate} />
+
+      <div className="max-w-6xl mx-auto">
+
+        {/* ── Page Title ── */}
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 mt-2">
+          تأكيد الطلب
+        </h1>
+
+        {/* ── Mobile: collapsible order summary ── */}
+        <div className="lg:hidden mb-4">
+          <button
+            type="button"
+            onClick={() => setSummaryOpen((v) => !v)}
+            className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm"
+          >
+            <span className="font-semibold text-gray-800 text-base">
+              عرض تفاصيل الطلب ({cartProducts.length} منتج)
+            </span>
+            <span className="text-cyan-600 text-xl">{summaryOpen ? '▲' : '▼'}</span>
+          </button>
+
+          {summaryOpen && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mt-2 p-4">
+              <OrderSummary
+                cartProducts={cartProducts}
+                subtotal={subtotal}
+                totalProductDiscount={totalProductDiscount}
+                shippingFee={SHIPPING_FEE}
+                navigate={navigate}
+              />
+            </div>
+          )}
         </div>
-        <aside className="bg-white rounded-2xl p-6 shadow">
-          <ShippingForm shipping={shipping} errors={errors} updateShipping={updateShipping} loading={loading} onSubmit={placeOrder} navigate={navigate} cartProducts={cartProducts} location={location} onLocationChange={setLocation} />
-        </aside>
+
+        {/* ── Layout: mobile = single col (form first), desktop = 3-col grid ── */}
+        <div className="flex flex-col-reverse lg:grid lg:grid-cols-3 gap-6 lg:gap-8">
+
+          {/* Order Summary — desktop only (hidden on mobile, shown above as accordion) */}
+          <div className="hidden lg:block lg:col-span-2 bg-white rounded-2xl p-6 shadow">
+            <h2 className="text-xl font-bold mb-4 text-gray-900">مراجعة الطلب</h2>
+            <OrderSummary
+              cartProducts={cartProducts}
+              subtotal={subtotal}
+              totalProductDiscount={totalProductDiscount}
+              shippingFee={SHIPPING_FEE}
+              navigate={navigate}
+            />
+          </div>
+
+          {/* Shipping Form — always first on mobile via flex-col-reverse */}
+          <aside className="bg-white rounded-2xl p-5 sm:p-6 shadow lg:sticky lg:top-24 lg:h-fit">
+            <ShippingForm
+              shipping={shipping}
+              errors={errors}
+              updateShipping={updateShipping}
+              loading={loading}
+              onSubmit={placeOrder}
+              navigate={navigate}
+              cartProducts={cartProducts}
+              location={location}
+              onLocationChange={setLocation}
+            />
+          </aside>
+
+        </div>
       </div>
     </section>
   );
