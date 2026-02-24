@@ -5,7 +5,7 @@ import {
   Navigation, ExternalLink, Loader2,
 } from 'lucide-react';
 import { useState } from 'react';
-import LocationPicker from '../components/LocationPicker';
+import LocationPicker from "../components/Locationpicker"
 import { useOrders } from '../hooks/useOrders';
 import { formatDate, formatEGP } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
