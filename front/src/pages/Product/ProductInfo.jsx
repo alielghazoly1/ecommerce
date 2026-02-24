@@ -1,4 +1,4 @@
-import { formatEGP } from '../../components/utils';
+import { formatEGP } from '../../lib/utils';
 
 const ProductInfo = ({ product, hasDiscount, discountPercent }) => {
   return (

@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react';
-import LocationPicker from '../../components/Locationpicker';
+import LocationPicker from '../../components/LocationPicker';
 
 const ShippingForm = ({
   shipping,

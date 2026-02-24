@@ -1,13 +1,18 @@
+import { useNavigate } from 'react-router-dom';
 import CartItem from './CartItem';
 import EmptyCart from './EmptyCart';
 import OrderSummary from './OrderSummary';
 import { useCart } from './useCart';
 
+const SHIPPING_FEE = 60;
+
 const Cart = () => {
+  const navigate = useNavigate();
   const {
     cartProducts,
     itemCount,
-    total,
+    subtotal,
+    totalProductDiscount,
     loading,
     addToCart,
     removeFromCart,
@@ -44,15 +49,17 @@ const Cart = () => {
                   item={item}
                   onAddToCart={addToCart}
                   onRemoveFromCart={removeFromCart}
-                  
                 />
               ))}
             </div>
 
             {/* Order Summary */}
             <OrderSummary
-              itemCount={itemCount}
-              total={total}
+              cartProducts={cartProducts}
+              subtotal={subtotal}
+              totalProductDiscount={totalProductDiscount}
+              shippingFee={SHIPPING_FEE}
+              navigate={navigate}
             />
           </div>
         )}

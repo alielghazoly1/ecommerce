@@ -1,75 +1,43 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { ShopContext } from '../../context/ShopContext';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 
 import OrderSummary from './OrderSummary';
 import ShippingForm from './ShippingForm';
 import Toast from '../../components/ui/Toast';
+import { useAuth, useCartProducts, useCartActions } from '../../store/selectors';
+import { api } from '../../config/api';
 
-const api = axios.create({ withCredentials: true });
 
-const SHIPPING_FEE = 60; // ✅ مصاريف الشحن الثابتة 60 ج
+const SHIPPING_FEE = 60;
 
 const Order = () => {
-  const {
-    cartItems = {},
-    clearCart,
-    all_products = [],
-    url,
-    isAuthenticated,
-    authLoading,
-  } = useContext(ShopContext);
-
   const navigate = useNavigate();
+  const { isAuthenticated, authLoading } = useAuth();
+  const { clearCart } = useCartActions();
+  const cartProducts = useCartProducts();
+  
 
-  /* ---------------- CART PRODUCTS ---------------- */
-  const cartProducts = useMemo(() => {
-    return Object.keys(cartItems || {})
-      .map((id) => {
-        const product = all_products.find((p) => String(p._id) === String(id));
-        return product ? { ...product, quantity: cartItems[id] } : null;
-      })
-      .filter(Boolean);
-  }, [cartItems, all_products]);
+  const subtotal = useMemo(
+    () => cartProducts.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0),
+    [cartProducts],
+  );
 
-  // ✅ Subtotal بسعر البيع الفعلي (price بعد الخصم)
-  const subtotal = useMemo(() => {
-    return cartProducts.reduce(
-      (sum, item) => sum + Number(item.price) * Number(item.quantity),
-      0,
-    );
-  }, [cartProducts]);
-
-  // ✅ إجمالي وفورات المنتجات (originalPrice - price) × quantity
-  const totalProductDiscount = useMemo(() => {
-    return cartProducts.reduce((sum, item) => {
-      if (item.originalPrice && item.originalPrice > item.price) {
+  const totalProductDiscount = useMemo(
+    () => cartProducts.reduce((sum, item) => {
+      if (item.originalPrice && item.originalPrice > item.price)
         return sum + (item.originalPrice - item.price) * item.quantity;
-      }
       return sum;
-    }, 0);
-  }, [cartProducts]);
+    }, 0),
+    [cartProducts],
+  );
 
-  /* ---------------- SHIPPING ---------------- */
-  const [shipping, setShipping] = useState({
-    street: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    phone: '',
-  });
+  const [shipping, setShipping] = useState({ street: '', city: '', state: '', zipCode: '', phone: '' });
   const [errors, setErrors] = useState({});
-
-  /* ---------------- LOCATION ---------------- */
   const [location, setLocation] = useState(null);
-
-  /* ---------------- UI STATE ---------------- */
   const [loading, setLoading] = useState(false);
-  const submittingRef = useRef(false);
   const [toast, setToast] = useState({ message: '', type: 'info' });
+  const submittingRef = useRef(false);
 
-  /* ---------------- AUTH GUARD ---------------- */
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated) {
@@ -78,7 +46,6 @@ const Order = () => {
     }
   }, [authLoading, isAuthenticated, navigate]);
 
-  /* ---------------- HELPERS ---------------- */
   const updateShipping = (field, value) => {
     setShipping((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -93,40 +60,23 @@ const Order = () => {
     return Object.keys(e).length === 0;
   };
 
-  /* ---------------- PLACE ORDER ---------------- */
   const placeOrder = async (e) => {
     e.preventDefault();
     if (submittingRef.current) return;
-
-    if (!cartProducts.length) {
-      setToast({ message: 'السلة فارغة', type: 'error' });
-      return;
-    }
-    if (!validate()) {
-      setToast({ message: 'راجع بيانات الشحن', type: 'error' });
-      return;
-    }
+    if (!cartProducts.length) { setToast({ message: 'السلة فارغة', type: 'error' }); return; }
+    if (!validate()) { setToast({ message: 'راجع بيانات الشحن', type: 'error' }); return; }
 
     submittingRef.current = true;
     setLoading(true);
 
-    // ✅ الـ backend يحسب الخصومات والشحن من المنتجات نفسها
     const payload = {
       items: cartProducts.map((p) => ({ id: p._id, quantity: p.quantity })),
       address: {
-        street: shipping.street,
-        city: shipping.city,
-        state: shipping.state || '',
-        zipCode: shipping.zipCode || '',
-        country: 'Egypt',
-        phone: shipping.phone,
+        street: shipping.street, city: shipping.city,
+        state: shipping.state || '', zipCode: shipping.zipCode || '',
+        country: 'Egypt', phone: shipping.phone,
         ...(location?.latitude && location?.longitude && {
-          location: {
-            latitude: location.latitude,
-            longitude: location.longitude,
-            accuracy: location.accuracy || null,
-            placeName: location.placeName || null,
-          },
+          location: { latitude: location.latitude, longitude: location.longitude, accuracy: location.accuracy || null, placeName: location.placeName || null },
         }),
       },
       amount: subtotal + SHIPPING_FEE,
@@ -134,7 +84,7 @@ const Order = () => {
     };
 
     try {
-      const res = await api.post(`${url}/api/order/place`, payload);
+      const res = await api.post('/api/order/place', payload);
       if (res.data?.success) {
         setToast({ message: 'تم إنشاء الطلب بنجاح ✓', type: 'success' });
         await clearCart();
@@ -155,34 +105,16 @@ const Order = () => {
     }
   };
 
-  /* ---------------- UI ---------------- */
   return (
     <section className="min-h-screen bg-gray-50 py-12 px-4">
       <Toast toast={toast} onClose={() => setToast({ message: '', type: 'info' })} />
       <div className="mt-15 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow">
           <h2 className="text-2xl font-bold mb-4">مراجعة الطلب</h2>
-          <OrderSummary
-            cartProducts={cartProducts}
-            subtotal={subtotal}
-            totalProductDiscount={totalProductDiscount}
-            shippingFee={SHIPPING_FEE}
-            url={url}
-            navigate={navigate}
-          />
+          <OrderSummary  cartProducts={cartProducts} subtotal={subtotal} totalProductDiscount={totalProductDiscount} shippingFee={SHIPPING_FEE} navigate={navigate} />
         </div>
         <aside className="bg-white rounded-2xl p-6 shadow">
-          <ShippingForm
-            shipping={shipping}
-            errors={errors}
-            updateShipping={updateShipping}
-            loading={loading}
-            onSubmit={placeOrder}
-            navigate={navigate}
-            cartProducts={cartProducts}
-            location={location}
-            onLocationChange={setLocation}
-          />
+          <ShippingForm shipping={shipping} errors={errors} updateShipping={updateShipping} loading={loading} onSubmit={placeOrder} navigate={navigate} cartProducts={cartProducts} location={location} onLocationChange={setLocation} />
         </aside>
       </div>
     </section>
