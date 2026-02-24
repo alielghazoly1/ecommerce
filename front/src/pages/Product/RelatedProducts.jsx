@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { TrendingUp } from 'lucide-react';
 import LazyImage from '../../components/LazyImage';
-import { formatEGP } from '../../components/utils';
+import { formatEGP } from '../../lib/utils';
 
 const RelatedProducts = ({ products }) => {
   if (!products || products.length === 0) return null;

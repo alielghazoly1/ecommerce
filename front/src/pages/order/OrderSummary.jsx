@@ -1,5 +1,5 @@
 import LazyImage from '../../components/LazyImage';
-import { formatEGP } from '../../components/utils';
+import { formatEGP } from '../../lib/utils';
 
 // ✅ Props بسيطة — بدون coupon/discountPercent لأن الخصم جاي من المنتجات نفسها
 const OrderSummary = ({

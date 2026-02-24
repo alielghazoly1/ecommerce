@@ -1,73 +1,53 @@
-import { useContext, useMemo } from 'react';
-import {
-  Home,
-  FolderOpen,
-  ShoppingBag,
-  Mail,
-  ShoppingCart,
-  CircleUserRound,
-} from 'lucide-react';
+import { useMemo } from 'react';
+import { Home, FolderOpen, ShoppingBag, Mail, ShoppingCart, CircleUserRound } from 'lucide-react';
 import { Link as ScrollLink, scroller } from 'react-scroll';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ShopContext } from '../context/ShopContext';
+import { useAuth, useCartItemCount } from '../../store/selectors';
 
 const menuItemData = [
-  { to: 'home', label: 'الصفحة الرئيسية', Icon: Home },
-  { to: 'categories', label: 'تصفح المنتجات', Icon: FolderOpen },
-  { to: 'shop', label: 'خصومات متجرنا', Icon: ShoppingBag },
-  { to: 'contact', label: 'تواصل معنا', Icon: Mail },
+  { to: 'home',       label: 'الصفحة الرئيسية', Icon: Home },
+  { to: 'categories', label: 'تصفح المنتجات',   Icon: FolderOpen },
+  { to: 'shop',       label: 'خصومات متجرنا',   Icon: ShoppingBag },
+  { to: 'contact',    label: 'تواصل معنا',       Icon: Mail },
 ];
 
 const MenuItems = ({ setSidebarOpen, isMobile }) => {
-  const { cartItems, isAuthenticated, logout } = useContext(ShopContext);
+  const { isAuthenticated, logout } = useAuth();
+  const totalItems = useCartItemCount();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const totalItems = useMemo(() => {
-    return Object.values(cartItems).reduce((a, b) => a + b, 0);
-  }, [cartItems]);
+  const closeSidebar = () => setSidebarOpen?.(false);
 
   const handleLogout = async () => {
     await logout();
     navigate('/');
-    setSidebarOpen && setSidebarOpen(false);
+    closeSidebar();
   };
 
   const handleNavigateAndScroll = (section) => {
     navigate('/');
     setTimeout(() => {
-      scroller.scrollTo(section, {
-        smooth: true,
-        duration: 500,
-        offset: -80,
-      });
+      scroller.scrollTo(section, { smooth: true, duration: 500, offset: -80 });
     }, 100);
-    setSidebarOpen && setSidebarOpen(false);
+    closeSidebar();
   };
 
   return (
     <div
       className={`flex md:justify-center lg:justify-end ${
-        isMobile
-          ? 'flex-col space-y-4 items-center px-4 gap-y-2'
-          : 'flex-row w-full items-center gap-4'
+        isMobile ? 'flex-col space-y-4 items-center px-4 gap-y-2' : 'flex-row w-full items-center gap-4'
       } font-sans`}
     >
       {menuItemData.map(({ to, label, Icon }) => {
-        // ✅ "categories" تروح صفحة /categories مع active state
         if (to === 'categories') {
           const isActive = location.pathname === '/categories';
           return (
             <button
               key={to}
-              onClick={() => {
-                navigate('/categories');
-                setSidebarOpen && setSidebarOpen(false);
-              }}
+              onClick={() => { navigate('/categories'); closeSidebar(); }}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all shrink-0 min-w-20 hover:shadow-md ${
-                isActive
-                  ? 'bg-cyan-100 text-cyan-700 shadow-lg'
-                  : 'text-gray-800 hover:bg-gray-100'
+                isActive ? 'bg-cyan-100 text-cyan-700 shadow-lg' : 'text-gray-800 hover:bg-gray-100'
               }`}
             >
               <Icon className={`w-6 h-6 ${isActive ? 'text-cyan-600' : 'text-gray-700'}`} />
@@ -76,7 +56,6 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
           );
         }
 
-        // باقي العناصر - scroll links أو navigate
         return location.pathname === '/' ? (
           <ScrollLink
             key={to}
@@ -85,7 +64,7 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
             duration={500}
             offset={-80}
             spy
-            onClick={() => setSidebarOpen && setSidebarOpen(false)}
+            onClick={closeSidebar}
             className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all shrink-0 min-w-20 text-gray-800 hover:bg-gray-100 hover:shadow-md cursor-pointer"
             activeClass="bg-cyan-100 text-cyan-700 shadow-lg"
           >
@@ -104,12 +83,9 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
         );
       })}
 
-      {/* 🛒 Cart */}
+      {/* Cart */}
       <button
-        onClick={() => {
-          navigate('/cart');
-          setSidebarOpen && setSidebarOpen(false);
-        }}
+        onClick={() => { navigate('/cart'); closeSidebar(); }}
         className="relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-gray-800 hover:bg-gray-100 hover:shadow-md"
       >
         <ShoppingCart className="w-6 h-6 text-gray-700" />
@@ -122,10 +98,7 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
 
       {!isAuthenticated ? (
         <button
-          onClick={() => {
-            navigate('/login');
-            setSidebarOpen && setSidebarOpen(false);
-          }}
+          onClick={() => { navigate('/login'); closeSidebar(); }}
           className="flex items-center gap-2 px-4 py-3 rounded-lg bg-cyan-400 text-white font-semibold hover:bg-cyan-500 transition-all"
         >
           تسجيل دخول
@@ -133,18 +106,12 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
       ) : (
         <div className="flex items-center gap-4">
           <div
-            onClick={() => {
-              navigate('/profile');
-              setSidebarOpen && setSidebarOpen(false);
-            }}
+            onClick={() => { navigate('/profile'); closeSidebar(); }}
             className="flex flex-col items-center cursor-pointer group"
           >
             <CircleUserRound className="w-6 h-6 text-gray-700 group-hover:text-cyan-600" />
-            <span className="text-xs text-gray-600 mt-1 group-hover:text-cyan-600">
-              الحساب
-            </span>
+            <span className="text-xs text-gray-600 mt-1 group-hover:text-cyan-600">الحساب</span>
           </div>
-
           <button
             onClick={handleLogout}
             className="flex items-center gap-2 px-4 py-3 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition-all"

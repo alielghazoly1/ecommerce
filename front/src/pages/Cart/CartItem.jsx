@@ -1,7 +1,7 @@
 import { memo, useCallback } from 'react';
 import { Trash2, Plus, Minus } from 'lucide-react';
 import LazyImage from '../../components/LazyImage';
-import { formatEGP } from '../../components/utils';
+import { formatEGP } from '../../lib/utils';
 const CartItem = memo(({ item, onAddToCart, onRemoveFromCart }) => {
   const handleRemove = useCallback(() => {
     onRemoveFromCart(item._id, true);
