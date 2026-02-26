@@ -13,7 +13,7 @@ export const useAuth = () =>
       register: s.register,
       logout: s.logout,
       checkAuth: s.checkAuth,
-    }))
+    })),
   );
 
 // ─── Products ─────────────────────────────────────────────────────────────────
@@ -32,7 +32,9 @@ export const useRelatedProducts = (productId, category, limit = 8) => {
   return useMemo(
     () =>
       products
-        .filter((p) => String(p._id) !== String(productId) && p.category === category)
+        .filter(
+          (p) => String(p._id) !== String(productId) && p.category === category,
+        )
         .slice(0, limit),
     [products, productId, category, limit],
   );
@@ -64,7 +66,7 @@ export const useCartActions = () =>
       removeFromCart: s.removeFromCart,
       clearCart: s.clearCart,
       loadCartData: s.loadCartData,
-    }))
+    })),
   );
 
 export const useCartItems = () => useStore((s) => s.cartItems);
