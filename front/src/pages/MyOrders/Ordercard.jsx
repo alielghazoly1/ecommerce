@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Calendar, MapPin, Phone, Banknote, CreditCard, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatDate, formatEGP } from "../../lib/utils"
 import { STATUS_CONFIG } from "./Orderconstants"
-import OrderProgress from './OrderProgress';
-import OrderLocation from './OrderLocation';
-import TrackingBadge from './TrackingBadge';
+import OrderProgress from './Orderprogress';
+import OrderLocation from './Orderlocation';
+import TrackingBadge from './Trackingbadge';
 
 const OrderCard = ({ order, onLocationUpdate }) => {
   const [expanded, setExpanded] = useState(false);
