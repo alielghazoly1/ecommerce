@@ -3,12 +3,12 @@
  */
 export const formatEGP = (value) => {
   try {
-    return new Intl.NumberFormat('ar-EG', {
+    return new Intl.NumberFormat('en-EG', {
       style: 'currency',
       currency: 'EGP',
       maximumFractionDigits: 0,
     }).format(value);
-  } catch {
+  } catch (error) {
     return `ج.م ${Number(value).toFixed(2)}`;
   }
 };

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Clock, Tag } from 'lucide-react';
 import LazyImage from './LazyImage';
 import Toast from './ui/Toast';
-import { formatEGP } from './utils';
+import { formatEGP } from "../lib/utils";
 import { useAuth, useCartActions, useFeaturedProducts } from '../store/selectors';
 import useStore from '../store/useStore';
 
