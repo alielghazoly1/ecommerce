@@ -5,7 +5,6 @@ import OrderCard from "./Ordercard"
 
 import OrderSkeleton from "./Orderskeleton"
 
-import OrderSkeleton from './Orderskeleton';
 
 
 const MyOrders = () => {
