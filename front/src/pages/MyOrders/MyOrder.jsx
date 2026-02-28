@@ -2,11 +2,11 @@ import { ShoppingBag, XCircle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useOrders } from "../../hooks/useOrders"
 import OrderCard from "./Ordercard"
-<<<<<<< HEAD
+
 import OrderSkeleton from "./Orderskeleton"
-=======
+
 import OrderSkeleton from './Orderskeleton';
->>>>>>> f0300599d7b62337690f6d761b09fd5f98249ad3
+
 
 const MyOrders = () => {
   const { orders, loading, error, fetchOrders, updateOrderLocation } = useOrders();
