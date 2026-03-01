@@ -3,8 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Clock, Tag } from 'lucide-react';
 import LazyImage from './LazyImage';
 import Toast from './ui/Toast';
-import { formatEGP } from "../lib/utils";
-import { useAuth, useCartActions, useFeaturedProducts } from '../store/selectors';
+import { formatEGP } from '../lib/utils';
+import {
+  useAuth,
+  useCartActions,
+  useFeaturedProducts,
+} from '../store/selectors';
 import useStore from '../store/useStore';
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -48,10 +52,15 @@ const Offer = () => {
   const [addedIds, setAddedIds] = useState([]);
 
   const target = useMemo(() => Date.now() + 5 * 24 * 3600 * 1000, []);
-  const [secs, setSecs] = useState(Math.max(0, Math.round((target - Date.now()) / 1000)));
+  const [secs, setSecs] = useState(
+    Math.max(0, Math.round((target - Date.now()) / 1000)),
+  );
 
   useEffect(() => {
-    const id = setInterval(() => setSecs(Math.max(0, Math.round((target - Date.now()) / 1000))), 1000);
+    const id = setInterval(
+      () => setSecs(Math.max(0, Math.round((target - Date.now()) / 1000))),
+      1000,
+    );
     return () => clearInterval(id);
   }, [target]);
 
@@ -59,7 +68,10 @@ const Offer = () => {
     async (id) => {
       if (!id || loadingIds.includes(id)) return;
       if (!isAuthenticated) {
-        setToast({ type: 'error', message: 'يرجى تسجيل الدخول لإضافة منتجات للسلة' });
+        setToast({
+          type: 'error',
+          message: 'يرجى تسجيل الدخول لإضافة منتجات للسلة',
+        });
         setTimeout(() => navigate('/login'), TOAST_DURATION);
         return;
       }
@@ -68,7 +80,10 @@ const Offer = () => {
         await addToCart(id);
         setAddedIds((prev) => [...prev, id]);
         setToast({ type: 'success', message: 'تمت إضافة المنتج إلى السلة 🛒' });
-        setTimeout(() => setAddedIds((prev) => prev.filter((x) => x !== id)), 1200);
+        setTimeout(
+          () => setAddedIds((prev) => prev.filter((x) => x !== id)),
+          1200,
+        );
       } catch {
         setToast({ type: 'error', message: 'حدث خطأ أثناء إضافة المنتج' });
       } finally {
@@ -91,16 +106,29 @@ const Offer = () => {
         <div className="relative z-10 max-w-7xl mx-auto">
           <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-12 gap-6">
             <div className="text-center sm:text-right">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-2">متجرنا الحصري</h2>
-              <p className="text-gray-600 text-sm sm:text-base">اكتشف أحدث العروض واغتنم التخفيضات قبل انتهاء الوقت</p>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-2">
+                متجرنا الحصري
+              </h2>
+              <p className="text-gray-600 text-sm sm:text-base">
+                اكتشف أحدث العروض واغتنم التخفيضات قبل انتهاء الوقت
+              </p>
             </div>
             <div className="inline-flex items-center gap-3 bg-white/90 px-4 py-3 rounded-2xl shadow-lg mx-auto sm:mx-0">
               <Clock className="w-5 h-5 text-cyan-600" />
               <div className="flex gap-2">
-                {[['أيام', days], ['ساعات', hours], ['دقائق', minutes], ['ثواني', seconds]].map(([label, val]) => (
+                {[
+                  ['أيام', days],
+                  ['ساعات', hours],
+                  ['دقائق', minutes],
+                  ['ثواني', seconds],
+                ].map(([label, val]) => (
                   <div key={label} className="text-center">
-                    <div className="bg-linear-to-r from-cyan-500 to-cyan-600 text-white font-bold rounded-lg px-2.5 py-1.5 min-w-[3rem] shadow-md">{pad(val)}</div>
-                    <div className="text-[10px] text-gray-600 mt-1 font-medium">{label}</div>
+                    <div className="bg-linear-to-r from-cyan-500 to-cyan-600 text-white font-bold rounded-lg px-2.5 py-1.5 min-w-[3rem] shadow-md">
+                      {pad(val)}
+                    </div>
+                    <div className="text-[10px] text-gray-600 mt-1 font-medium">
+                      {label}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -109,29 +137,43 @@ const Offer = () => {
 
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)}
+              {Array.from({ length: 8 }).map((_, i) => (
+                <ProductSkeleton key={i} />
+              ))}
             </div>
           ) : products?.length === 0 ? (
             <div className="text-center py-20">
               <div className="w-24 h-24 mx-auto mb-6 bg-linear-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center shadow-inner">
                 <ShoppingBag className="w-12 h-12 text-gray-400" />
               </div>
-              <p className="text-gray-500 text-lg font-medium">لا توجد عروض حالياً</p>
+              <p className="text-gray-500 text-lg font-medium">
+                لا توجد عروض حالياً
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 md:gap-6 gap-3">
               {products.map((p) => {
                 const isAdding = loadingIds.includes(p._id);
                 const isAdded = addedIds.includes(p._id);
-                const hasDiscount = p.originalPrice && p.originalPrice > p.price;
-                const discount = hasDiscount ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
+                const hasDiscount =
+                  p.originalPrice && p.originalPrice > p.price;
+                const discount = hasDiscount
+                  ? Math.round(
+                      ((p.originalPrice - p.price) / p.originalPrice) * 100,
+                    )
+                  : 0;
                 return (
                   <article
                     key={p._id}
                     role="button"
                     tabIndex={0}
                     onClick={() => navigate(`/product/${p._id}`)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/product/${p._id}`); } }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        navigate(`/product/${p._id}`);
+                      }
+                    }}
                     className="group relative bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300 transform hover:-translate-y-2 cursor-pointer"
                   >
                     {hasDiscount && (
@@ -143,33 +185,53 @@ const Offer = () => {
                       </div>
                     )}
                     <div className="relative w-full h-64 flex items-center justify-center overflow-hidden">
-                      <LazyImage src={p.image} alt={p.name} className="object-contain w-full h-full transition-transform duration-500 group-hover:scale-110" />
+                      <LazyImage
+                        src={p.image}
+                        alt={p.name}
+                        className="object-contain w-full h-full transition-transform duration-500 group-hover:scale-110"
+                      />
                     </div>
                     <div className="p-5">
-                      <h3 className="text-lg font-bold text-gray-900 mb-2">{p.name}</h3>
+                      <h3 className="text-lg font-bold text-gray-900 mb-2">
+                        {p.name}
+                      </h3>
                       <div className="flex-col flex  md:flex-row items-center justify-between gap-3">
                         <div>
-                          
                           {hasDiscount ? (
                             <div className="flex items-center justify-center md:flex-col gap-1 ">
-                              <span className="text-lg font-bold text-cyan-600">{formatEGP(p.price)}</span>
-                              <span className="text-xs line-through text-red-700">{formatEGP(p.originalPrice)}</span>
+                              <span className="text-lg font-bold text-cyan-600">
+                                {formatEGP(p.price)}
+                              </span>
+                              <span className="text-xs line-through text-red-700">
+                                {formatEGP(p.originalPrice)}
+                              </span>
                             </div>
                           ) : (
-                            <span className="text-xl font-bold text-cyan-600">{formatEGP(p.price)}</span>
+                            <span className="text-xl font-bold text-cyan-600">
+                              {formatEGP(p.price)}
+                            </span>
                           )}
                         </div>
                         <button
-                          onClick={(e) => { e.stopPropagation(); onAdd(p._id); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAdd(p._id);
+                          }}
                           disabled={isAdding}
                           className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md hover:shadow-lg ${
-                            isAdding ? 'bg-gray-300 text-gray-600 cursor-wait'
-                            : isAdded ? 'bg-green-500 hover:bg-green-600 text-white'
-                            : 'bg-linear-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white'
+                            isAdding
+                              ? 'bg-gray-300 text-gray-600 cursor-wait'
+                              : isAdded
+                                ? 'bg-green-500 hover:bg-green-600 text-white'
+                                : 'bg-linear-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white'
                           }`}
                         >
                           <ShoppingBag className="w-4 h-4" />
-                          {isAdding ? 'جاري...' : isAdded ? 'تمت الاضافة ✔' : 'أضف الي السلة'}
+                          {isAdding
+                            ? 'جاري...'
+                            : isAdded
+                              ? 'تمت الاضافة ✔'
+                              : 'أضف الي السلة'}
                         </button>
                       </div>
                     </div>
