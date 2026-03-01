@@ -5,7 +5,7 @@ import PageBackground from "./Pagebackground"
 import CategoryPageHeader from "./Categorypageheader"
 import ProductSearchBar from "./Productsearchbar"
 import CategoryFilterBar from "./Categoryfilterbar"
-import ProductGrid from './ProductGrid';
+import ProductGrid from './Productgrid';
 
 /**
  * Categories page — lean orchestrator.
