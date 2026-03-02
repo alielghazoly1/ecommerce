@@ -1,6 +1,6 @@
 import { ShoppingCart } from 'lucide-react';
 import LazyImage from './LazyImage';
-import Logo from '../assets/logo.svg';
+import Logo from '../assets/logoo.svg';
 
 const Hero = () => {
   return (
@@ -22,7 +22,7 @@ const Hero = () => {
 
           {/* Buttons */}
           <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
-            <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
+         
               <button
                 onClick={() => (window.location.href = '/categories')}
                 className="flex items-center gap-3
@@ -33,7 +33,7 @@ const Hero = () => {
                 <ShoppingCart className="w-5 h-5" />
                 تسوق الآن
               </button>
-            </div>
+           
 
             <button
               onClick={() => (window.location.href = '#categories')}

@@ -7,7 +7,7 @@ const Layout = () => {
       <Header />
 
       {/* ✅ padding-top بيساوي ارتفاع الـ Header */}
-      <main className="pt-[75px] md:pt-[80px]">
+      <main className="pt-[75px] md:pt-20">
         <Outlet />
       </main>
     </div>

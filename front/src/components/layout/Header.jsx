@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Menu, X, ShoppingCart } from 'lucide-react';
+import { Menu, X, ShoppingCart,Nut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MenuItems from './MenuItems';
 import { useCartItemCount } from '../../store/selectors';
@@ -26,9 +26,9 @@ const Header = () => {
       <header className="hidden md:flex fixed top-0 w-full z-50 bg-white/95 backdrop-blur-xl shadow-md px-8 lg:px-12 py-4 items-center justify-between">
         <h1
           onClick={() => navigate('/')}
-          className="cursor-pointer text-xl lg:text-2xl font-extrabold tracking-wide text-gray-800 hover:text-cyan-600 transition-colors"
+          className="cursor-pointer hidden xl:block lg:text-2xl lg:w-full font-extrabold tracking-wide text-gray-800 hover:text-cyan-600 transition-colors"
         >
-          Tota's Magic Choco 🍫
+          Tota's Magic Nuts  <Nut className="w-5 h-5 inline-block -mt-1" />
         </h1>
         <MenuItems isMobile={false} />
       </header>
@@ -68,17 +68,17 @@ const Header = () => {
       {open && (
         <div
           onClick={() => setOpen(false)}
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] animate-fade-in"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-60 animate-fade-in"
           aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 right-0 h-full w-80 bg-white z-[70] shadow-2xl transform transition-transform duration-300 ease-in-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed top-0 right-0 h-full w-80 bg-white z-70 shadow-2xl transform transition-transform duration-300 ease-in-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
         aria-hidden={!open}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-cyan-50 to-blue-50">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 bg-linear-to-r from-cyan-50 to-blue-50">
           <span className="font-bold text-xl text-gray-800">القائمة الرئيسية</span>
           <button onClick={() => setOpen(false)} aria-label="إغلاق القائمة" className="p-2 rounded-lg hover:bg-white/80 transition-colors">
             <X size={24} className="text-gray-700" />
