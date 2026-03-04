@@ -1,6 +1,6 @@
 import { Package, Award, TrendingUp } from 'lucide-react';
-import StatCard from './StatCard';
-import { formatEGP } from '../lib/utils';
+import StatCard from "./Statcard";
+import { formatEGP } from "../../lib/utils"
 
 /**
  * AccountStats

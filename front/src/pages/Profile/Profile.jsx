@@ -1,13 +1,13 @@
 import { Loader2, User } from 'lucide-react';
-import Toast        from "../../components/ui/Toast"
-import { useProfile }    from "../../hooks/useProfile"
-import { useAllProducts } from "../../store/selectors"
+import Toast from '../../components/ui/Toast';
+import { useProfile } from '../../hooks/useProfile';
+import { useAllProducts } from '../../store/selectors';
 
-import ProfileCard    from "./Profilecard"
-import AccountStats   from  "./Accountstats"
-import QuickActions   from "./Quickactions"
-import CartSection    from "./Cartsection"
-import SavedAddresses from  "./Savedaddresses"
+import ProfileCard from './Profilecard';
+import AccountStats from './Accountstats';
+import QuickActions from './Quickactions';
+import CartSection from './Cartsection';
+import SavedAddresses from './Savedaddresses';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -73,14 +73,21 @@ const Profile = () => {
 
   // ── Loading / error guards ──────────────────────────────────────────────────
   if (authLoading || loading) {
-    return <LoadingScreen message={authLoading ? 'جاري التحقق...' : 'جاري تحميل البروفايل...'} />;
+    return (
+      <LoadingScreen
+        message={authLoading ? 'جاري التحقق...' : 'جاري تحميل البروفايل...'}
+      />
+    );
   }
 
   if (!user) return <ErrorScreen />;
 
   // ── Derived data ────────────────────────────────────────────────────────────
   const cartProducts = buildCartProducts(user.cartData, products);
-  const cartTotal    = cartProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
+  const cartTotal = cartProducts.reduce(
+    (sum, p) => sum + p.price * p.quantity,
+    0,
+  );
 
   // ── Layout ──────────────────────────────────────────────────────────────────
   return (
@@ -89,7 +96,6 @@ const Profile = () => {
 
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
           {/* ── Left column ─────────────────────────────────────────────────── */}
           <div className="lg:col-span-1 space-y-6">
             <ProfileCard
@@ -114,7 +120,6 @@ const Profile = () => {
             <CartSection cartProducts={cartProducts} cartTotal={cartTotal} />
             <SavedAddresses addresses={user.addresses} />
           </div>
-
         </div>
       </div>
     </section>
