@@ -3,11 +3,11 @@ import Toast        from "../../components/ui/Toast"
 import { useProfile }    from "../../hooks/useProfile"
 import { useAllProducts } from "../../store/selectors"
 
-import ProfileCard    from './ProfileCard';
-import AccountStats   from './AccountStats';
-import QuickActions   from './QuickActions';
-import CartSection    from './CartSection';
-import SavedAddresses from './SavedAddresses';
+import ProfileCard    from "./Profilecard"
+import AccountStats   from  "./Accountstats"
+import QuickActions   from "./Quickactions"
+import CartSection    from "./Cartsection"
+import SavedAddresses from  "./Savedaddresses"
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 

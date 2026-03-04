@@ -1,5 +1,5 @@
 import { User, Mail, Phone, Calendar, Clock, Shield, CheckCircle, Edit } from 'lucide-react';
-import { formatDate } from '../lib/utils';
+import { formatDate } from "../../lib/utils"
 
 /**
  * ProfileAvatar

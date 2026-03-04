@@ -1,7 +1,7 @@
 import { ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import LazyImage from '../components/LazyImage';
-import { formatEGP } from '../lib/utils';
+import LazyImage from "../../components/LazyImage";
+import { formatEGP } from "../../lib/utils"
 
 // ─── Private sub-components ────────────────────────────────────────────────────
 
