@@ -24,7 +24,7 @@ const StatCard = ({ icon: Icon, label, value, bgColor, iconColor, valueColor }) 
 const ProfileCard = ({ user, isEditing, editData, setEditData, setIsEditing, updateProfile }) => (
   <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
     <div className="relative inline-block mb-6">
-      <div className="w-32 h-32 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-full flex items-center justify-center text-white shadow-2xl">
+      <div className="w-32 h-32 bg-linear-to-br from-cyan-500 to-cyan-600 rounded-full flex items-center justify-center text-white shadow-2xl">
         <User size={64} />
       </div>
       {user.isEmailVerified && (
@@ -56,7 +56,7 @@ const ProfileCard = ({ user, isEditing, editData, setEditData, setIsEditing, upd
       </>
     )}
 
-    <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-full text-sm font-semibold shadow-lg">
+    <div className="inline-flex items-center gap-2 px-4 py-2 bg-linear-to-r from-cyan-500 to-cyan-600 text-white rounded-full text-sm font-semibold shadow-lg">
       <Shield className="w-4 h-4" />{user.role === 'admin' ? 'مدير' : 'عضو'}
     </div>
 
@@ -78,12 +78,12 @@ const CartSection = ({ cartProducts, cartTotal }) => {
 
       {cartProducts.length === 0 ? (
         <div className="text-center py-16">
-          <div className="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
+          <div className="w-32 h-32 mx-auto mb-6 bg-linear-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
             <ShoppingCart className="w-16 h-16 text-gray-400" />
           </div>
           <h3 className="text-2xl font-bold text-gray-800 mb-3">السلة فارغة</h3>
           <p className="text-gray-600 mb-6">ابدأ التسوق الآن واستمتع بعروضنا المميزة</p>
-          <button onClick={() => navigate('/')} className="px-8 py-3 bg-gradient-to-r from-cyan-600 to-cyan-700 text-white rounded-xl font-semibold hover:from-cyan-700 hover:to-cyan-800 transition-all shadow-lg">
+          <button onClick={() => navigate('/')} className="px-8 py-3 bg-linear-to-r from-cyan-600 to-cyan-700 text-white rounded-xl font-semibold hover:from-cyan-700 hover:to-cyan-800 transition-all shadow-lg">
             تصفح المنتجات
           </button>
         </div>
@@ -92,7 +92,7 @@ const CartSection = ({ cartProducts, cartTotal }) => {
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {cartProducts.map((product) => (
               <div key={product._id} className="flex items-center gap-4 p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors">
-                <div className="w-20 h-20 bg-white rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
+                <div className="w-20 h-20 bg-white rounded-lg overflow-hidden shrink-0 shadow-sm">
                   <LazyImage src={product.image} alt={product.name} className="w-full h-full object-contain p-2" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -109,9 +109,9 @@ const CartSection = ({ cartProducts, cartTotal }) => {
           <div className="mt-6 pt-6 border-t-2 border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <span className="text-xl font-bold text-gray-900">الإجمالي</span>
-              <span className="text-3xl font-extrabold bg-gradient-to-r from-cyan-600 to-cyan-700 bg-clip-text text-transparent">{formatEGP(cartTotal)}</span>
+              <span className="text-3xl font-extrabold bg-linear-to-r from-cyan-600 to-cyan-700 bg-clip-text text-transparent">{formatEGP(cartTotal)}</span>
             </div>
-            <button onClick={() => navigate('/order')} className="w-full py-4 bg-gradient-to-r from-cyan-600 to-cyan-700 text-white rounded-xl font-bold text-lg hover:from-cyan-700 hover:to-cyan-800 transition-all shadow-lg">
+            <button onClick={() => navigate('/order')} className="w-full py-4 bg-linear-to-r from-cyan-600 to-cyan-700 text-white rounded-xl font-bold text-lg hover:from-cyan-700 hover:to-cyan-800 transition-all shadow-lg">
               إتمام الطلب
             </button>
           </div>
@@ -133,7 +133,7 @@ const ProfilePage = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="flex justify-center items-center min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
         <div className="flex flex-col items-center">
           <Loader2 className="animate-spin w-20 h-20 text-cyan-600" />
           <h2 className="text-2xl font-bold text-gray-800 mt-6">
@@ -146,7 +146,7 @@ const ProfilePage = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-50 to-gray-100">
         <div className="text-center">
           <User className="w-24 h-24 text-gray-300 mx-auto mb-4" />
           <p className="text-xl text-gray-600 mb-4">فشل تحميل بيانات المستخدم</p>
@@ -165,7 +165,7 @@ const ProfilePage = () => {
   const cartTotal = cartProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
 
   return (
-    <section className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 py-12 px-4">
+    <section className="min-h-screen bg-linear-to-br from-gray-50 via-white to-gray-50 py-12 px-4">
       <Toast toast={toast} onClose={closeToast} />
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -189,7 +189,6 @@ const ProfilePage = () => {
               <div className="space-y-4">
                 <StatCard icon={Package}  label="إجمالي الطلبات" value={user.metadata?.totalOrders || 0}          bgColor="bg-cyan-50"   iconColor="text-cyan-600"   valueColor="text-cyan-600" />
                 <StatCard icon={Award}    label="إجمالي الإنفاق"  value={formatEGP(user.metadata?.totalSpent || 0)} bgColor="bg-green-50"  iconColor="text-green-600"  valueColor="text-green-600" />
-                <StatCard icon={Heart}    label="المفضلة"         value={user.wishlist?.length || 0}                bgColor="bg-purple-50" iconColor="text-purple-600" valueColor="text-purple-600" />
               </div>
             </div>
 
