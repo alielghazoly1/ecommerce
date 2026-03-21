@@ -14,7 +14,6 @@ import { useInitApp } from './store/selectors';
 
 const App = () => {
   const initApp = useInitApp();
-
   useEffect(() => {
     initApp();
   }, [initApp]);
