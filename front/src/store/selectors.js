@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import useStore from './useStore';
-
 // ─── Auth ──────────────────────────────────────────────────────────────────────
 export const useAuth = () =>
   useStore(
@@ -15,7 +14,6 @@ export const useAuth = () =>
       checkAuth: s.checkAuth,
     })),
   );
-
 // ─── Products ─────────────────────────────────────────────────────────────────
 export const useAllProducts = () => useStore((s) => s.products);
 

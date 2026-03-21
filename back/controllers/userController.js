@@ -1,4 +1,4 @@
-// userController.js - COOKIE-BASED VERSION 🍪
+// userController.js - COOKIE + TOKEN VERSION (Safari Fix)
 import userModel from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
@@ -10,14 +10,9 @@ import { asyncHandler } from '../middleware/errorHandler.js';
 // Create JWT Token
 // =====================
 const createToken = (user) => {
-  return jwt.sign(
-    {
-      id: user._id,
-      role: user.role,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: '7d' }, // 7 days
-  );
+  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: '7d',
+  });
 };
 
 // =====================
@@ -25,18 +20,18 @@ const createToken = (user) => {
 // =====================
 const setTokenCookie = (res, token) => {
   const isProduction = process.env.NODE_ENV === 'production';
-  
+
   res.cookie('token', token, {
-    httpOnly: true,      // 🔒 JavaScript can't access it
-    secure: isProduction, // 🔒 HTTPS only in production
-    sameSite: isProduction ? 'none' : 'lax', // 🔒 CSRF protection
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     path: '/',
   });
 };
 
 // =====================
-// Login User 🍪
+// Login User
 // =====================
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -58,30 +53,31 @@ const loginUser = asyncHandler(async (req, res) => {
     });
   }
 
-  // Update last login
   await user.updateLastLogin();
 
   const token = createToken(user);
-  
-  // 🍪 Set cookie
+
+  // 🍪 Set cookie (للـ browsers العادية)
   setTokenCookie(res, token);
-  
+
   logger.info('User logged in', { email, userId: user._id });
 
-  res.json({ 
+  // ✅ رجّع الـ token في الـ response body كمان (عشان Safari و mobile)
+  res.json({
     success: true,
     message: 'Login successful',
+    token, // ← الإضافة الجديدة
     user: {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role
-    }
+      role: user.role,
+    },
   });
 });
 
 // =====================
-// Register User 🍪
+// Register User
 // =====================
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -101,40 +97,35 @@ const registerUser = asyncHandler(async (req, res) => {
     });
   }
 
-  // Password will be hashed by the pre-save middleware
-  const user = await userModel.create({
-    name,
-    email,
-    password,
-    role: 'user',
-  });
+  const user = await userModel.create({ name, email, password, role: 'user' });
 
   const token = createToken(user);
-  
+
   // 🍪 Set cookie
   setTokenCookie(res, token);
-  
+
   logger.info('User registered', { email, userId: user._id });
 
-  res.status(201).json({ 
+  // ✅ رجّع الـ token في الـ response body كمان
+  res.status(201).json({
     success: true,
     message: 'Registration successful',
+    token, // ← الإضافة الجديدة
     user: {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role
-    }
+      role: user.role,
+    },
   });
 });
 
 // =====================
-// Logout User 🍪 (NEW)
+// Logout User
 // =====================
 export const logoutUser = asyncHandler(async (req, res) => {
   const isProduction = process.env.NODE_ENV === 'production';
-  
-  // Clear the cookie
+
   res.clearCookie('token', {
     httpOnly: true,
     secure: isProduction,
@@ -144,14 +135,11 @@ export const logoutUser = asyncHandler(async (req, res) => {
 
   logger.info('User logged out', { userId: req.user?._id });
 
-  res.json({
-    success: true,
-    message: 'Logged out successfully',
-  });
+  res.json({ success: true, message: 'Logged out successfully' });
 });
 
 // =====================
-// Get User Profile (Enhanced)
+// Get User Profile
 // =====================
 export const getUserProfile = asyncHandler(async (req, res) => {
   const user = await userModel
@@ -159,16 +147,15 @@ export const getUserProfile = asyncHandler(async (req, res) => {
     .select('-password -emailVerificationToken -passwordResetToken');
 
   if (!user) {
-    return res.status(404).json({
-      success: false,
-      message: 'User not found',
-    });
+    return res.status(404).json({ success: false, message: 'User not found' });
   }
 
-  // Calculate cart statistics
   const cartStats = {
     itemsCount: user.cartItemsCount || 0,
-    totalItems: Array.from(user.cartData.values()).reduce((sum, qty) => sum + qty, 0),
+    totalItems: Array.from(user.cartData.values()).reduce(
+      (sum, qty) => sum + qty,
+      0,
+    ),
   };
 
   res.json({
@@ -182,26 +169,16 @@ export const getUserProfile = asyncHandler(async (req, res) => {
       role: user.role,
       isEmailVerified: user.isEmailVerified,
       isActive: user.isActive,
-      
-      // Cart & Wishlist
       cartData: user.cartData,
       wishlist: user.wishlist,
       cartStats,
-      
-      // Addresses
       addresses: user.addresses,
-      
-      // Preferences
       preferences: user.preferences,
-      
-      // Metadata & Statistics
       metadata: {
         totalOrders: user.metadata?.totalOrders || 0,
         totalSpent: user.metadata?.totalSpent || 0,
         lastOrderDate: user.metadata?.lastOrderDate,
       },
-      
-      // Account Info
       lastLogin: user.lastLogin,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
@@ -214,27 +191,20 @@ export const getUserProfile = asyncHandler(async (req, res) => {
 // =====================
 export const updateProfile = asyncHandler(async (req, res) => {
   const { name, phone, preferences } = req.body;
-  
+
   const user = await userModel.findById(req.user._id);
-  
   if (!user) {
-    return res.status(404).json({
-      success: false,
-      message: 'User not found',
-    });
+    return res.status(404).json({ success: false, message: 'User not found' });
   }
-  
-  // Update allowed fields
+
   if (name) user.name = name;
   if (phone) user.phone = phone;
-  if (preferences) {
-    user.preferences = { ...user.preferences, ...preferences };
-  }
-  
+  if (preferences) user.preferences = { ...user.preferences, ...preferences };
+
   await user.save();
-  
+
   logger.info('Profile updated', { userId: user._id });
-  
+
   res.json({
     success: true,
     message: 'Profile updated successfully',
@@ -257,62 +227,33 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 
 export const deleteUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({
-      success: false,
-      message: 'User ID is required',
-    });
-  }
+  if (!id)
+    return res
+      .status(400)
+      .json({ success: false, message: 'User ID is required' });
 
   const deleted = await userModel.findByIdAndDelete(id);
-
-  if (!deleted) {
-    return res.status(404).json({
-      success: false,
-      message: 'User not found',
-    });
-  }
+  if (!deleted)
+    return res.status(404).json({ success: false, message: 'User not found' });
 
   logger.info('User deleted', { userId: id });
-
-  res.json({
-    success: true,
-    message: 'User deleted successfully',
-  });
+  res.json({ success: true, message: 'User deleted successfully' });
 });
 
 export const makeAdmin = asyncHandler(async (req, res) => {
   const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({
-      success: false,
-      message: 'User ID is required',
-    });
-  }
-
   const user = await userModel.findById(id);
-
-  if (!user) {
-    return res.status(404).json({
-      success: false,
-      message: 'User not found',
-    });
-  }
-
-  if (user.role === 'admin') {
-    return res.status(400).json({
-      success: false,
-      message: 'User is already admin',
-    });
-  }
+  if (!user)
+    return res.status(404).json({ success: false, message: 'User not found' });
+  if (user.role === 'admin')
+    return res
+      .status(400)
+      .json({ success: false, message: 'User is already admin' });
 
   user.role = 'admin';
   await user.save({ validateBeforeSave: false });
 
   logger.info('User promoted to admin', { userId: id });
-
   res.json({
     success: true,
     message: 'User promoted to admin',
@@ -327,73 +268,28 @@ export const makeAdmin = asyncHandler(async (req, res) => {
 
 export const demoteToUser = asyncHandler(async (req, res) => {
   const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({
-      success: false,
-      message: 'User ID is required',
-    });
-  }
-
   const user = await userModel.findById(id);
-
-  if (!user) {
-    return res.status(404).json({
-      success: false,
-      message: 'User not found',
-    });
-  }
-
-  if (user.role !== 'admin') {
-    return res.status(400).json({
-      success: false,
-      message: 'User is not admin',
-    });
-  }
+  if (!user)
+    return res.status(404).json({ success: false, message: 'User not found' });
+  if (user.role !== 'admin')
+    return res
+      .status(400)
+      .json({ success: false, message: 'User is not admin' });
 
   user.role = 'user';
+  await user.save({ validateBeforeSave: false });
 
-  try {
-    await user.save({ validateBeforeSave: false });
-
-    logger.info('Admin demoted to user', { userId: id });
-
-    res.json({
-      success: true,
-      message: 'Admin demoted to user',
-      data: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (saveError) {
-    logger.error('Error saving user', { error: saveError.message, userId: id });
-
-    const updatedUser = await userModel
-      .findByIdAndUpdate(
-        id,
-        { role: 'user' },
-        { new: true, runValidators: false },
-      )
-      .select('-password');
-
-    if (updatedUser) {
-      return res.json({
-        success: true,
-        message: 'Admin demoted to user',
-        data: {
-          _id: updatedUser._id,
-          name: updatedUser.name,
-          email: updatedUser.email,
-          role: updatedUser.role,
-        },
-      });
-    }
-
-    throw saveError;
-  }
+  logger.info('Admin demoted to user', { userId: id });
+  res.json({
+    success: true,
+    message: 'Admin demoted to user',
+    data: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  });
 });
 
 export { loginUser, registerUser };

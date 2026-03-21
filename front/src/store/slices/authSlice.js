@@ -1,4 +1,4 @@
-import { api } from '../../config/api';
+import { api, saveToken, removeToken } from '../../config/api';
 
 export const createAuthSlice = (set, get) => ({
   // ─── State ──────────────────────────────────────────────────────
@@ -12,26 +12,49 @@ export const createAuthSlice = (set, get) => ({
     try {
       const res = await api.post('/api/users/login', { email, password });
       if (res.data.success) {
+        // ✅ احفظ الـ token في localStorage (Safari fix)
+        if (res.data.token) saveToken(res.data.token);
+
         set({ user: res.data.user, isAuthenticated: true });
         await get().loadCartData(true);
         return { success: true };
       }
-      return { success: false, message: res.data.message || 'فشل تسجيل الدخول' };
+      return {
+        success: false,
+        message: res.data.message || 'فشل تسجيل الدخول',
+      };
     } catch (err) {
-      return { success: false, message: err.response?.data?.message || 'فشل تسجيل الدخول' };
+      return {
+        success: false,
+        message: err.response?.data?.message || 'فشل تسجيل الدخول',
+      };
     }
   },
 
   register: async (name, email, password, phone) => {
     try {
-      const res = await api.post('/api/users/register', { name, email, password, phone });
+      const res = await api.post('/api/users/register', {
+        name,
+        email,
+        password,
+        phone,
+      });
       if (res.data.success) {
+        // ✅ احفظ الـ token في localStorage (Safari fix)
+        if (res.data.token) saveToken(res.data.token);
+
         set({ user: res.data.user, isAuthenticated: true });
         return { success: true };
       }
-      return { success: false, message: res.data.message || 'فشل إنشاء الحساب' };
+      return {
+        success: false,
+        message: res.data.message || 'فشل إنشاء الحساب',
+      };
     } catch (err) {
-      return { success: false, message: err.response?.data?.message || 'فشل إنشاء الحساب' };
+      return {
+        success: false,
+        message: err.response?.data?.message || 'فشل إنشاء الحساب',
+      };
     }
   },
 
@@ -41,6 +64,8 @@ export const createAuthSlice = (set, get) => ({
     } catch {
       // نكمل حتى لو الـ request فشل
     } finally {
+      // ✅ امسح الـ token من localStorage
+      removeToken();
       set({ user: null, isAuthenticated: false, cartItems: {} });
       localStorage.removeItem('tota-store');
     }
