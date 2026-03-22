@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, Clock, Tag } from 'lucide-react';
+import { ShoppingBag, Tag } from 'lucide-react';
 import LazyImage from './LazyImage';
 import Toast from './ui/Toast';
 import { formatEGP } from '../lib/utils';
@@ -10,8 +10,6 @@ import {
   useFeaturedProducts,
 } from '../store/selectors';
 import useStore from '../store/useStore';
-
-const pad = (n) => String(n).padStart(2, '0');
 
 const ProductSkeleton = () => (
   <div className="group relative bg-white rounded-2xl shadow-lg overflow-hidden">
@@ -44,25 +42,11 @@ const Offer = () => {
   const { addToCart } = useCartActions();
   const authLoading = useStore((s) => s.authLoading);
   const allProducts = useStore((s) => s.products);
-  const products = useFeaturedProducts(8);
+  const products = useFeaturedProducts(15);
   const isLoading = authLoading || !allProducts;
-
   const [toast, setToast] = useState(null);
   const [loadingIds, setLoadingIds] = useState([]);
   const [addedIds, setAddedIds] = useState([]);
-
-  const target = useMemo(() => Date.now() + 5 * 24 * 3600 * 1000, []);
-  const [secs, setSecs] = useState(
-    Math.max(0, Math.round((target - Date.now()) / 1000)),
-  );
-
-  useEffect(() => {
-    const id = setInterval(
-      () => setSecs(Math.max(0, Math.round((target - Date.now()) / 1000))),
-      1000,
-    );
-    return () => clearInterval(id);
-  }, [target]);
 
   const onAdd = useCallback(
     async (id) => {
@@ -93,11 +77,6 @@ const Offer = () => {
     [addToCart, loadingIds, navigate, isAuthenticated],
   );
 
-  const days = Math.floor(secs / 86400);
-  const hours = Math.floor((secs % 86400) / 3600);
-  const minutes = Math.floor((secs % 3600) / 60);
-  const seconds = secs % 60;
-
   return (
     <>
       <Toast toast={toast} onClose={() => setToast(null)} />
@@ -113,30 +92,10 @@ const Offer = () => {
                 اكتشف أحدث العروض واغتنم التخفيضات قبل انتهاء الوقت
               </p>
             </div>
-            <div className="inline-flex items-center gap-3 bg-white/90 px-4 py-3 rounded-2xl shadow-lg mx-auto sm:mx-0">
-              <Clock className="w-5 h-5 text-cyan-600" />
-              <div className="flex gap-2">
-                {[
-                  ['أيام', days],
-                  ['ساعات', hours],
-                  ['دقائق', minutes],
-                  ['ثواني', seconds],
-                ].map(([label, val]) => (
-                  <div key={label} className="text-center">
-                    <div className="bg-linear-to-r from-cyan-500 to-cyan-600 text-white font-bold rounded-lg px-2.5 py-1.5 min-w-[3rem] shadow-md">
-                      {pad(val)}
-                    </div>
-                    <div className="text-[10px] text-gray-600 mt-1 font-medium">
-                      {label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </header>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {Array.from({ length: 8 }).map((_, i) => (
                 <ProductSkeleton key={i} />
               ))}

@@ -28,7 +28,7 @@ const Header = () => {
           onClick={() => navigate('/')}
           className="cursor-pointer hidden xl:block lg:text-2xl lg:w-full font-extrabold tracking-wide text-gray-800 hover:text-cyan-600 transition-colors"
         >
-          Tota's Magic Nuts  <Nut className="w-5 h-5 inline-block -mt-1" />
+          Tota's Magic Nuts 🌰🍫
         </h1>
         <MenuItems isMobile={false} />
       </header>
@@ -39,7 +39,7 @@ const Header = () => {
           onClick={() => navigate('/')}
           className="cursor-pointer text-lg font-bold text-gray-800 hover:text-cyan-600 transition-colors"
         >
-          Tota's Magic Choco 🍫
+          Tota's Magic Nuts 🌰🍫
         </h1>
         <div className="flex items-center gap-2">
           <button
