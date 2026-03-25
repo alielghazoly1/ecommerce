@@ -1,4 +1,4 @@
-// src/config/axiosConfig.js - HttpOnly Cookie Version 🍪
+// src/config/axiosConfig.js ✅ FINAL
 import axios from 'axios';
 
 const axiosInstance = axios.create({
@@ -8,17 +8,21 @@ const axiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  // ✅ هذا هو المفتاح الأساسي - إرسال الـ Cookie تلقائياً
+  // withCredentials مش ضروري لأننا بنبعت Bearer token
+  // بس خليناه عشان الـ Cookie تتبعت كـ fallback لو الباك دعمها
   withCredentials: true,
 });
 
-// ─── Request Interceptor ─────────────────────────────────────────────────
+// ─── Request Interceptor ─────────────────────────────────────────────────────
 axiosInstance.interceptors.request.use(
   (config) => {
-    // ✅ لا نضيف Authorization header - الـ Cookie سيُرسل تلقائياً
+    // ✅ بنضيف الـ token من localStorage في كل request
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
 
-    // لا نضيف Content-Type تلقائياً لـ multipart/form-data
-    // axios سيقوم بإضافته تلقائياً مع boundary
+    // لا نضيف Content-Type لـ FormData — axios بيضيفه تلقائياً مع الـ boundary
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
@@ -28,29 +32,27 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// ─── Response Interceptor ────────────────────────────────────────────────
+// ─── Response Interceptor ────────────────────────────────────────────────────
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    // تسجيل تفاصيل الخطأ للتشخيص
     if (error.response) {
       console.error('❌ API Error:', {
-        status: error.response.status,
+        status:     error.response.status,
         statusText: error.response.statusText,
-        url: error.config?.url,
-        method: error.config?.method,
-        data: error.response.data,
+        url:        error.config?.url,
+        method:     error.config?.method,
+        data:       error.response.data,
       });
     }
 
-    // ✅ في حالة 401 - الـ Cookie انتهت صلاحيته أو غير موجود
+    // ✅ 401 → امسح الـ token وارجع للـ login
     if (error.response?.status === 401) {
-      // إعادة التوجيه لصفحة تسجيل الدخول فقط إذا لم نكن فيها بالفعل
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+
       const currentPath = window.location.pathname;
-      if (
-        currentPath !== '/admin/login' &&
-        !currentPath.includes('/admin/login')
-      ) {
+      if (!currentPath.includes('/admin/login')) {
         window.location.href = '/admin/login';
       }
     }
