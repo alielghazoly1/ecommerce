@@ -5,20 +5,6 @@ import jwt from 'jsonwebtoken';
 import logger from '../utils/logger.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 
-const setTokenCookie = (res, token) => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  res.cookie('token', token, {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000,
-    path: '/',
-  });
-};
-
-// =====================
-// Admin Login
-// =====================
 export const adminLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   logger.info('Admin login attempt', { email });
@@ -26,46 +12,56 @@ export const adminLogin = asyncHandler(async (req, res) => {
   const user = await userModel.findOne({ email }).select('+password');
 
   if (!user) {
-    return res.status(404).json({ success: false, message: 'User not found' });
+    return res
+      .status(401)
+      .json({ success: false, message: 'بيانات تسجيل الدخول غير صحيحة' });
   }
-
   if (user.role !== 'admin') {
-    return res.status(403).json({ success: false, message: 'Access denied. Admin only.' });
+    return res
+      .status(403)
+      .json({ success: false, message: 'غير مصرح. هذه المنطقة للمشرفين فقط' });
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    return res.status(401).json({ success: false, message: 'Invalid password' });
+    return res
+      .status(401)
+      .json({ success: false, message: 'بيانات تسجيل الدخول غير صحيحة' });
   }
 
+  // ✅ 7 أيام بدل يوم — أريح للمستخدم
   const token = jwt.sign(
     { id: user._id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: '1d' },
+    { expiresIn: '7d' },
   );
 
-  // Cookie كـ fallback للبراوزرات اللي بتدعمه
-  setTokenCookie(res, token);
+  const isProduction = process.env.NODE_ENV === 'production';
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
+  });
 
   logger.success('Admin logged in', { email, id: user._id });
 
-  // ✅ بنبعت الـ token في الـ response body — الفرونت بيحتاجه
   res.json({
     success: true,
-    message: 'Admin login successful',
+    message: 'تم تسجيل الدخول بنجاح',
     token,
-    user: {
-      name:  user.name,
-      email: user.email,
-      role:  user.role,
-    },
+    user: { name: user.name, email: user.email, role: user.role },
   });
 });
 
-// =====================
-// Admin Logout
-// =====================
 export const adminLogout = asyncHandler(async (req, res) => {
-  res.clearCookie('token', { path: '/' });
-  res.json({ success: true, message: 'Logged out successfully' });
+  const isProduction = process.env.NODE_ENV === 'production';
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/',
+  });
+  res.json({ success: true, message: 'تم تسجيل الخروج بنجاح' });
 });

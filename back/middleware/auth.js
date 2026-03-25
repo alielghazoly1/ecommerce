@@ -1,4 +1,4 @@
-// middleware/auth.js - COOKIE + BEARER TOKEN VERSION (Safari Fix)
+// middleware/auth.js ✅ FINAL - Works on all devices & browsers
 import jwt from 'jsonwebtoken';
 import User from '../models/userModel.js';
 import logger from '../utils/logger.js';
@@ -6,33 +6,41 @@ import logger from '../utils/logger.js';
 const authMiddleware = async (req, res, next) => {
   let token = null;
 
-  // 1️⃣ Authorization header أولاً (Bearer token) — بيشتغل على كل البراوزرات
-  const authHeader = req.headers['authorization'];
+  // 1️⃣ Authorization header — Bearer token (الأولوية الأولى)
+  //    ده بيشتغل على كل الأجهزة والبراوزرات بدون استثناء
+  const authHeader =
+    req.headers['authorization'] || req.headers['Authorization'];
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.split(' ')[1];
+    token = authHeader.substring(7).trim(); // أأمن من split
   }
 
-  // 2️⃣ Cookie كـ fallback
-  if (!token) {
-    token = req.cookies?.token;
+  // 2️⃣ Cookie fallback (لو الـ Bearer مش موجود)
+  if (!token && req.cookies?.token) {
+    token = req.cookies.token;
   }
+
+  // 3️⃣ Query param fallback (للحالات الاستثنائية - مش مستحسن للإنتاج)
+  // if (!token && req.query?.token) token = req.query.token;
 
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: 'Please login again',
+      message: 'غير مصرح. يرجى تسجيل الدخول مرة أخرى',
     });
   }
+
+  // تنظيف الـ token من أي مسافات زيادة
+  token = token.trim();
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.id).select('-password');
+    const user = await User.findById(decoded.id).select('-password').lean();
 
     if (!user) {
-      return res.status(404).json({
+      return res.status(401).json({
         success: false,
-        message: 'User not found',
+        message: 'المستخدم غير موجود. يرجى تسجيل الدخول مرة أخرى',
       });
     }
 
@@ -40,9 +48,17 @@ const authMiddleware = async (req, res, next) => {
     next();
   } catch (error) {
     logger.error('Authentication error', { error: error.message });
-    return res.status(403).json({
+
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى',
+      });
+    }
+
+    return res.status(401).json({
       success: false,
-      message: 'Invalid or expired token',
+      message: 'رمز المصادقة غير صالح. يرجى تسجيل الدخول مرة أخرى',
     });
   }
 };
