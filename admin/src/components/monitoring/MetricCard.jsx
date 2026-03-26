@@ -31,7 +31,7 @@ export const ProgressBar = ({ percentage, color = 'purple' }) => {
   return (
     <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
       <div
-        className={`h-full bg-gradient-to-r ${colorClasses[color]} transition-all duration-500`}
+        className={`h-full bg-linear-to-r ${colorClasses[color]} transition-all duration-500`}
         style={{ width: `${Math.min(percentage, 100)}%` }}
       />
     </div>

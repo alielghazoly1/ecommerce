@@ -6,7 +6,7 @@ import usersReducer from './slices/usersSlice';
 import monitoringReducer from './slices/monitoringSlice';
 import dashboardReducer from './slices/dashboardSlice';
 
-export const store = configureStore({
+const store = configureStore({
   reducer: {
     products: productsReducer,
     orders: ordersReducer,

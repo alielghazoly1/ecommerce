@@ -1,64 +1,88 @@
-// src/context/AuthContext.jsx ✅ FINAL
+// src/context/AuthContext.jsx ✅ FINAL - Works on all devices & browsers
 import {
   createContext,
   useContext,
   useState,
   useEffect,
   useCallback,
+  useRef,
 } from 'react';
 import axios from '../config/axiosConfig';
 
 const AuthContext = createContext(null);
 
+// ✅ Helper — قراءة وكتابة localStorage بأمان (Safari Private Mode)
+const storage = {
+  get: (key) => {
+    try { return localStorage.getItem(key); }
+    catch { return null; }
+  },
+  set: (key, value) => {
+    try { localStorage.setItem(key, value); }
+    catch { /* Safari private mode — نتجاهل */ }
+  },
+  remove: (key) => {
+    try { localStorage.removeItem(key); }
+    catch { /* تجاهل */ }
+  },
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser]                       = useState(null);
   const [loading, setLoading]                 = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const verifyInProgress                      = useRef(false); // منع التكرار
 
-  // ─── Logout ──────────────────────────────────────────────────────────────
+  // ─── Logout ────────────────────────────────────────────────────────────────
   const handleLogout = useCallback(async (shouldRedirect = true) => {
     try {
       await axios.post('/admin/logout');
     } catch {
-      // حتى لو فشل الـ request، نمسح البيانات المحلية
+      // نمسح البيانات حتى لو فشل الـ request
     } finally {
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('adminUser');
+      storage.remove('adminToken');
+      storage.remove('adminUser');
       setUser(null);
       setIsAuthenticated(false);
-      if (shouldRedirect) {
+      if (shouldRedirect && !window.location.pathname.includes('/admin/login')) {
         window.location.href = '/admin/login';
       }
     }
   }, []);
 
-  // ─── Check Auth ───────────────────────────────────────────────────────────
+  // ─── Check Auth ─────────────────────────────────────────────────────────────
   const checkAuthStatus = useCallback(async () => {
+    // منع أكثر من verify في نفس الوقت
+    if (verifyInProgress.current) return;
+    verifyInProgress.current = true;
+
     setLoading(true);
 
-    const savedToken = localStorage.getItem('adminToken');
+    const savedToken = storage.get('adminToken');
 
-    // ✅ لو مفيش token خالص → مش محتاجين نكلم السيرفر
+    // ✅ مفيش token → مش محتاجين نكلم السيرفر
     if (!savedToken) {
       setUser(null);
       setIsAuthenticated(false);
       setLoading(false);
+      verifyInProgress.current = false;
       return;
     }
 
-    // ✅ في token → نتحقق منه مع السيرفر
     try {
       const response = await axios.get('/admin/verify');
 
       if (response.data.success) {
+        // السيرفر بيرجع البيانات في admin أو user
+        const raw = response.data.user || response.data.admin || {};
         const userData = {
-          name:  response.data.user?.name  || response.data.admin?.name  || 'Admin',
-          email: response.data.user?.email || response.data.admin?.email || '',
-          role:  response.data.user?.role  || response.data.admin?.role  || 'admin',
+          name:  raw.name  || 'Admin',
+          email: raw.email || '',
+          role:  raw.role  || 'admin',
         };
         setUser(userData);
         setIsAuthenticated(true);
-        localStorage.setItem('adminUser', JSON.stringify(userData));
+        storage.set('adminUser', JSON.stringify(userData));
       } else {
         handleLogout(false);
       }
@@ -66,24 +90,35 @@ export const AuthProvider = ({ children }) => {
       const status = err.response?.status;
 
       if (status === 401 || status === 403) {
-        // Token منتهي أو غير صالح → logout
-        handleLogout(false);
+        // ✅ Token منتهي أو غير صالح → logout بدون redirect لو على صفحة login
+        storage.remove('adminToken');
+        storage.remove('adminUser');
+        setUser(null);
+        setIsAuthenticated(false);
       } else {
-        // مشكلة شبكة أو سيرفر → نستخدم البيانات المحفوظة مؤقتاً
-        const savedUser = localStorage.getItem('adminUser');
-        if (savedUser) {
+        // ✅ مشكلة شبكة أو سيرفر مش متاح → نستخدم البيانات المحفوظة
+        //    عشان المستخدم ميتلوجاوتش بسبب ضعف النت على الموبايل
+        const savedUser = storage.get('adminUser');
+        if (savedUser && savedToken) {
           try {
             setUser(JSON.parse(savedUser));
             setIsAuthenticated(true);
           } catch {
-            handleLogout(false);
+            storage.remove('adminToken');
+            storage.remove('adminUser');
+            setUser(null);
+            setIsAuthenticated(false);
           }
         } else {
-          handleLogout(false);
+          storage.remove('adminToken');
+          storage.remove('adminUser');
+          setUser(null);
+          setIsAuthenticated(false);
         }
       }
     } finally {
       setLoading(false);
+      verifyInProgress.current = false;
     }
   }, [handleLogout]);
 
@@ -91,16 +126,15 @@ export const AuthProvider = ({ children }) => {
     checkAuthStatus();
   }, [checkAuthStatus]);
 
-  // ─── Login ────────────────────────────────────────────────────────────────
+  // ─── Login ──────────────────────────────────────────────────────────────────
   const login = async (email, password) => {
     try {
       const { data } = await axios.post('/admin/login', { email, password });
 
       if (data.success) {
-        // ✅ احفظ الـ token — السيرفر بيبعته في data.token
-        const token = data.token;
-        if (token) {
-          localStorage.setItem('adminToken', token);
+        // ✅ احفظ الـ token في localStorage
+        if (data.token) {
+          storage.set('adminToken', data.token);
         }
 
         const userData = {
@@ -108,7 +142,7 @@ export const AuthProvider = ({ children }) => {
           email: data.user?.email || email,
           role:  data.user?.role  || 'admin',
         };
-        localStorage.setItem('adminUser', JSON.stringify(userData));
+        storage.set('adminUser', JSON.stringify(userData));
 
         setUser(userData);
         setIsAuthenticated(true);
@@ -124,26 +158,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ─── Update user ──────────────────────────────────────────────────────────
+  // ─── Update User ────────────────────────────────────────────────────────────
   const updateUser = useCallback((userData) => {
     setUser((prev) => {
       const updated = { ...prev, ...userData };
-      localStorage.setItem('adminUser', JSON.stringify(updated));
+      storage.set('adminUser', JSON.stringify(updated));
       return updated;
     });
   }, []);
 
-  const value = {
-    user,
-    loading,
-    isAuthenticated,
-    login,
-    logout: handleLogout,
-    updateUser,
-    checkAuthStatus,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      isAuthenticated,
+      login,
+      logout: handleLogout,
+      updateUser,
+      checkAuthStatus,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
