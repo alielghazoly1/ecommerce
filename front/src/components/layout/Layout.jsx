@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
+import Footer from './Footer';
 
 const Layout = () => {
   return (
@@ -10,6 +11,7 @@ const Layout = () => {
       <main className="pt-14 md:pt-25">
         <Outlet />
       </main>
+      <Footer />
     </div>
   );
 };

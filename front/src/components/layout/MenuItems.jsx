@@ -1,14 +1,20 @@
 import { useMemo } from 'react';
-import { Home, FolderOpen, ShoppingBag, Mail, ShoppingCart, CircleUserRound } from 'lucide-react';
+import {
+  Home,
+  FolderOpen,
+  ShoppingBag,
+  Mail,
+  ShoppingCart,
+  CircleUserRound,
+} from 'lucide-react';
 import { Link as ScrollLink, scroller } from 'react-scroll';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, useCartItemCount } from '../../store/selectors';
 
 const menuItemData = [
-  { to: 'home',       label: 'الصفحة الرئيسية', Icon: Home },
-  { to: 'categories', label: 'تصفح المنتجات',   Icon: FolderOpen },
-  { to: 'shop',       label: 'خصومات متجرنا',   Icon: ShoppingBag },
-  { to: 'contact',    label: 'تواصل معنا',       Icon: Mail },
+  { to: 'home', label: 'الصفحة الرئيسية', Icon: Home },
+  { to: 'categories', label: 'تصفح المنتجات', Icon: FolderOpen },
+  { to: 'shop', label: 'خصومات متجرنا', Icon: ShoppingBag },
 ];
 
 const MenuItems = ({ setSidebarOpen, isMobile }) => {
@@ -36,7 +42,9 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
   return (
     <div
       className={`flex md:justify-center lg:justify-end ${
-        isMobile ? 'flex-col space-y-4 items-center px-4 gap-y-2' : 'flex-row w-full items-center gap-4'
+        isMobile
+          ? 'flex-col space-y-4 items-center px-4 gap-y-2'
+          : 'flex-row w-full items-center gap-4'
       } font-sans`}
     >
       {menuItemData.map(({ to, label, Icon }) => {
@@ -45,12 +53,19 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
           return (
             <button
               key={to}
-              onClick={() => { navigate('/categories'); closeSidebar(); }}
+              onClick={() => {
+                navigate('/categories');
+                closeSidebar();
+              }}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all shrink-0 min-w-20 hover:shadow-md ${
-                isActive ? 'bg-cyan-100 text-cyan-700 shadow-lg' : 'text-gray-800 hover:bg-gray-100'
+                isActive
+                  ? 'bg-cyan-100 text-cyan-700 shadow-lg'
+                  : 'text-gray-800 hover:bg-gray-100'
               }`}
             >
-              <Icon className={`w-6 h-6 ${isActive ? 'text-cyan-600' : 'text-gray-700'}`} />
+              <Icon
+                className={`w-6 h-6 ${isActive ? 'text-cyan-600' : 'text-gray-700'}`}
+              />
               <span className="font-medium text-base">{label}</span>
             </button>
           );
@@ -85,7 +100,10 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
 
       {/* Cart */}
       <button
-        onClick={() => { navigate('/cart'); closeSidebar(); }}
+        onClick={() => {
+          navigate('/cart');
+          closeSidebar();
+        }}
         className="relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-gray-800 hover:bg-gray-100 hover:shadow-md"
       >
         <ShoppingCart className="w-6 h-6 text-gray-700" />
@@ -98,7 +116,10 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
 
       {!isAuthenticated ? (
         <button
-          onClick={() => { navigate('/login'); closeSidebar(); }}
+          onClick={() => {
+            navigate('/login');
+            closeSidebar();
+          }}
           className="flex items-center gap-2 px-4 py-3 rounded-lg bg-cyan-400 text-white font-semibold hover:bg-cyan-500 transition-all"
         >
           تسجيل دخول
@@ -106,11 +127,16 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
       ) : (
         <div className="flex items-center gap-4">
           <div
-            onClick={() => { navigate('/profile'); closeSidebar(); }}
+            onClick={() => {
+              navigate('/profile');
+              closeSidebar();
+            }}
             className="flex flex-col items-center cursor-pointer group"
           >
             <CircleUserRound className="w-6 h-6 text-gray-700 group-hover:text-cyan-600" />
-            <span className="text-xs text-gray-600 mt-1 group-hover:text-cyan-600">الحساب</span>
+            <span className="text-xs text-gray-600 mt-1 group-hover:text-cyan-600">
+              الحساب
+            </span>
           </div>
           <button
             onClick={handleLogout}
