@@ -1,5 +1,5 @@
 import { ShoppingCart, ArrowLeft } from 'lucide-react';
-import heroImg from '../assets/Gemini_Generated_Image_q0prhiq0prhiq0pr.png';
+import heroImg from "../../assets/Gemini_Generated_Image_q0prhiq0prhiq0pr.png"
 
 const Hero = () => {
   return (

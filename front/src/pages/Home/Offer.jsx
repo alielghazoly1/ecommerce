@@ -1,15 +1,15 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Tag } from 'lucide-react';
-import LazyImage from './LazyImage';
-import Toast from './ui/Toast';
-import { formatEGP } from '../lib/utils';
+import LazyImage from '../../components/LazyImage';
+import Toast from '../../components/ui/Toast';
+import { formatEGP } from '../../lib/utils';
 import {
   useAuth,
   useCartActions,
   useFeaturedProducts,
-} from '../store/selectors';
-import useStore from '../store/useStore';
+} from '../../store/selectors';
+import useStore from '../../store/useStore';
 
 const ProductSkeleton = () => (
   <div className="group relative bg-white rounded-2xl shadow-lg overflow-hidden">

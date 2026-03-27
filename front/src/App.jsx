@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { Routes, Route } from 'react-router';
 import Layout from './components/layout/Layout';
-import Home from './pages/Home';
+import Home from './pages/Home/Home';
 import Cart from './pages/Cart/Cart';
-import MyOrders from "./pages/MyOrders/MyOrder"
+import MyOrders from './pages/MyOrders/MyOrder';
 import Product from './pages/Product/Product';
 import Order from './pages/order/Order';
-import Categories from "./pages/Categories/Categories";
+import Categories from './pages/Categories/Categories';
 import Profile from './pages/Profile/Profile';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
