@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const BASE_URL = 'https://back-alielghazoly1-alielghazoly1s-projects.vercel.app';
+export const BASE_URL = 'https://back-alielghazoly1s-projects.vercel.app';
 // export const BASE_URL = 'http://localhost:4000';
 
 // ─── Token helpers ────────────────────────────────────────────────────────────

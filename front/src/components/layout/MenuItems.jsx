@@ -1,9 +1,7 @@
-import { useMemo } from 'react';
 import {
   Home,
   FolderOpen,
   ShoppingBag,
-  Mail,
   ShoppingCart,
   CircleUserRound,
 } from 'lucide-react';
@@ -22,9 +20,7 @@ const MenuItems = ({ setSidebarOpen, isMobile }) => {
   const totalItems = useCartItemCount();
   const location = useLocation();
   const navigate = useNavigate();
-
   const closeSidebar = () => setSidebarOpen?.(false);
-
   const handleLogout = async () => {
     await logout();
     navigate('/');

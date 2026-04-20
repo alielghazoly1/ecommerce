@@ -15,8 +15,9 @@ export const useAuth = () =>
     })),
   );
 // ─── Products ─────────────────────────────────────────────────────────────────
+// get all products
 export const useAllProducts = () => useStore((s) => s.products);
-
+// get product by id
 export const useProduct = (productId) => {
   const products = useStore((s) => s.products);
   return useMemo(
@@ -83,7 +84,7 @@ export const useCartProducts = () => {
     [cartItems, products],
   );
 };
-
+//  total number items in cart
 export const useCartItemCount = () => {
   const cartItems = useStore((s) => s.cartItems);
   return useMemo(
